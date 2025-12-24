@@ -1,0 +1,132 @@
+VERSION ?= 0.0.1
+PREVIOUS_TAG = 0.0.0
+BUILD_NUMBER := $(shell git rev-list --all --count)
+BUILDDATE := $(shell date '+%Y%m%d')
+
+CXX			= @CXX@
+EXTRA_CFLAGS = -ggdb -Wall
+INCLUDE	= -Iinclude -Ipplib/include -Ippltk/include
+CPPFLAGS	= @CPPFLAGS@
+CXXFLAGS	= @CXXFLAGS@
+
+CFLAGS		=  $(INCLUDE) $(EXTRA_CFLAGS) $(CXXFLAGS) @CFLAGS@ @DEFS@  @PTHREAD_CFLAGS@ \
+	@FT2_CFLAGS@ \
+	@DAV1D_CFLAGS@ @ZLIB_CFLAGS@ @BZ2_CFLAGS@ @PCRE2_CFLAGS@ @ICONV_CFLAGS@ \
+	@MPG123_CFLAGS@	@SDL3_CFLAGS@ @VORBIS_CFLAGS@ @ASSIMP_CFLAGS@
+LDFLAGS		= @LDFLAGS@
+LIBS_PPL7 =  pplib/release/libppl7-audio.a  pplib/release/libppl7-gfx.a  pplib/release/libppl7-core.a
+LIBS_PPLTK = ppltk/compile/libppltk.a
+LIBS		= $(LIBS_PPL7)  $(LIBS_PPLTK) @ASAN_FLAGS@ \
+	@LIBS@ @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DAV1D_LIBS@ @ZLIB_LIBS@ @BZ2_LIBS@ @PCRE2_LIBS@ @FT2_LIBS@ \
+	@PNG_LIBS@ @JPEG_LIBS@ @ICONV_LIBS@ @MPG123_LIBS@ @SDL3_LIBS@ @VORBIS_LIBS@ @VORBISFILE_LIBS@ @ASSIMP_LIBS@ \
+	-lstdc++
+
+
+
+PROGRAM	= gd2
+APPNAME = gd2
+
+OBJECTS=compile/main.o \
+	compile/game.o \
+	compile/gameevents.o \
+	compile/object.o \
+	compile/person.o \
+	compile/employee.o \
+	compile/team.o \
+	compile/task.o \
+	compile/project.o \
+	compile/product.o
+
+
+
+
+
+$(PROGRAM): update_version ppl7 ppl_toolkit shaders $(OBJECTS)
+	$(CXX) -o $(PROGRAM) $(OBJECTS) $(LIBS)
+	-chmod 755 $(PROGRAM)
+
+all: update_version $(PROGRAM) texmaker
+
+shaders:
+	# nix bisher
+
+
+mingw: update_version
+	rm -rf release/deploy
+	mkdir -p release/deploy
+	make -j 16 ppl7
+	make -j 16 ppl_toolkit
+	make -j 16 $(PROGRAM)
+	ldd  $(PROGRAM).exe  | grep -v WINDOWS | grep ucrt64 | awk '{print $$3}' | while read line  ; do cp $${line} release/deploy; done
+
+	cat setup.tpl.iss | sed "s/^AppVersion=.*/AppVersion=${VERSION}.${BUILD_NUMBER}/"  \
+		| sed "s/^AppVerName=.*/AppVerName=$(APPNAME) ${VERSION}/"  \
+		| sed "s/^VersionInfoVersion=.*/VersionInfoVersion=${VERSION}/"  \
+		| sed "s/^OutputBaseFilename=.*/OutputBaseFilename=${APPNAME}-${VERSION}-Setup/"  \
+		> setup.iss
+	cp $(PROGRAM).exe release/deploy
+	strip release/deploy/$(PROGRAM).exe
+
+setup: mingw
+	"C:\Program Files (x86)\Inno Setup 5\ISCC.exe" setup.iss
+
+
+history:
+	@echo "Git history between Tag $(PREVIOUS_TAG) and head" >  history.tmp
+	@echo "================================================================================" >>  history.tmp
+	@git log --pretty=format:"%ad=!=%s" --date=iso8601-strict $(PREVIOUS_TAG)...main | sort | awk -F "=!=" '{ print $$2}' >> history.tmp
+	cat history.tmp
+
+ppl7:
+	-mkdir -p pplib/release
+	cd pplib && $(MAKE) -j release/libppl7-core.a
+	cd pplib && $(MAKE) -j release/libppl7-gfx.a
+	cd pplib && $(MAKE) -j release/libppl7-audio.a
+
+ppl_toolkit:
+	-mkdir -p ppltk/release
+	cd ppltk && $(MAKE) -j
+
+clean:
+	-rm -f compile/*.o $(PROGRAM) *.core
+
+cleanall:
+	-rm -f compile/*.o $(PROGRAM) *.core
+	cd pplib && $(MAKE) clean
+	cd ppltk && $(MAKE) clean
+
+hud:
+	./texmaker -s lightwave/Render/hud/ -t res/hud.tex -w 512 -h 256 -px 50 -py 98 -x tmp/hud
+	./texmaker -f res/cursor/cursor.lst -t res/cursor.tex -w 128 -h 128 -px 0 -py 0 -x tmp/cursor
+
+sprites: hud
+
+fonts:
+	- rm -rf res/*.fnt6
+	pplfontmaker -t res/notosans-black.fnt6 -q /usr/share/fonts/google-noto/NotoSans-Black.ttf -s "12,14,16,18,20,30,40,50,64" --idn --aa4 -n "NotoSans-Black" --zlib -6
+	pplfontmaker -t res/notosans.fnt6 -q /usr/share/fonts/google-noto/NotoSans-Regular.ttf -s "8,10,12,14,16,18,20,30" --idn --aa4 -n "NotoSans" --zlib -6
+	pplfontmaker -t res/notosans.fnt6 -q /usr/share/fonts/google-noto/NotoSans-Bold.ttf -s "8,10,12,14,16,18,20,30" --idn --aa4 -n "NotoSans" --zlib -6 --isbold
+
+
+update_version:
+	@mkdir -p tmp
+	@echo "#ifndef VERSION_H_" > tmp/version.h
+	@echo "#define VERSION_H_" >> tmp/version.h
+	@echo "#define APP_VERSION \"$(VERSION)\"" >> tmp/version.h
+	@echo "#define APP_REVSION \"$(BUILD_NUMBER)\"" >> tmp/version.h
+	@echo "#define APP_BUILDDATE $(BUILDDATE)" >> tmp/version.h
+	@echo "#endif" >> tmp/version.h
+	@diff tmp/version.h include/version.h > /dev/null 2>&1; if [ $$? -ne 0 ] ; then cp tmp/version.h include/version.h; fi
+
+
+compile/main.o: src/main.cpp Makefile include/gameengine.h
+	- @mkdir -p compile
+	$(CXX) -o compile/main.o -c src/main.cpp $(CFLAGS)
+
+compile/sdl.o: src/sdl.cpp Makefile include/sdl_wrapper.h
+	- @mkdir -p compile
+	$(CXX) -o compile/sdl.o -c src/sdl.cpp $(CFLAGS)
+
+compile/game.o: src/game/game.cpp Makefile include/gameengine.h include/version.h
+	- @mkdir -p compile
+	$(CXX) -o compile/game.o -c src/game/game.cpp $(CFLAGS)

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+#aclocal -I autoconf --install --output=autoconf/aclocal.m4
+aclocal -I autoconf --install
+automake --add-missing
+autoconf

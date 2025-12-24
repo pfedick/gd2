@@ -1,0 +1,10 @@
+autom4te.cache
+Makefile
+compile
+configure~
+config.log
+config.status
+*.exe
+.vscode/
+tmp/
+configure.ac~
