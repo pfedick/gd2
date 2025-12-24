@@ -28,14 +28,6 @@ APPNAME = gd2
 
 OBJECTS=compile/main.o \
 	compile/game.o \
-	compile/gameevents.o \
-	compile/object.o \
-	compile/person.o \
-	compile/employee.o \
-	compile/team.o \
-	compile/task.o \
-	compile/project.o \
-	compile/product.o
 
 
 
