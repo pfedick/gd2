@@ -15,7 +15,7 @@ public:
         int textureId;
         SDL_Texture* tex;
         const ppl7::grafix::Drawable* drawable;
-        SDL_Rect r;
+        SDL_FRect r;
         ppl7::grafix::Point Pivot;
         ppl7::grafix::Point Offset;
 
@@ -68,7 +68,7 @@ public:
     void draw(SDL_Renderer* renderer, int x, int y, int id, const SDL_Color& color_modulation) const;
     void drawBoundingBox(SDL_Renderer* renderer, int x, int y, int id) const;
     void drawBoundingBoxWithAngle(SDL_Renderer* renderer, int x, int y, int id, float scale_x, float scale_y, float angle) const;
-    void draw(SDL_Renderer* renderer, int id, const SDL_Rect& source, const SDL_Rect& target) const;
+    void draw(SDL_Renderer* renderer, int id, const SDL_FRect& source, const SDL_FRect& target) const;
     void drawScaled(SDL_Renderer* renderer, int x, int y, int id, float scale_factor) const;
     void drawScaled(SDL_Renderer* renderer, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const;
     void drawScaledWithAngle(SDL_Renderer* renderer, int x, int y, int id, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation) const;
@@ -90,7 +90,7 @@ public:
     SDL_BlendMode getTextureBlendMode() const;
     void setPivot(int id, int x, int y);
 
-    SDL_Rect getSpriteSource(int id) const;
+    SDL_FRect getSpriteSource(int id) const;
     const SpriteIndexItem* getSpriteIndex(int id) const;
     ppl7::grafix::Point spriteOffset(int id) const;
 };

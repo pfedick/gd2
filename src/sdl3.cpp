@@ -247,7 +247,7 @@ void SDL3::getDisplayModes(int display_id, std::list<DisplayMode>& mode_list)
 	SDL_DisplayID* displays = SDL_GetDisplays(&num_displays);
 	if (display_id < num_displays) {
 		int count;
-		const SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes(display_id, &count);
+		SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes(displays[display_id], &count);
 		if (modes) {
 			for (int i = 0; i < count; i++) {
 				mode_list.push_back(SDL3::DisplayMode(SDL2RGBFormat(modes[i]->format),
@@ -256,4 +256,5 @@ void SDL3::getDisplayModes(int display_id, std::list<DisplayMode>& mode_list)
 			SDL_free(modes);
 		}
 	}
+	SDL_free(displays);
 }
