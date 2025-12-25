@@ -28,6 +28,8 @@ APPNAME = gd2
 
 OBJECTS=compile/main.o \
 	compile/game.o \
+	compile/sdl3.o \
+	compile/spritetexture.o \
 
 
 
@@ -111,14 +113,18 @@ update_version:
 	@diff tmp/version.h include/version.h > /dev/null 2>&1; if [ $$? -ne 0 ] ; then cp tmp/version.h include/version.h; fi
 
 
-compile/main.o: src/main.cpp Makefile include/gameengine.h
+compile/main.o: src/main.cpp Makefile include/sdl3_if.h include/game.h
 	- @mkdir -p compile
 	$(CXX) -o compile/main.o -c src/main.cpp $(CFLAGS)
 
-compile/sdl.o: src/sdl.cpp Makefile include/sdl_wrapper.h
+compile/sdl3.o: src/sdl3.cpp Makefile include/sdl3_if.h
 	- @mkdir -p compile
-	$(CXX) -o compile/sdl.o -c src/sdl.cpp $(CFLAGS)
+	$(CXX) -o compile/sdl3.o -c src/sdl3.cpp $(CFLAGS)
 
-compile/game.o: src/game/game.cpp Makefile include/gameengine.h include/version.h
+compile/game.o: src/game/game.cpp Makefile include/game.h include/version.h
 	- @mkdir -p compile
 	$(CXX) -o compile/game.o -c src/game/game.cpp $(CFLAGS)
+
+compile/spritetexture.o: src/spritetexture.cpp Makefile include/spritetexture.h include/sdl3_if.h
+	- @mkdir -p compile
+	$(CXX) -o compile/spritetexture.o -c src/spritetexture.cpp $(CFLAGS)
