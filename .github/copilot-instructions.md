@@ -54,6 +54,13 @@ gd2 is a **2D Jump'n'Run game** using SDL3 GPU API for advanced rendering (norma
 
 **Renderer vs GPU path**: For gd2, **use SDL3's GPU API** (not SDL_Renderer) for all drawable sprites, tiles, and lighting passes. Mix SDL_Renderer with GPU in the same frame is awkward; commit to GPU-first: `SDL_CreateGPUDevice()` → command buffers → pipelines, bind groups, GPU textures.
 
+**Learning resources**: Excellent tutorials on SDL3 GPU API usage:
+- [Getting Started with SDL3_GPU](https://glusoft.com/sdl3-tutorials/getting-started-sdl3_gpu/) - Basic setup and initialization
+- [Display Triangle with SDL3_GPU](https://glusoft.com/sdl3-tutorials/display-triangle-sdl3_gpu/) - First rendering example
+- [Display Texture with SDL3_GPU](https://glusoft.com/sdl3-tutorials/display-texture-sdl3_gpu/) - Texture loading and rendering
+- [Sprite Batching with SDL3 GPU](https://glusoft.com/sdl3-tutorials/sprite-batching-sdl3-gpu/) - Efficient batch rendering for sprites
+- [SDL3 GPU API Documentation](https://wiki.libsdl.org/SDL3/CategoryGPU) - Official API reference
+
 **Texture loading workflow**:
 - Load image files via `SDL_LoadBMP` or `IMG_Load` into CPU pixels.
 - Create GPU textures: `SDL_CreateGPUTexture()` with `SDL_TEXTUREUSAGE_SAMPLING`.
