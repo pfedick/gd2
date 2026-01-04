@@ -16,6 +16,19 @@
 - Let the user fill in details and adapt to their needs
 - Review and refactor together, not in isolation
 
+**Accuracy and verification**:
+- If a solution is only a guess or hypothesis, communicate this immediately and clearly
+- Whenever possible, verify assumptions through code analysis or tool usage before suggesting them
+- Never invent API methods that don't exist; always verify against actual code, headers, or documentation
+- Check parameters against documentation, function signatures, or existing usage patterns before proposing them
+- Use available tools (grep_search, semantic_search, read_file, list_code_usages) to verify:
+  - Whether a function/method exists in the codebase
+  - What parameters it actually accepts
+  - How it's used elsewhere in the project
+  - What the actual API surface looks like (especially for SDL3, PPL7, PPLTK)
+- When uncertain about SDL3 GPU API specifics, search the codebase for existing usage patterns or read relevant headers
+- For PPL7/PPLTK APIs, reference the actual source files in pplib/include or ppltk/include to confirm method signatures
+
 ## Project Overview
 gd2 is a **2D Jump'n'Run game** using SDL3 GPU API for advanced rendering (normal maps, parallax scrolling, per-layer blur). See [DeckerGame](https://github.com/pfedick/DeckerGame) (SDL2, Windows-only) as the spiritual predecessor; this rewrite targets **Windows (mingw64/msys), Linux, and FreeBSD** and leverages SDL3's new GPU features.
 
@@ -35,6 +48,8 @@ gd2 is a **2D Jump'n'Run game** using SDL3 GPU API for advanced rendering (norma
 - Resources/fonts: font names referenced in code assume the generated `.fnt6` files; if you change fonts, regenerate and commit both the font files and `resources/res.h` to keep runtime loads working.
 - Coding conventions: prefer existing PPL7 types (`ppl7::String`, `ppl7::grafix::ImageList`, etc.) and exception macros (`PPL7EXCEPTION`); respect the redraw/focus lifecycle managed by `WindowManager` instead of manually painting outside the tree.
 - Release packaging: `make mingw` copies dependent ucrt64 DLLs next to `gd2.exe` and rewrites `setup.iss`; `make setup` runs Inno Setup to produce an installer.
+
+
 ## SDL3 GPU Architecture
 
 **Renderer vs GPU path**: For gd2, **use SDL3's GPU API** (not SDL_Renderer) for all drawable sprites, tiles, and lighting passes. Mix SDL_Renderer with GPU in the same frame is awkward; commit to GPU-first: `SDL_CreateGPUDevice()` → command buffers → pipelines, bind groups, GPU textures.
