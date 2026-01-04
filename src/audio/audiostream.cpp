@@ -1,0 +1,130 @@
+#include "audio.h"
+#include <unistd.h>
+
+AudioStream::AudioStream()
+{
+	decoder = NULL;
+	volume = 1.0f;
+	buffersize = 0;
+	prebuffer = NULL;
+	fade_start = 0.0f;
+	fade_start_volume = 1.0f;
+	fade_time = 4.0f;
+}
+
+AudioStream::AudioStream(AudioClass a)
+{
+	decoder = NULL;
+	volume = 1.0f;
+	buffersize = 0;
+	prebuffer = NULL;
+	fade_start = 0.0f;
+	fade_start_volume = 1.0f;
+	fade_time = 4.0f;
+	setAudioClass(a);
+}
+
+AudioStream::AudioStream(const ppl7::String& filename, AudioClass a)
+{
+	decoder = NULL;
+	volume = 1.0f;
+	buffersize = 0;
+	prebuffer = NULL;
+	fade_start = 0.0f;
+	fade_start_volume = 1.0f;
+	fade_time = 4.0f;
+	setAudioClass(a);
+	open(filename);
+}
+
+
+
+AudioStream::~AudioStream()
+{
+	if (decoder) delete decoder;
+	if (prebuffer) free(prebuffer);
+	decoder = NULL;
+}
+
+void AudioStream::open(const ppl7::String& filename)
+{
+	if (decoder) delete decoder;
+	decoder = NULL;
+	ppl7::AudioInfo info;
+	ff.open(filename);
+	if (!ppl7::IdentAudioFile(ff, info)) {
+		throw AudioException("Couldn't identify audio file format: %s", (const char*)filename);
+	}
+	if (info.Format == ppl7::AudioInfo::AIFF) decoder = (ppl7::AudioDecoder*)new ppl7::AudioDecoder_Aiff();
+	else if (info.Format == ppl7::AudioInfo::WAVE) decoder = (ppl7::AudioDecoder*)new ppl7::AudioDecoder_Wave();
+	else if (info.Format == ppl7::AudioInfo::MP3) decoder = (ppl7::AudioDecoder*)new ppl7::AudioDecoder_MP3();
+	if (!decoder) throw AudioException("UnknownAudioFormat: %s", (const char*)filename);
+	decoder->open(ff, &info);
+}
+
+void AudioStream::rewind()
+{
+	if (decoder) decoder->seekSample(0);
+	fade_start = 0;
+	volume = fade_start_volume;
+}
+
+void AudioStream::setVolume(float volume)
+{
+	this->volume = volume;
+	fade_start = 0;
+	if (this->volume < 0) this->volume = 0.0f;
+	if (this->volume > 1.0) this->volume = 1.0f;
+	this->fade_start_volume = this->volume;
+}
+
+void AudioStream::fadeout(float seconds)
+{
+	fade_start_volume = volume;
+	fade_time = seconds;
+	fade_start = ppl7::GetMicrotime();
+
+}
+
+bool AudioStream::isHearable() const
+{
+	if (!decoder) return false;
+	return true;
+
+}
+
+size_t AudioStream::addSamples(size_t num, ppl7::STEREOSAMPLE_FLOAT* buffer, float v)
+{
+	if (!decoder) {
+		return 0;
+	}
+	if (buffersize < num * sizeof(ppl7::STEREOSAMPLE_FLOAT)) {
+		if (!prebuffer) prebuffer = (ppl7::STEREOSAMPLE_FLOAT*)malloc(num * sizeof(ppl7::STEREOSAMPLE_FLOAT));
+		else {
+			ppl7::STEREOSAMPLE_FLOAT* newbuffer = (ppl7::STEREOSAMPLE_FLOAT*)realloc(prebuffer, num * sizeof(ppl7::STEREOSAMPLE_FLOAT));
+			if (!newbuffer) return 0;
+			prebuffer = newbuffer;
+		}
+		if (!prebuffer) return 0;
+	}
+	size_t read = decoder->getSamples(num, prebuffer);
+	if (read < num) {
+		memset(prebuffer + read, 0, (num - read) * sizeof(ppl7::STEREOSAMPLE_FLOAT));
+	}
+	if (fade_start > 0.0f) {
+		float in_fade = (ppl7::GetMicrotime() - fade_start) / fade_time;
+		volume = fade_start_volume - in_fade * fade_start_volume;
+		if (volume <= 0) {
+			fade_start = 0;
+			volume = fade_start_volume;
+			decoder->seekSample(0);
+			return 0;
+		}
+	}
+	float total_volume = volume * v;
+	for (size_t i = 0;i < num;i++) {
+		buffer[i].left += prebuffer[i].left * total_volume;
+		buffer[i].right += prebuffer[i].right * total_volume;
+	}
+	return read;
+}

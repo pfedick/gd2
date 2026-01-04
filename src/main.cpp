@@ -46,7 +46,7 @@ void start(int argc, char** argv)
 
     if (ppl7::HaveArgv(argc, argv, "-l")) {
         ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
-        game.loadLevel(level);
+        //game.loadLevel(level);
     }
     game.run();
 

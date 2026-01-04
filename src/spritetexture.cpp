@@ -1,132 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
-#include <sdl3_if.h>
-#include <spritetexture.h>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include "gpu.h"
+#include "sprite.h"
 
 
-/*!\page PFPSpriteTexture1 Format PFP Sprite-Textures, Version 1
- *
-Eine Texture-Sprite-Datei wird zum Speichern von Sprites verwendet, die mit der Klasse ppl7::grafix::Sprite
-geladen und dargestellt werden k�nnen. Dabei werden viele einzelne kleine Sprite-Grafiken auf einer
-oder mehreren gr��eren Texturen zusammengefasst.
-Die Datei verwendet als Basisformat das \ref PFPFileVersion3 "PFP-File-Format Version 3" mit seinen Chunks.
-Das File tr�gt als ID "TEXS", Hauptversion 1, Unterversion 0. Eine Texturedatei enth�lt immer einen
-Index-Chunk (INDX) und beliebig viele Surface-Chunks (SURF).
-
-\par INDX: Index-Chunk
-
-Der INDX-Chunk beginnt mit einem 4-Byte-Wert im Little Endian Format, der angibt, wieviele Sprites
-im Index vorhanden sind.
-\code
-Byte 0:  Anzahl Sprites                               4 Byte
-\endcode
-
-Darauf folgt dann pro Sprite ein 22 Byte langer Block mit folgenden Daten:
-\code
-Byte 0:  ItemId                                       4 Byte
-Byte 4:  TextureId                                    2 Byte
-Byte 6:  TextureRect                                  8 Byte
-		 Byte 6:  left          (2 Byte)
-		 Byte 8:  top           (2 Byte)
-		 Byte 10: right         (2 Byte)
-		 Byte 12: bottom        (2 Byte)
-Byte 14: Pivot-Punkt                                  4 Byte
-		 Byte 14: x-Koordinate  (2 Byte)
-		 Byte 16: y-Koordinate  (2 Byte)
-Byte 18: Offset                                       4 Byte
-		 Byte 18: x-Koordinate  (2 Byte)
-		 Byte 20: y-Koordinate  (2 Byte)
-\endcode
-S�mtliche Werte m�ssen im Little-Endian-Format angegeben werden.
-
-Beschreibung:
-<ul>
-<li><b>ItemId</b>\n
-Jedes Sprite hat seine eigene ID. Diese muss nicht zwangsl�ufig ein fortlaufender Z�hler sein, sondern
-kann eine beliebige Ziffer sein. Sie muss nur eindeutig sein.
-</li>
-<li><b>TextureId</b>\n
-Eine Sprite-Datei kann mehrere Texturen enthalten. Dieser Wert stellt eine Referenz auf die
-ID der Textur dar.
-</li>
-<li><b>TextureRect</b>\n
-Da pro Textur mehrere Sprites gespeichert werden, m�ssen dessen Koordinaten innerhalb der Textur
-festgehalten werden. Diese geschieht innerhalb dieses Datenblocks, bei dem jeder Wert mit 2 Byte
-im Little-Endian Format dargestellt wird.
-</li>
-<li><b>Pivot-Punkt</b>\n
-Der Pivot-Punkt oder auch Ursprung ist die Position innerhalb des Sprites, aber der mit dem Zeichnen
-begonnen wird. Bei einer Figur k�nnte dies z.B. der Mittelpunkt der F��e sein, bei einem Baum das
-unterste Ende des Stamms.
-</li>
-<li><b>Offset</b>\n
-Falls das Sprite in der Quellgrafik nicht b�ndig mit der ersten Pixelreihe bzw. Pixelspalte
-beginnt, wird der sogenannte Offset gespeichert. Er gibt ganz einfach Spalte und Zeile an, ab der
-das Sprite beginnt.
-</li>
-</ul>
-\par SURF: Surface-Chunk
-Der Surface-Chunk setzt sich aus einem 8 Byte langem Header, gefolgt von den Zlib-komprimierten
-Pixel-Daten zusammen:
-
-\code
-Byte 0:  TextureId                                    2 Byte
-Byte 2:  RGB-Format                                   1 Byte
-Byte 3:  Bittiefe                                     1 Byte
-Byte 4:  Breite                                       2 Byte
-Byte 6:  H�he                                         2 Byte
-\endcode
-Beschreibung:
-<ul>
-<li><b>TextureId</b>\n
-Eindeutige ID der Textur, in der Regel eine fortlaufende Nummer. Wird als Referenz im INDX-Chunk
-verwendet.
-</li>
-<li><b>RGB-Format</b>\n
-Eine eindeutige Nummer, die das Farbformat der Grafikdaten angibt. Folgende Formate sind definiert:
-- 9: A8R8G8B8
-</li>
-<li><b>Bittiefe</b>\n
-Die Bittiefe eines einzelnen Farbwertes. Ist abh�ngig vom RGB-Format und in der Regel 32 Bit.
-</li>
-<li><b>Breite/H�he</b>\n
-Gibt Breite und H�he der Grafik in Pixel an. Texturen unterliegen gewissen Einschr�nkungen, daher
-sollten H�he und Breite m�glichst identisch und ein Vielfaches von 2 sein, also beispielsweise 32, 64,
-128, 256, 512, 1024, 2048. Die meisten Grafikkarten unterst�tzen Texturen bis zu einer Gr��e von 4096 x 4096
-Pixel.
-</li>
-</ul>
-
-Die Pixel-Daten werden mit der Funktion ppl6::CCompression::CompressZlib komprimiert. Sie beginnen daher
-mit einem 9-Byte langen Header, gefolgt von den eigentlichen Zlib-komprimierten Daten:
-\code
-Byte 0:  Komprimierunsart, ist immer 1 f�r Zlib       1 Byte
-Byte 1:  Anzahl Bytes unkomprimiert (litte endian)    4 Byte
-Byte 5:  Anzahl Bytes komprimiert (litte endian)      4 Byte
-Byte 9:  Beginn des komprimierten Datenstroms
-\endcode
-
- */
 
 using namespace ppl7;
 
-
-
+int64_t unique_texture_base_id_counter = 1;
 
 SpriteTexture::SpriteTexture()
 {
 	bMemoryBufferd = false;
 	bOutlinesEnabled = false;
 	bCollisionDetectionEnabled = false;
+	bHasNormals = true;
+	bHasSpeculars = true;
 	bSDLBufferd = true;
 	defaultBlendMode = SDL_BLENDMODE_BLEND;
 	current_outline_texture = NULL;
 	current_outline_sprite_id = -1;
+	base_texture_id = (unique_texture_base_id_counter++) << 32;
+	gpu = NULL;
 }
 
 SpriteTexture::~SpriteTexture()
@@ -156,11 +53,13 @@ void SpriteTexture::enableOutlines(bool enabled)
 
 void SpriteTexture::clear()
 {
-	std::map<int, SDL_Texture*>::const_iterator it;
-	for (it = TextureMap.begin();it != TextureMap.end();++it) {
-		SDL_DestroyTexture(it->second);
+	if (gpu) {
+		std::map<int, SDL_GPUTexture*>::const_iterator it;
+		for (it = TextureMap.begin();it != TextureMap.end();++it) {
+			gpu->destroyGPUTexture(it->second);
+		}
+		if (current_outline_texture) gpu->destroyGPUTexture(current_outline_texture);
 	}
-	if (current_outline_texture) SDL_DestroyTexture(current_outline_texture);
 	current_outline_texture = NULL;
 	current_outline_sprite_id = -1;
 	TextureMap.clear();
@@ -168,10 +67,10 @@ void SpriteTexture::clear()
 	SpriteList.clear();
 }
 
-SDL_Texture* SpriteTexture::findTexture(int id) const
+SDL_GPUTexture* SpriteTexture::findTexture(int id) const
 {
 	if (bSDLBufferd) {
-		std::map<int, SDL_Texture*>::const_iterator it;
+		std::map<int, SDL_GPUTexture*>::const_iterator it;
 		it = TextureMap.find(id);
 		if (it != TextureMap.end()) return it->second;
 	}
@@ -214,14 +113,14 @@ void SpriteTexture::loadIndex(ppl7::PFPChunk* chunk)
 	}
 }
 
-void SpriteTexture::loadTexture(SDL3& sdl, PFPChunk* chunk, const ppl7::grafix::Color& tint)
+ppl7::grafix::Image SpriteTexture::loadTexture(PFPChunk* chunk, const ppl7::grafix::Color& tint)
 {
 	Compression Comp;
 	Comp.usePrefix(Compression::Prefix_V2);
 	char* buffer = (char*)chunk->data();
 
 	// Zunächst lesen wir dem Header
-	int id = Peek16(buffer + 0);
+	//int id = Peek16(buffer + 0);
 	ppl7::grafix::RGBFormat rgbformat;
 	switch (Peek8(buffer + 2)) {
 	case 9: rgbformat = grafix::RGBFormat::A8R8G8B8;
@@ -268,30 +167,26 @@ void SpriteTexture::loadTexture(SDL3& sdl, PFPChunk* chunk, const ppl7::grafix::
 			}
 		}
 	}
-	if (bMemoryBufferd) {
-		InMemoryTextureMap.insert(std::pair<int, ppl7::grafix::Image>(id, surface));
-	}
-	if (bSDLBufferd) {
-		SDL_Texture* tex = sdl.createTexture(surface);
-		SDL_SetTextureBlendMode(tex, defaultBlendMode);
-		TextureMap.insert(std::pair<int, SDL_Texture*>(id, tex));
-	}
+	return surface;
 }
+
+
 
 static inline void putOutlinePixel(ppl7::grafix::Image& surface, int x, int y, ppl7::grafix::Color& c)
 {
 
 }
 
-void SpriteTexture::load(SDL3& sdl, const String& filename, const ppl7::grafix::Color& tint)
+void SpriteTexture::load(GPUContext& gpu, const String& filename, const ppl7::grafix::Color& tint)
 {
 	File ff;
 	ff.open(filename);
-	load(sdl, ff, tint);
+	load(gpu, ff, tint);
 }
 
-void SpriteTexture::load(SDL3& sdl, FileObject& ff, const ppl7::grafix::Color& tint)
+void SpriteTexture::load(GPUContext& gpu, FileObject& ff, const ppl7::grafix::Color& tint)
 {
+	this->gpu = &gpu;
 	PFPFile File;
 	clear();
 	File.load(ff);
@@ -305,8 +200,37 @@ void SpriteTexture::load(SDL3& sdl, FileObject& ff, const ppl7::grafix::Color& t
 	File.reset(it);
 	while ((chunk = File.findNextChunk(it, "SURF"))) {
 		//printf ("load SURF\n");
-		loadTexture(sdl, chunk, tint);
+		int id = Peek16(chunk->data());
+		ppl7::grafix::Image surface = loadTexture(chunk, tint);
+
+		if (bMemoryBufferd) {
+			InMemoryTextureMap.insert(std::pair<int, ppl7::grafix::Image>(id, surface));
+		}
+		if (bSDLBufferd) {
+			SDL_GPUTexture* tex = gpu.createGPUTexture(surface);
+			TextureMap.insert(std::pair<int, SDL_GPUTexture*>(id, tex));
+		}
 	}
+	if (bSDLBufferd) {
+		File.reset(it);
+		while ((chunk = File.findNextChunk(it, "NORM"))) {
+			int id = Peek16(chunk->data());
+			ppl7::grafix::Image surface = loadTexture(chunk, tint);
+			SDL_GPUTexture* tex = gpu.createGPUTexture(surface);
+			NormalMap.insert(std::pair<int, SDL_GPUTexture*>(id, tex));
+			bHasNormals = true;
+		}
+		File.reset(it);
+		while ((chunk = File.findNextChunk(it, "SPEC"))) {
+			int id = Peek16(chunk->data());
+			ppl7::grafix::Image surface = loadTexture(chunk, tint);
+			SDL_GPUTexture* tex = gpu.createGPUTexture(surface);
+			SpecularMap.insert(std::pair<int, SDL_GPUTexture*>(id, tex));
+			bHasSpeculars = true;
+
+		}
+	}
+
 	// Index Chunks laden
 	File.reset(it);
 	//printf ("DONE SURF\n");
@@ -355,9 +279,21 @@ const ppl7::grafix::Drawable SpriteTexture::getDrawable(int id) const
 	return draw;
 }
 
-void SpriteTexture::draw(SDL_Renderer* renderer, int x, int y, int id) const
+SDL_FRect SpriteTexture::getSpriteSource(int id) const
+{
+	SDL_FRect r;
+	r.x = 0;r.y = 0;r.w = 0;r.h = 0;
+	std::map<int, SpriteIndexItem>::const_iterator it;
+	it = SpriteList.find(id);
+	if (it == SpriteList.end()) return r;
+	return (*it).second.r;
+}
+
+void SpriteTexture::draw(GPUContext& gpu, int x, int y, int id) const
 {
 	if (!bSDLBufferd) return;
+	gpu.drawSprite(*this, id, (float)x, (float)y);
+#ifdef OLD_SDL_RENDERER_API
 	std::map<int, SpriteIndexItem>::const_iterator it;
 	it = SpriteList.find(id);
 	if (it == SpriteList.end()) return;
@@ -367,14 +303,18 @@ void SpriteTexture::draw(SDL_Renderer* renderer, int x, int y, int id) const
 	tr.y = y + item.Offset.y - item.Pivot.y;
 	tr.w = item.r.w;
 	tr.h = item.r.h;
+
+
 	SDL_SetTextureColorMod(item.tex, 255, 255, 255);
 	SDL_SetTextureAlphaMod(item.tex, 255);
 	SDL_RenderTexture(renderer, item.tex, &item.r, &tr);
+#endif
 }
 
-void SpriteTexture::draw(SDL_Renderer* renderer, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const
+void SpriteTexture::draw(GPUContext& gpu, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const
 {
 	if (!bSDLBufferd) return;
+#ifdef OLD_SDL_RENDERER_API
 	std::map<int, SpriteIndexItem>::const_iterator it;
 	it = SpriteList.find(id);
 	if (it == SpriteList.end()) return;
@@ -387,11 +327,13 @@ void SpriteTexture::draw(SDL_Renderer* renderer, int x, int y, int id, const ppl
 	SDL_SetTextureAlphaMod(item.tex, color_modulation.alpha());
 	SDL_SetTextureColorMod(item.tex, color_modulation.red(), color_modulation.green(), color_modulation.blue());
 	SDL_RenderTexture(renderer, item.tex, &item.r, &tr);
+#endif
 }
 
-void SpriteTexture::drawBoundingBox(SDL_Renderer* renderer, int x, int y, int id) const
+void SpriteTexture::drawBoundingBox(GPUContext& gpu, int x, int y, int id) const
 {
 	if (!bSDLBufferd) return;
+#ifdef OLD_SDL_RENDERER_API	
 	std::map<int, SpriteIndexItem>::const_iterator it;
 	it = SpriteList.find(id);
 	if (it == SpriteList.end()) return;
@@ -402,10 +344,11 @@ void SpriteTexture::drawBoundingBox(SDL_Renderer* renderer, int x, int y, int id
 	tr.w = item.r.w;
 	tr.h = item.r.h;
 	SDL_RenderRect(renderer, &tr);
+#endif
 
 }
 
-void SpriteTexture::drawBoundingBoxWithAngle(SDL_Renderer* renderer, int x, int y, int id, float scale_x, float scale_y, float angle) const
+void SpriteTexture::drawBoundingBoxWithAngle(GPUContext& gpu, int x, int y, int id, float scale_x, float scale_y, float angle) const
 {
 	if (!bSDLBufferd) return;
 	std::map<int, SpriteIndexItem>::const_iterator it;
@@ -419,15 +362,18 @@ void SpriteTexture::drawBoundingBoxWithAngle(SDL_Renderer* renderer, int x, int 
 	tr.y = rr.y1;
 	tr.w = rr.width();
 	tr.h = rr.height();
+#ifdef OLD_SDL_RENDERER_API		
 	SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
 	SDL_RenderRect(renderer, &tr);
+#endif
 
 }
 
 
-void SpriteTexture::draw(SDL_Renderer* renderer, int id, const SDL_FRect& source, const SDL_FRect& target) const
+void SpriteTexture::draw(GPUContext& gpu, int id, const SDL_FRect& source, const SDL_FRect& target) const
 {
 	if (!bSDLBufferd) return;
+#ifdef OLD_SDL_RENDERER_API
 	std::map<int, SpriteIndexItem>::const_iterator it;
 	it = SpriteList.find(id);
 	if (it == SpriteList.end()) return;
@@ -435,11 +381,13 @@ void SpriteTexture::draw(SDL_Renderer* renderer, int id, const SDL_FRect& source
 	SDL_SetTextureColorMod(item.tex, 255, 255, 255);
 	SDL_SetTextureAlphaMod(item.tex, 255);
 	SDL_RenderTexture(renderer, item.tex, &source, &target);
+#endif
 }
 
-void SpriteTexture::drawScaled(SDL_Renderer* renderer, int x, int y, int id, float scale_factor) const
+void SpriteTexture::drawScaled(GPUContext& gpu, int x, int y, int id, float scale_factor) const
 {
 	if (!bSDLBufferd) return;
+#ifdef OLD_SDL_RENDERER_API	
 	std::map<int, SpriteIndexItem>::const_iterator it;
 	it = SpriteList.find(id);
 	if (it == SpriteList.end()) return;
@@ -461,11 +409,13 @@ void SpriteTexture::drawScaled(SDL_Renderer* renderer, int x, int y, int id, flo
 	SDL_SetTextureColorMod(item.tex, 255, 255, 255);
 	SDL_SetTextureAlphaMod(item.tex, 255);
 	SDL_RenderTexture(renderer, item.tex, &item.r, &tr);
+#endif
 }
 
-void SpriteTexture::drawScaled(SDL_Renderer* renderer, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const
+void SpriteTexture::drawScaled(GPUContext& gpu, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const
 {
 	if (!bSDLBufferd) return;
+#ifdef OLD_SDL_RENDERER_API	
 	std::map<int, SpriteIndexItem>::const_iterator it;
 	it = SpriteList.find(id);
 	if (it == SpriteList.end()) return;
@@ -486,11 +436,13 @@ void SpriteTexture::drawScaled(SDL_Renderer* renderer, int x, int y, int id, flo
 	SDL_SetTextureAlphaMod(item.tex, color_modulation.alpha());
 	SDL_SetTextureColorMod(item.tex, color_modulation.red(), color_modulation.green(), color_modulation.blue());
 	SDL_RenderTexture(renderer, item.tex, &item.r, &tr);
+#endif
 }
 
-void SpriteTexture::drawScaledWithAngle(SDL_Renderer* renderer, int x, int y, int id, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation) const
+void SpriteTexture::drawScaledWithAngle(GPUContext& gpu, int x, int y, int id, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation) const
 {
 	if (!bSDLBufferd) return;
+#ifdef OLD_SDL_RENDERER_API	
 	std::map<int, SpriteIndexItem>::const_iterator it;
 	it = SpriteList.find(id);
 	if (it == SpriteList.end()) return;
@@ -507,21 +459,10 @@ void SpriteTexture::drawScaledWithAngle(SDL_Renderer* renderer, int x, int y, in
 	SDL_SetTextureAlphaMod(item.tex, color_modulation.alpha());
 	SDL_SetTextureColorMod(item.tex, color_modulation.red(), color_modulation.green(), color_modulation.blue());
 	SDL_RenderTextureRotated(renderer, item.tex, &item.r, &tr, angle, &center, SDL_FLIP_NONE);
+#endif
 }
 
-
-SDL_FRect SpriteTexture::getSpriteSource(int id) const
-{
-	SDL_FRect r;
-	r.x = 0;r.y = 0;r.w = 0;r.h = 0;
-	std::map<int, SpriteIndexItem>::const_iterator it;
-	it = SpriteList.find(id);
-	if (it == SpriteList.end()) return r;
-	return (*it).second.r;
-}
-
-
-void SpriteTexture::drawOutlines(SDL_Renderer* renderer, int x, int y, int id, float scale_factor)
+void SpriteTexture::drawOutlines(GPUContext& gpu, int x, int y, int id, float scale_factor)
 {
 	if (!bOutlinesEnabled) return;
 	std::map<int, SpriteIndexItem>::const_iterator it;
@@ -530,7 +471,7 @@ void SpriteTexture::drawOutlines(SDL_Renderer* renderer, int x, int y, int id, f
 	const SpriteIndexItem& item = it->second;
 
 	if (id != current_outline_sprite_id || current_outline_texture == NULL) {
-		current_outline_texture = postGenerateOutlines(renderer, id);
+		current_outline_texture = postGenerateOutlines(id);
 		if (current_outline_texture) current_outline_sprite_id = id;
 		else return;
 	}
@@ -549,10 +490,12 @@ void SpriteTexture::drawOutlines(SDL_Renderer* renderer, int x, int y, int id, f
 		tr.w = (int)((float)item.r.w * scale_factor);
 		tr.h = (int)((float)item.r.h * scale_factor);
 	}
+#ifdef OLD_SDL_RENDERER_API
 	SDL_RenderTexture(renderer, current_outline_texture, NULL, &tr);
+#endif
 }
 
-void SpriteTexture::drawOutlinesWithAngle(SDL_Renderer* renderer, int x, int y, int id, float scale_x, float scale_y, float angle)
+void SpriteTexture::drawOutlinesWithAngle(GPUContext& gpu, int x, int y, int id, float scale_x, float scale_y, float angle)
 {
 	if (!bOutlinesEnabled) return;
 	std::map<int, SpriteIndexItem>::const_iterator it;
@@ -561,7 +504,7 @@ void SpriteTexture::drawOutlinesWithAngle(SDL_Renderer* renderer, int x, int y, 
 	const SpriteIndexItem& item = it->second;
 
 	if (id != current_outline_sprite_id || current_outline_texture == NULL) {
-		current_outline_texture = postGenerateOutlines(renderer, id);
+		current_outline_texture = postGenerateOutlines(id);
 		if (current_outline_texture) current_outline_sprite_id = id;
 		else return;
 	}
@@ -574,9 +517,10 @@ void SpriteTexture::drawOutlinesWithAngle(SDL_Renderer* renderer, int x, int y, 
 	center.x = (item.Pivot.x - item.Offset.x) * scale_x;
 	center.y = (item.Pivot.y - item.Offset.y) * scale_y;
 
+#ifdef OLD_SDL_RENDERER_API
 	SDL_RenderTextureRotated(renderer, current_outline_texture, NULL, &tr, angle, &center, SDL_FLIP_NONE);
+#endif
 }
-
 
 
 ppl7::grafix::Size SpriteTexture::spriteSize(int id, float scale_factor) const
@@ -695,19 +639,22 @@ int SpriteTexture::numSprites() const
 
 void SpriteTexture::setTextureBlendMode(SDL_BlendMode blendMode)
 {
-	std::map<int, SDL_Texture*>::iterator it;
+	// TODO
+	std::map<int, SDL_GPUTexture*>::iterator it;
 	for (it = TextureMap.begin();it != TextureMap.end();++it) {
-		SDL_SetTextureBlendMode(it->second, blendMode);
+		// TODO
+		//SDL_SetTextureBlendMode(it->second, blendMode);
 	}
 	defaultBlendMode = blendMode;
 }
 
 SDL_BlendMode SpriteTexture::getTextureBlendMode() const
 {
-	std::map<int, SDL_Texture*>::const_iterator it;
+	std::map<int, SDL_GPUTexture*>::const_iterator it;
 	SDL_BlendMode bm = defaultBlendMode;
 	for (it = TextureMap.begin();it != TextureMap.end();++it) {
-		SDL_GetTextureBlendMode(it->second, &bm);
+		// TODO
+		//SDL_GetTextureBlendMode(it->second, &bm);
 		return bm;
 	}
 	return bm;
@@ -795,12 +742,12 @@ static void generateOutlinesForSprite(const ppl7::grafix::Drawable& source, ppl7
 	}
 }
 
-SDL_Texture* SpriteTexture::postGenerateOutlines(SDL_Renderer* renderer, int sprite_id)
+SDL_GPUTexture* SpriteTexture::postGenerateOutlines(int sprite_id)
 {
 	if (!bMemoryBufferd || !bOutlinesEnabled) return NULL;
 	//ppl7::PrintDebugTime("SpriteTexture::postGenerateOutlines\n");
 	//double start=ppl7::GetMicrotime();
-	if (current_outline_texture) SDL_DestroyTexture(current_outline_texture);
+	if (current_outline_texture) gpu->destroyGPUTexture(current_outline_texture);
 	current_outline_texture = NULL;
 	current_outline_sprite_id = -1;
 	std::map<int, SpriteIndexItem>::iterator it;
@@ -812,8 +759,15 @@ SDL_Texture* SpriteTexture::postGenerateOutlines(SDL_Renderer* renderer, int spr
 	ppl7::grafix::Rect r(item.r.x, item.r.y, item.r.w, item.r.h);
 	ppl7::grafix::Drawable source = item.drawable->getDrawable(r);
 	generateOutlinesForSprite(source, target);
-	SDL_Texture* tex = SDL3::createTexture(renderer, target);
+	SDL_GPUTexture* tex = gpu->createGPUTexture(target);
 	//ppl7::PrintDebugTime("  ===> %0.6f s\n", ppl7::GetMicrotime() - start);
 	return tex;
 
+}
+
+uint64_t SpriteTexture::getUniqueTextureId(int id) const
+{
+	const SpriteIndexItem* item = getSpriteIndex(id);
+	if (!item) return 0;
+	return base_texture_id | (uint64_t)(item->textureId);
 }
