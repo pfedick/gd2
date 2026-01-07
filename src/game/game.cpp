@@ -13,28 +13,32 @@ Game::Game()
 {
     wm = ppltk::GetWindowManager();
     Style.setStyle(ppltk::WidgetStyle::Dark);
+    quitGame = false;
 
 }
 void Game::init()
 {
     createWindow();
     gpu.init((SDL_Window*)getSDLWindow());
-    sdl.setRenderer((SDL_Renderer*)getRenderer());
     sdl.setGPUDevice(gpu.gpu);
 
 }
 
 void Game::createWindow()
 {
+    int flags = ppltk::Window::WaitVsync | ppltk::Window::NoSDLRenderer;
+    config.windowMode = Config::WindowMode::Window;
+    config.ScreenResolution = ppl7::grafix::Size(1920, 1080);
     if (config.windowMode == Config::WindowMode::Window) {
-        setFlags(ppltk::Window::WaitVsync | ppltk::Window::Resizeable);
+        flags |= ppltk::Window::Resizeable;
     }
     else if (config.windowMode == Config::WindowMode::Fullscreen) {
-        setFlags(ppltk::Window::WaitVsync | ppltk::Window::Fullscreen | ppltk::Window::Resizeable);
+        flags |= ppltk::Window::Fullscreen | ppltk::Window::Resizeable;
     }
     else {
-        setFlags(ppltk::Window::WaitVsync | ppltk::Window::FullscreenDesktop | ppltk::Window::Resizeable);
+        flags |= ppltk::Window::FullscreenDesktop | ppltk::Window::Resizeable;
     }
+    setFlags(flags);
     enableFixedUiSize(true, 1920, 1080);
     setWindowTitle("George Decker");
     ppl7::grafix::Image icon;
@@ -44,11 +48,7 @@ void Game::createWindow()
     setBackgroundColor(ppl7::grafix::Color(0, 0, 0, 0));
     setSize(config.ScreenResolution);
     wm->createWindow(*this);
-    SDL_Renderer* renderer = (SDL_Renderer*)getRenderer();
-    sdl.setRenderer(renderer);
-
-    gpu.init((SDL_Window*)getSDLWindow());
-
+    sdl_window = (SDL_Window*)getSDLWindow();
     //setPos(0,0);
     //SDL_RenderSetLogicalSize(renderer, 1920, 1080);
     wm->setGameControllerFocus(this);
@@ -56,12 +56,15 @@ void Game::createWindow()
     SDL_HideCursor();
 
 
+
 }
 
 
 void Game::init_grafix()
 {
+
     resources.load(gpu);
+    ppl7::PrintDebug("Grafix initialized\n");
 }
 
 
@@ -84,10 +87,10 @@ void Game::run()
         drawHUD();
 
         // UI
-        drawWidgets();
+        //drawWidgets();
 
         // Mouse
-        drawCursor(mouse);
+        //drawCursor(mouse);
 
     }
 }
@@ -99,6 +102,28 @@ void Game::updateUi(const ppltk::MouseState& mouse)
 
 void Game::drawWorld()
 {
+    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
+    if (cmdbuf == NULL)
+    {
+        SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
+        return;
+    }
+    SDL_GPUTexture* swapchainTexture;
+    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, sdl_window, &swapchainTexture, NULL, NULL)) {
+        SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
+        return;
+    }
+
+    SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
+    colorTargetInfo.texture = swapchainTexture;
+    colorTargetInfo.clear_color = (SDL_FColor){ 0.3f, 0.6f, 0.5f, 1.0f };
+    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
+    SDL_EndGPURenderPass(renderPass);
+
+    SDL_SubmitGPUCommandBuffer(cmdbuf);
 
 }
 

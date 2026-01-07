@@ -66,14 +66,18 @@ SDL_GPUTexture* GPUContext::createGPUTexture(const ppl7::grafix::Drawable& surfa
     .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,  // Für Shader-Sampling
     .width = (Uint32)surface.width(),
     .height = (Uint32)surface.height(),
+    .layer_count_or_depth = 1,
+    .num_levels = 1,
     };
     // Textur erstellen
     SDL_GPUTexture* texture = SDL_CreateGPUTexture(gpu, &texture_info);
     if (!texture) {
         throw GPUException("SDL_CreateGPUTexture failed: %s", SDL_GetError());
     }
+
     // Daten in GPU hochladen
     SDL_GPUTransferBufferCreateInfo  transfer_info = {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
         .size = (Uint32)surface.width() * (Uint32)surface.height() * 4,  // RGBA8 = 4 Bytes/Pixel
     };
     SDL_GPUTransferBuffer* transfer_buffer = SDL_CreateGPUTransferBuffer(gpu, &transfer_info);
@@ -84,15 +88,34 @@ SDL_GPUTexture* GPUContext::createGPUTexture(const ppl7::grafix::Drawable& surfa
 
     // Pixel-Daten kopieren
     void* mapped = SDL_MapGPUTransferBuffer(gpu, transfer_buffer, false);
+    if (!mapped) {
+        SDL_ReleaseGPUTransferBuffer(gpu, transfer_buffer);
+        SDL_ReleaseGPUTexture(gpu, texture);
+        throw GPUException("SDL_MapGPUTransferBuffer failed: %s", SDL_GetError());
+    }
     memcpy(mapped, surface.adr(), surface.width() * surface.height() * 4);
     SDL_UnmapGPUTransferBuffer(gpu, transfer_buffer);
 
     // Mit Command Buffer zur GPU transferieren
     SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(gpu);
+    if (!cmd) {
+        const char* e = SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(gpu, transfer_buffer);
+        SDL_ReleaseGPUTexture(gpu, texture);
+        throw GPUException("SDL_AcquireGPUCommandBuffer failed: %s", e);
+    }
     SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(cmd);
+    if (!copy_pass) {
+        const char* e = SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(gpu, transfer_buffer);
+        SDL_ReleaseGPUTexture(gpu, texture);
+        throw GPUException("SDL_BeginGPUCopyPass failed: %s", e);
+    }
     SDL_GPUTextureTransferInfo transfer_region = {
         .transfer_buffer = transfer_buffer,
-        .offset = 0
+        .offset = 0,
+        .pixels_per_row = 0,
+        .rows_per_layer = 0
     };
     SDL_GPUTextureRegion texture_region = {
         .texture = texture,
@@ -108,7 +131,7 @@ SDL_GPUTexture* GPUContext::createGPUTexture(const ppl7::grafix::Drawable& surfa
     SDL_UploadToGPUTexture(copy_pass, &transfer_region, &texture_region, false);
     SDL_EndGPUCopyPass(copy_pass);
     SDL_SubmitGPUCommandBuffer(cmd);
-
+    SDL_WaitForGPUIdle(gpu);  // Wartet bis GPU fertig ist
     SDL_ReleaseGPUTransferBuffer(gpu, transfer_buffer);
     return texture;
 }

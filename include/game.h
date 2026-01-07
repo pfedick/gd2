@@ -93,6 +93,7 @@ class Game : private ppltk::Window
 {
 private:
     SDL sdl;
+    SDL_Window* sdl_window;
     GPUContext gpu;
     ppltk::WindowManager* wm;
     ppltk::WidgetStyle Style;
@@ -101,6 +102,7 @@ private:
 
     bool quitGame = false;
     bool showui = true;
+
 
 public:
     Resources resources;

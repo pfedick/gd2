@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <ppl7.h>
 #include <ppl7-grafix.h>
-#include "decker.h"
+#include "game.h"
 
-
-Background::Background(SDL& s)
-    :sdl(s)
+#ifdef TODO
+Background::Background()
 {
+    gpu = NULL;
     tex_sky = NULL;
     fade_target_tex = NULL;
     fade_progress = 0.0f;
@@ -168,3 +168,5 @@ void Background::drawFade(SDL_Renderer* renderer, const ppl7::grafix::Rect& view
     }
 
 }
+
+#endif // TODO
