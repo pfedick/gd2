@@ -98,6 +98,8 @@ private:
     ppltk::WindowManager* wm;
     ppltk::WidgetStyle Style;
 
+    ppl7::grafix::Image WidgetDrawbuffer;
+
     void createWindow();
 
     bool quitGame = false;

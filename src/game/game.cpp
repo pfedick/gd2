@@ -55,7 +55,8 @@ void Game::createWindow()
 
     SDL_HideCursor();
 
-
+    WidgetDrawbuffer.create(1920, 1080, ppl7::grafix::RGBFormat::A8R8G8B8);
+    this->setWidgetDrawbuffer(&WidgetDrawbuffer);
 
 }
 
@@ -71,6 +72,7 @@ void Game::init_grafix()
 void Game::run()
 {
     ppl7::ppl_time_t last_second = ppl7::GetTime();
+    quitGame = false;
     while (!quitGame) {
         ppl7::ppl_time_t current_second = ppl7::GetTime();
         if (current_second > last_second) {
@@ -84,7 +86,7 @@ void Game::run()
         gpu.clearQueues();
         drawWorld();
         // HUD
-        drawHUD();
+        //drawHUD();
 
         // UI
         //drawWidgets();
@@ -113,7 +115,10 @@ void Game::drawWorld()
         SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
         return;
     }
-
+    if (swapchainTexture == NULL) {
+        // Das kann passieren, wenn das Fenster minimiert ist
+        return;
+    }
     SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
     colorTargetInfo.texture = swapchainTexture;
     colorTargetInfo.clear_color = (SDL_FColor){ 0.3f, 0.6f, 0.5f, 1.0f };
@@ -141,11 +146,13 @@ void Game::drawCursor(const ppltk::MouseState& mouse)
 
 void Game::quitEvent(ppltk::Event* event)
 {
+    ppl7::PrintDebug("Quit event received\n");
     quitGame = true;
 }
 
 void Game::closeEvent(ppltk::Event* event)
 {
+    ppl7::PrintDebug("Close event received\n");
     quitGame = true;
 }
 
