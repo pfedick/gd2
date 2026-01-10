@@ -91,6 +91,7 @@ void SpriteTexture::loadIndex(ppl7::PFPChunk* chunk)
 {
 	char* buffer = (char*)chunk->data();
 	int num = Peek32(buffer);		// Anzahl Einträge in der Tabelle
+	ppl7::PrintDebugTime("SpriteTexture::loadIndex: %d sprites\n", num);
 	char* p = buffer + 4;
 	SpriteIndexItem item;
 	for (int i = 0;i < num;i++) {
@@ -112,10 +113,15 @@ void SpriteTexture::loadIndex(ppl7::PFPChunk* chunk)
 			item.uv.h = (float)item.r.h / (float)s.height;
 		}
 		else {
+			ppl7::PrintDebugTime("  WARNING: sprite %d has texture %d with size 0x0\n", item.id, item.textureId);
 			item.uv.x = 0.0f;
 			item.uv.y = 0.0f;
 			item.uv.w = 0.0f;
 			item.uv.h = 0.0f;
+		}
+
+		if (!item.tex) {
+			ppl7::PrintDebugTime("  WARNING: sprite %d has NULL texture (textureId=%d)\n", item.id, item.textureId);
 		}
 
 		item.Pivot.x = Peek16(p + 14 + 0);
@@ -217,12 +223,19 @@ void SpriteTexture::load(GPUContext& gpu, FileObject& ff, const ppl7::grafix::Co
 		//printf ("load SURF\n");
 		int id = Peek16(chunk->data());
 		ppl7::grafix::Image surface = loadTexture(chunk, tint);
+		ppl7::PrintDebugTime("SpriteTexture: loaded SURF texture %d, size %dx%d\n", id, surface.width(), surface.height());
 		TextureSizeMap.insert(std::pair<int, ppl7::grafix::Size>(id, ppl7::grafix::Size(surface.width(), surface.height())));
 		if (bMemoryBufferd) {
 			InMemoryTextureMap.insert(std::pair<int, ppl7::grafix::Image>(id, surface));
 		}
 		if (bSDLBufferd) {
 			SDL_GPUTexture* tex = gpu.createGPUTexture(surface);
+			if (tex) {
+				ppl7::PrintDebugTime("  GPU texture created successfully\n");
+			}
+			else {
+				ppl7::PrintDebugTime("  ERROR: GPU texture creation failed\n");
+			}
 			TextureMap.insert(std::pair<int, SDL_GPUTexture*>(id, tex));
 		}
 	}

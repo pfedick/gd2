@@ -27,18 +27,27 @@ GPUContext::~GPUContext()
 void GPUContext::init(SDL_Window* window)
 {
     shutdown();
-    gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, false, NULL);
+    // Force SPIRV (Vulkan) since we only have SPIRV shaders compiled
+    gpu = SDL_CreateGPUDevice(
+        SDL_GPU_SHADERFORMAT_SPIRV,  // Only SPIRV -> forces Vulkan backend
+        true,  // debug mode
+        NULL
+    );
     if (!gpu) {
         throw GPUException("SDL_CreateGPUDevice failed: %s", SDL_GetError());
     }
-    // window für GPUDevice beanspruchen und Swapchain initialisieren
+
+    // Log which backend was chosen
+    const char* driver = SDL_GetGPUDeviceDriver(gpu);
+    ppl7::PrintDebugTime("GPU Device created with driver: %s\n", driver ? driver : "unknown");
+
+    // Claim window for GPU device and initialize swapchain
     if (!SDL_ClaimWindowForGPUDevice(gpu, window)) {
         SDL_DestroyGPUDevice(gpu);
         gpu = NULL;
         throw GPUException("SDL_ClaimWindowForGPUDevice failed: %s", SDL_GetError());
     }
     this->window = window;
-
 }
 
 void GPUContext::shutdown()
@@ -59,7 +68,7 @@ SDL_GPUTexture* GPUContext::createGPUTexture(const ppl7::grafix::Drawable& surfa
     // Textur-Beschreibung
     SDL_GPUTextureCreateInfo texture_info = {
     .type = SDL_GPU_TEXTURETYPE_2D,
-    .format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,  // Filterbar, Sampling-fähig
+    .format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM,  // BGRA matches PPL7 byte order
     .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,  // Für Shader-Sampling
     .width = (Uint32)surface.width(),
     .height = (Uint32)surface.height(),

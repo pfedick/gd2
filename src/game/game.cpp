@@ -1,4 +1,7 @@
 #include "game.h"
+#include "simpletest.h"
+
+extern SimpleQuadTest* g_simpleTest;
 
 
 ppl7::grafix::Point GetViewPos()
@@ -21,10 +24,14 @@ void Game::init()
     createWindow();
     gpu.init((SDL_Window*)getSDLWindow());
     sdl.setGPUDevice(gpu.gpu);
-    gpu_batcher.init(&gpu);
+    //gpu_batcher.init(&gpu);  // TODO: Fix instancing - use Storage Buffers like SDL examples
 
     // Initialize projection/view matrices for rendering
-    gpu_batcher.updateMatrices(1920, 1080);
+    //gpu_batcher.updateMatrices(1920, 1080);
+
+    // Initialize simple test quad
+    g_simpleTest = new SimpleQuadTest();
+    g_simpleTest->init(&gpu, 1920, 1080);
 }
 
 void Game::createWindow()
@@ -66,8 +73,14 @@ void Game::createWindow()
 
 void Game::init_grafix()
 {
-
     resources.load(gpu);
+
+    // Initialize simple test
+    if (!g_simpleTest) {
+        g_simpleTest = new SimpleQuadTest();
+        g_simpleTest->init(&gpu, 1920, 1080);
+    }
+
     ppl7::PrintDebug("Grafix initialized\n");
 }
 
@@ -124,26 +137,25 @@ void Game::drawWorld()
     }
     SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
     colorTargetInfo.texture = swapchainTexture;
-    colorTargetInfo.clear_color = (SDL_FColor){ 0.3f, 0.6f, 0.5f, 1.0f };
+    colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };  // Black background
     colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+    colorTargetInfo.cycle = false;  // CRITICAL: SDL examples use false!
 
     SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
 
-    gpu_batcher.startRenderPass();
-    int x = 0, y = 0;
-    for (int i = 0;i < 100;i++) {
-        gpu_batcher.addSprite(resources.Player, i, x, y, 1.0f, 1.0f, 0.0f);
-        x += 100;
-        if (x > 1800) {
-            x = 0;
-            y += 100;
-        }
+    // Set viewport and scissor
+    SDL_GPUViewport viewport = { 0.0f, 0.0f, 1920.0f, 1080.0f, 0.0f, 1.0f };
+    SDL_SetGPUViewport(renderPass, &viewport);
+    SDL_Rect scissor = { 0, 0, 1920, 1080 };
+    SDL_SetGPUScissor(renderPass, &scissor);
+
+    // Draw simple test quad
+    if (g_simpleTest) {
+        g_simpleTest->draw(cmdbuf, renderPass);
     }
 
-    gpu_batcher.endRenderPass(cmdbuf, renderPass);
     SDL_EndGPURenderPass(renderPass);
-
     SDL_SubmitGPUCommandBuffer(cmdbuf);
 }
 

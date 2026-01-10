@@ -29,15 +29,9 @@ public:
 
 class GPUContext
 {
-private:
-
-
-    SDL_Window* window;
 public:
-    // Es wäre besser, wenn dass hier ein GPUContext wäre, den wir anstelle von
-    // SDL_Renderer verwenden könnten.
-
     SDL_GPUDevice* gpu;
+    SDL_Window* window;  // Public so SimpleQuadTest can access it
 
     GPUContext();
     ~GPUContext();
@@ -157,6 +151,7 @@ public:
 
     void clearQueues(); // temporary?
     void startRenderPass();
+    void prepareInstanceData(SDL_GPUCommandBuffer* cmd);  // Upload instance data before render pass
     void endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass);
 
 

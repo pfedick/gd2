@@ -28,8 +28,12 @@ void GPUBatcher::init(GPUContext* gpu)
 {
     this->gpu = gpu;
     loadShaders();
+    ppl7::PrintDebugTime("GPUBatcher::init - Shaders loaded: vert=%p, frag=%p\n", vertShader, fragShader);
     createPipeline();
+    ppl7::PrintDebugTime("GPUBatcher::init - Pipeline created: %p\n", spritePipeline);
     createBuffers();
+    ppl7::PrintDebugTime("GPUBatcher::init - Buffers created: vert=%p, index=%p, instance=%p\n",
+        vertexBuffer, indexBuffer, instanceBuffer);
 }
 
 void GPUBatcher::clearQueues()
@@ -43,46 +47,158 @@ void GPUBatcher::startRenderPass()
     z = 0.0f;
 }
 
+void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
+{
+    if (!gpu || !gpu->gpu || !instanceBuffer) {
+        ppl7::PrintDebugTime("ERROR: prepareInstanceData - missing resources: gpu=%p, instanceBuffer=%p\n", gpu, instanceBuffer);
+        return;
+    }
+
+    ppl7::PrintDebugTime("GPUBatcher::prepareInstanceData: %zu texture batches\n", spriteCommands.size());
+
+    // Collect ALL sprites into one big list (ignoring texture batching for now)
+    const size_t MAX_INSTANCES_PER_BATCH = 16384;
+    std::vector<SpriteInstance> instances;
+    instances.reserve(MAX_INSTANCES_PER_BATCH);
+
+    // Upload instance data for all sprite batches
+    for (const auto& [textureId, spriteList] : spriteCommands) {
+        if (spriteList.empty()) continue;
+
+        ppl7::PrintDebugTime("  Processing batch for texture %llu: %zu sprites\n", textureId, spriteList.size());
+
+        // Collect instance data
+        for (const SpriteCommand& spriteCmd : spriteList) {
+            const SpriteTexture::SpriteIndexItem* item = spriteCmd.sprite->getSpriteIndex(spriteCmd.sprite_id);
+            if (item) {
+                SpriteInstance inst;
+                inst.pos_x = spriteCmd.x;
+                inst.pos_y = spriteCmd.y;
+                inst.size_w = (float)item->r.w;
+                inst.size_h = (float)item->r.h;
+                inst.scale_x = spriteCmd.scale_x;
+                inst.scale_y = spriteCmd.scale_y;
+                inst.angle = spriteCmd.angle;
+                inst.uv_x = item->uv.x;
+                inst.uv_y = item->uv.y;
+                inst.uv_w = item->uv.w;
+                inst.uv_h = item->uv.h;
+                inst.pivot_x = (float)item->Pivot.x;
+                inst.pivot_y = (float)item->Pivot.y;
+                inst.offset_x = (float)item->Offset.x;
+                inst.offset_y = (float)item->Offset.y;
+                instances.push_back(inst);
+            }
+        }
+    }
+
+    if (instances.empty()) {
+        ppl7::PrintDebugTime("  No instances to upload!\n");
+        return;
+    }
+
+    ppl7::PrintDebugTime("  Uploading %zu total instances\n", instances.size());
+    ppl7::PrintDebugTime("  First sprite: pos=(%.1f,%.1f) size=(%.1f,%.1f) uv=(%.3f,%.3f,%.3f,%.3f)\n",
+        instances[0].pos_x, instances[0].pos_y,
+        instances[0].size_w, instances[0].size_h,
+        instances[0].uv_x, instances[0].uv_y, instances[0].uv_w, instances[0].uv_h);
+
+    // Upload ALL instance data at once
+    size_t instanceDataSize = sizeof(SpriteInstance) * instances.size();
+    SDL_GPUTransferBufferCreateInfo transferInfo = {
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+        .size = (Uint32)instanceDataSize
+    };
+    SDL_GPUTransferBuffer* transferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &transferInfo);
+    if (transferBuffer) {
+        void* mapped = SDL_MapGPUTransferBuffer(gpu->gpu, transferBuffer, false);
+        if (mapped) {
+            memcpy(mapped, instances.data(), instanceDataSize);
+            SDL_UnmapGPUTransferBuffer(gpu->gpu, transferBuffer);
+
+            SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
+            SDL_GPUTransferBufferLocation transferLocation = {
+                .transfer_buffer = transferBuffer,
+                .offset = 0
+            };
+            SDL_GPUBufferRegion bufferRegion = {
+                .buffer = instanceBuffer,
+                .offset = 0,
+                .size = (Uint32)instanceDataSize
+            };
+            SDL_UploadToGPUBuffer(copyPass, &transferLocation, &bufferRegion, false);
+            SDL_EndGPUCopyPass(copyPass);
+        }
+        SDL_ReleaseGPUTransferBuffer(gpu->gpu, transferBuffer);
+    }
+
+    ppl7::PrintDebugTime("  prepareInstanceData complete\n");
+}
+
 void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass)
 {
     if (!spritePipeline) return;
+
+    // Count total sprites
+    size_t totalSprites = 0;
+    for (const auto& [textureId, spriteList] : spriteCommands) {
+        totalSprites += spriteList.size();
+    }
+
+    if (totalSprites == 0) {
+        spriteCommands.clear();
+        return;
+    }
+
+    ppl7::PrintDebugTime("  endRenderPass: Drawing %zu sprites\n", totalSprites);
 
     // Bind sprite pipeline
     SDL_BindGPUGraphicsPipeline(render_pass, spritePipeline);
 
     // Push uniform data (projection/view matrices)
+    ppl7::PrintDebugTime("    Pushing matrices: proj[0]=%.3f, proj[5]=%.3f, proj[12]=%.3f, proj[13]=%.3f\n",
+        currentUniforms.projection[0], currentUniforms.projection[5],
+        currentUniforms.projection[12], currentUniforms.projection[13]);
     SDL_PushGPUVertexUniformData(cmd, 0, &currentUniforms, sizeof(UniformData));
 
-    // Primitive zeichnen
-    // TODO: Implement primitive rendering later
-    for (const PrimitiveCommand& prim : primitiveCommands) {
-        switch (prim.type) {
-        case PrimitiveCommand::Type::Line:
-            // TODO : SDL_DrawGPULine existiert nicht, evtl. eigene Implementierung
-            break;
-        case PrimitiveCommand::Type::Rect:
-            // TODO: Rechteck zeichnen
-            break;
-        case PrimitiveCommand::Type::FilledRect:
-            // TODO: Gefülltes Rechteck zeichnen
-            break;
-        }
-    }
+    // Bind vertex and instance buffers
+    SDL_GPUBufferBinding vertexBinding = {
+        .buffer = vertexBuffer,
+        .offset = 0
+    };
+    SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
 
-    // Sprites zeichnen - grouped by texture
+    SDL_GPUBufferBinding instanceBinding = {
+        .buffer = instanceBuffer,
+        .offset = 0
+    };
+    SDL_BindGPUVertexBuffers(render_pass, 1, &instanceBinding, 1);
+
+    // For now: bind first texture we find and draw ALL sprites
+    // TODO: Proper multi-texture batching later
     for (const auto& [textureId, spriteList] : spriteCommands) {
         if (spriteList.empty()) continue;
 
-        // Get texture from first sprite in list (all share same texture)
         const SpriteCommand& firstSprite = spriteList.front();
         const SpriteTexture::SpriteIndexItem* indexItem = firstSprite.sprite->getSpriteIndex(firstSprite.sprite_id);
         if (!indexItem || !indexItem->tex) continue;
 
-        // Bind texture for this batch
+        // Bind texture
+        ppl7::PrintDebugTime("    Binding texture %p\n", indexItem->tex);
         bindTexture(render_pass, indexItem->tex);
 
-        // Draw all sprites with this texture
-        drawSprites(cmd, render_pass, spriteList);
+        // Draw ALL sprites (since we uploaded them all together)
+        SDL_GPUBufferBinding indexBinding = {
+            .buffer = indexBuffer,
+            .offset = 0
+        };
+        SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+
+        ppl7::PrintDebugTime("    DrawIndexedPrimitives: indices=6, instances=%zu\n", totalSprites);
+        SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)totalSprites, 0, 0, 0);
+
+        // Only draw once with first texture found
+        break;
     }
 
     primitiveCommands.clear();
@@ -95,7 +211,13 @@ void GPUBatcher::addSprite(const SpriteTexture& sprite, int sprite_id, float x, 
 {
     SpriteCommand cmd(&sprite, sprite_id, x, y, z, scale_x, scale_y, angle, color_modulation);
     z += 0.0001f; // Slightly increase Z to ensure correct layering
-    spriteCommands[sprite.getUniqueTextureId(sprite_id)].push_back(cmd);
+    uint64_t texId = sprite.getUniqueTextureId(sprite_id);
+    spriteCommands[texId].push_back(cmd);
+
+    static int debug_counter = 0;
+    if (debug_counter++ < 5) {
+        ppl7::PrintDebugTime("GPUBatcher::addSprite: id=%d, pos=(%.1f,%.1f), texId=%llu\n", sprite_id, x, y, texId);
+    }
 }
 
 void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness)
@@ -128,7 +250,7 @@ void GPUBatcher::loadShaders()
         0,  // num_samplers
         0,  // num_storage_textures
         0,  // num_storage_buffers
-        1); // num_uniform_buffers
+        0); // num_uniform_buffers (using push constants instead)
 
     // Load fragment shader
     fragShader = gpu->loadShader("res/shaders/vulkan/sprite.frag.spv",
@@ -260,9 +382,9 @@ void GPUBatcher::createPipeline()
         .num_vertex_attributes = 10
     };
 
-    // Get swapchain texture format
-    SDL_Window* window = SDL_GetWindowFromID(1); // TODO: Get from GPUContext
-    SDL_GPUTextureFormat swapchainFormat = SDL_GetGPUSwapchainTextureFormat(gpu->gpu, window);
+    // Get swapchain texture format from GPUContext's window
+    SDL_GPUTextureFormat swapchainFormat = SDL_GetGPUSwapchainTextureFormat(gpu->gpu, gpu->window);
+    ppl7::PrintDebugTime("GPUBatcher: Swapchain format = %d\n", (int)swapchainFormat);
 
     // Color target description
     SDL_GPUColorTargetDescription colorTarget = {
@@ -366,8 +488,10 @@ void GPUBatcher::uploadStaticQuadData()
         { 1.0f, 1.0f,  1.0f, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f }   // Bottom-right
     };
 
-    // Quad indices (two triangles: 0-1-2, 2-1-3)
-    Uint16 quadIndices[6] = { 0, 1, 2, 2, 1, 3 };
+    // Quad indices (two triangles with counter-clockwise winding)
+    // First triangle: 0→2→1 (top-left → bottom-left → top-right)
+    // Second triangle: 1→2→3 (top-right → bottom-left → bottom-right)
+    Uint16 quadIndices[6] = { 0, 2, 1, 1, 2, 3 };
 
     SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(gpu->gpu);
     if (!cmd) return;
@@ -422,12 +546,14 @@ void GPUBatcher::updateMatrices(int screenWidth, int screenHeight)
 {
     if (!gpu || !gpu->gpu) return;
 
+    ppl7::PrintDebugTime("GPUBatcher::updateMatrices: screen %dx%d\n", screenWidth, screenHeight);
+
     // Create orthographic projection matrix for 2D rendering
     // Maps screen coordinates (0,0) to (screenWidth, screenHeight) to NDC (-1,-1) to (1,1)
     float left = 0.0f;
     float right = (float)screenWidth;
-    float bottom = (float)screenHeight;
-    float top = 0.0f;
+    float bottom = 0.0f;
+    float top = (float)screenHeight;
     float near = -1.0f;
     float far = 1.0f;
 
@@ -456,6 +582,14 @@ void GPUBatcher::updateMatrices(int screenWidth, int screenHeight)
     for (int i = 0; i < 16; i++) {
         currentUniforms.view[i] = (i % 5 == 0) ? 1.0f : 0.0f;
     }
+
+    // Debug: Print first row of matrices
+    ppl7::PrintDebugTime("  Projection[0-3]: %.3f, %.3f, %.3f, %.3f\n",
+        currentUniforms.projection[0], currentUniforms.projection[1],
+        currentUniforms.projection[2], currentUniforms.projection[3]);
+    ppl7::PrintDebugTime("  Projection[12-15]: %.3f, %.3f, %.3f, %.3f\n",
+        currentUniforms.projection[12], currentUniforms.projection[13],
+        currentUniforms.projection[14], currentUniforms.projection[15]);
 }
 
 void GPUBatcher::cleanup()
@@ -494,7 +628,10 @@ void GPUBatcher::cleanup()
 }
 void GPUBatcher::bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture)
 {
-    if (!texture || !sampler) return;
+    if (!texture || !sampler) {
+        ppl7::PrintDebugTime("  ERROR: bindTexture failed - texture=%p, sampler=%p\n", texture, sampler);
+        return;
+    }
 
     // Bind texture and sampler for fragment shader
     SDL_GPUTextureSamplerBinding textureSamplerBinding = {
@@ -503,96 +640,32 @@ void GPUBatcher::bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* tex
     };
 
     SDL_BindGPUFragmentSamplers(render_pass, 0, &textureSamplerBinding, 1);
+
+    static int bind_count = 0;
+    if (bind_count++ < 3) {
+        ppl7::PrintDebugTime("  Texture bound: %p\n", texture);
+    }
 }
 
 void GPUBatcher::drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites)
 {
     if (sprites.empty() || !vertexBuffer || !indexBuffer || !instanceBuffer) return;
 
-    const size_t MAX_INSTANCES_PER_BATCH = 16384;  // Must match buffer size
+    ppl7::PrintDebugTime("GPUBatcher::drawSprites: %zu sprites\n", sprites.size());
 
-    // Prepare instance data for all sprites
-    std::vector<SpriteInstance> instances;
-    instances.reserve(std::min(sprites.size(), MAX_INSTANCES_PER_BATCH));
-
-    // Bind static buffers once (vertex and index data already uploaded at init)
+    // Bind static buffers (vertex and index data already uploaded at init)
     SDL_GPUBufferBinding vertexBinding = { .buffer = vertexBuffer, .offset = 0 };
     SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
 
     SDL_GPUBufferBinding indexBinding = { .buffer = indexBuffer, .offset = 0 };
     SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
-    // Process sprites in batches if necessary
-    auto it = sprites.begin();
-    while (it != sprites.end()) {
-        instances.clear();
+    // Bind instance buffer (data was uploaded before render pass)
+    SDL_GPUBufferBinding instanceBinding = { .buffer = instanceBuffer, .offset = 0 };
+    SDL_BindGPUVertexBuffers(render_pass, 1, &instanceBinding, 1);
 
-        // Fill batch up to capacity
-        size_t batchCount = 0;
-        while (it != sprites.end() && batchCount < MAX_INSTANCES_PER_BATCH) {
-            const SpriteCommand& spriteCmd = *it;
-            const SpriteTexture::SpriteIndexItem* item = spriteCmd.sprite->getSpriteIndex(spriteCmd.sprite_id);
+    // Draw all instances
+    SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)sprites.size(), 0, 0, 0);
 
-            if (item) {
-                SpriteInstance inst;
-                inst.pos_x = spriteCmd.x;
-                inst.pos_y = spriteCmd.y;
-                inst.size_w = (float)item->r.w;
-                inst.size_h = (float)item->r.h;
-                inst.scale_x = spriteCmd.scale_x;
-                inst.scale_y = spriteCmd.scale_y;
-                inst.angle = spriteCmd.angle;
-                inst.uv_x = item->uv.x;
-                inst.uv_y = item->uv.y;
-                inst.uv_w = item->uv.w;
-                inst.uv_h = item->uv.h;
-                inst.pivot_x = (float)item->Pivot.x;
-                inst.pivot_y = (float)item->Pivot.y;
-                inst.offset_x = (float)item->Offset.x;
-                inst.offset_y = (float)item->Offset.y;
-
-                instances.push_back(inst);
-                batchCount++;
-            }
-            ++it;
-        }
-
-        if (instances.empty()) continue;
-
-        // Upload instance data for this batch
-        size_t instanceDataSize = sizeof(SpriteInstance) * instances.size();
-        SDL_GPUTransferBufferCreateInfo instanceTransferInfo = {
-            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-            .size = (Uint32)instanceDataSize
-        };
-        SDL_GPUTransferBuffer* instanceTransferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &instanceTransferInfo);
-        if (!instanceTransferBuffer) continue;
-
-        void* instanceMapped = SDL_MapGPUTransferBuffer(gpu->gpu, instanceTransferBuffer, false);
-        if (instanceMapped) {
-            memcpy(instanceMapped, instances.data(), instanceDataSize);
-            SDL_UnmapGPUTransferBuffer(gpu->gpu, instanceTransferBuffer);
-
-            SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
-            SDL_GPUTransferBufferLocation instanceTransferLocation = {
-                .transfer_buffer = instanceTransferBuffer,
-                .offset = 0
-            };
-            SDL_GPUBufferRegion instanceBufferRegion = {
-                .buffer = instanceBuffer,
-                .offset = 0,
-                .size = (Uint32)instanceDataSize
-            };
-            SDL_UploadToGPUBuffer(copyPass, &instanceTransferLocation, &instanceBufferRegion, false);
-            SDL_EndGPUCopyPass(copyPass);
-
-            // Bind instance buffer (slot 1)
-            SDL_GPUBufferBinding instanceBinding = { .buffer = instanceBuffer, .offset = 0 };
-            SDL_BindGPUVertexBuffers(render_pass, 1, &instanceBinding, 1);
-
-            // Draw this batch
-            SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)instances.size(), 0, 0, 0);
-        }
-        SDL_ReleaseGPUTransferBuffer(gpu->gpu, instanceTransferBuffer);
-    }
+    ppl7::PrintDebugTime("  DrawIndexedPrimitives: indices=6, instances=%zu\n", sprites.size());
 }

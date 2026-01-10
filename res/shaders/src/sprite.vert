@@ -14,11 +14,11 @@ layout(location = 7) in vec4 in_sprite_uv;      // Sprite UV rect (normalized 0-
 layout(location = 8) in vec2 in_sprite_pivot;   // Sprite pivot point (pixels)
 layout(location = 9) in vec2 in_sprite_offset;  // Sprite offset (pixels)
 
-// Uniforms
-layout(binding = 0) uniform UniformBuffer {
+// Push constants for matrices
+layout(push_constant) uniform PushConstants {
     mat4 projection;    // Orthographic projection matrix
     mat4 view;          // View/camera matrix
-} uniforms;
+} push;
 
 // Output to fragment shader
 layout(location = 0) out vec2 frag_texcoord;
@@ -53,7 +53,7 @@ void main() {
     vec2 world_pos = scaled_pos + in_sprite_pos;
     
     // Apply view and projection matrices
-    gl_Position = uniforms.projection * uniforms.view * vec4(world_pos, 0.0, 1.0);
+    gl_Position = push.projection * push.view * vec4(world_pos, 0.0, 1.0);
     
     // Pass data to fragment shader
     frag_texcoord = uv;
