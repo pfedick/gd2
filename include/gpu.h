@@ -71,6 +71,7 @@ private:
     SDL_GPUSampler* sampler;
     SDL_GPUBuffer* vertexBuffer;
     SDL_GPUBuffer* indexBuffer;
+    SDL_GPUBuffer* instanceBuffer;
 
     struct Vertex {
         float x, y;        // Position
@@ -78,10 +79,22 @@ private:
         float r, g, b, a;  // Color
     };
 
+    struct SpriteInstance {
+        float pos_x, pos_y;           // Sprite world position (pixels)
+        float size_w, size_h;         // Sprite size in pixels
+        float scale_x, scale_y;       // Sprite scale factors
+        float angle;                  // Rotation angle (radians)
+        float uv_x, uv_y, uv_w, uv_h; // UV rect (normalized 0-1)
+        float pivot_x, pivot_y;       // Pivot point (pixels)
+        float offset_x, offset_y;     // Offset (pixels)
+    };
+
     void loadShaders();
     void createPipeline();
     void createBuffers();
     void cleanup();
+    void bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture);
+    void drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites);
 
     class PrimitiveCommand
     {

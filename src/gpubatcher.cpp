@@ -14,6 +14,7 @@ GPUBatcher::GPUBatcher()
     sampler = nullptr;
     vertexBuffer = nullptr;
     indexBuffer = nullptr;
+    instanceBuffer = nullptr;
 }
 
 GPUBatcher::~GPUBatcher()
@@ -42,8 +43,13 @@ void GPUBatcher::startRenderPass()
 
 void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass)
 {
+    if (!spritePipeline) return;
+
+    // Bind sprite pipeline
+    SDL_BindGPUGraphicsPipeline(render_pass, spritePipeline);
+
     // Primitive zeichnen
-    // TODO
+    // TODO: Implement primitive rendering later
     for (const PrimitiveCommand& prim : primitiveCommands) {
         switch (prim.type) {
         case PrimitiveCommand::Type::Line:
@@ -58,19 +64,24 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
         }
     }
 
-    // Sprites zeichnen
-    for (const auto& [key, spriteList] : spriteCommands) {
-        // Batching der Sprites mit gleicher Textur
-        // TODO: Textur binden
+    // Sprites zeichnen - grouped by texture
+    for (const auto& [textureId, spriteList] : spriteCommands) {
+        if (spriteList.empty()) continue;
 
-        // Jetzt über die Sprites mit dieser Textur iterieren
-        for (const SpriteCommand& spriteCmd : spriteList) {
-            // TODO: Sprite zeichnen
-        }
+        // Get texture from first sprite in list (all share same texture)
+        const SpriteCommand& firstSprite = spriteList.front();
+        const SpriteTexture::SpriteIndexItem* indexItem = firstSprite.sprite->getSpriteIndex(firstSprite.sprite_id);
+        if (!indexItem || !indexItem->tex) continue;
+
+        // Bind texture for this batch
+        bindTexture(render_pass, indexItem->tex);
+
+        // Draw all sprites with this texture
+        drawSprites(cmd, render_pass, spriteList);
     }
+
     primitiveCommands.clear();
     spriteCommands.clear();
-
 }
 
 
@@ -145,6 +156,7 @@ void GPUBatcher::createPipeline()
 
     // Define vertex attributes
     SDL_GPUVertexAttribute vertexAttributes[] = {
+        // Per-vertex attributes (slot 0)
         // Position (location 0)
         {
             .location = 0,
@@ -165,24 +177,82 @@ void GPUBatcher::createPipeline()
             .buffer_slot = 0,
             .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
             .offset = sizeof(float) * 4
+        },
+        // Per-instance attributes (slot 1)
+        // Sprite position (location 3)
+        {
+            .location = 3,
+            .buffer_slot = 1,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+            .offset = 0
+        },
+        // Sprite size (location 4)
+        {
+            .location = 4,
+            .buffer_slot = 1,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+            .offset = sizeof(float) * 2
+        },
+        // Sprite scale (location 5)
+        {
+            .location = 5,
+            .buffer_slot = 1,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+            .offset = sizeof(float) * 4
+        },
+        // Sprite angle (location 6)
+        {
+            .location = 6,
+            .buffer_slot = 1,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
+            .offset = sizeof(float) * 6
+        },
+        // Sprite UV rect (location 7)
+        {
+            .location = 7,
+            .buffer_slot = 1,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+            .offset = sizeof(float) * 7
+        },
+        // Sprite pivot (location 8)
+        {
+            .location = 8,
+            .buffer_slot = 1,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+            .offset = sizeof(float) * 11
+        },
+        // Sprite offset (location 9)
+        {
+            .location = 9,
+            .buffer_slot = 1,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+            .offset = sizeof(float) * 13
         }
     };
 
     // Define vertex buffer layout
     SDL_GPUVertexBufferDescription vertexBufferDesc[] = {
+        // Slot 0: Per-vertex data
         {
             .slot = 0,
             .pitch = sizeof(Vertex),
             .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
             .instance_step_rate = 0
+        },
+        // Slot 1: Per-instance data
+        {
+            .slot = 1,
+            .pitch = sizeof(SpriteInstance),
+            .input_rate = SDL_GPU_VERTEXINPUTRATE_INSTANCE,
+            .instance_step_rate = 1
         }
     };
 
     SDL_GPUVertexInputState vertexInputState = {
         .vertex_buffer_descriptions = vertexBufferDesc,
-        .num_vertex_buffers = 1,
+        .num_vertex_buffers = 2,
         .vertex_attributes = vertexAttributes,
-        .num_vertex_attributes = 3
+        .num_vertex_attributes = 10
     };
 
     // Get swapchain texture format
@@ -261,6 +331,16 @@ void GPUBatcher::createBuffers()
     if (!indexBuffer) {
         throw GPUException("Failed to create index buffer: %s", SDL_GetError());
     }
+
+    // Create instance buffer (for sprite instance data)
+    SDL_GPUBufferCreateInfo instanceBufferInfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+        .size = sizeof(SpriteInstance) * 1024,  // Space for 1024 sprite instances
+    };
+    instanceBuffer = SDL_CreateGPUBuffer(gpu->gpu, &instanceBufferInfo);
+    if (!instanceBuffer) {
+        throw GPUException("Failed to create instance buffer: %s", SDL_GetError());
+    }
 }
 
 void GPUBatcher::cleanup()
@@ -283,6 +363,10 @@ void GPUBatcher::cleanup()
         SDL_ReleaseGPUBuffer(gpu->gpu, indexBuffer);
         indexBuffer = nullptr;
     }
+    if (instanceBuffer) {
+        SDL_ReleaseGPUBuffer(gpu->gpu, instanceBuffer);
+        instanceBuffer = nullptr;
+    }
     if (vertShader) {
         gpu->releaseShader(vertShader);
         vertShader = nullptr;
@@ -291,4 +375,181 @@ void GPUBatcher::cleanup()
         gpu->releaseShader(fragShader);
         fragShader = nullptr;
     }
+}
+void GPUBatcher::bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture)
+{
+    if (!texture || !sampler) return;
+
+    // Bind texture and sampler for fragment shader
+    SDL_GPUTextureSamplerBinding textureSamplerBinding = {
+        .texture = texture,
+        .sampler = sampler
+    };
+
+    SDL_BindGPUFragmentSamplers(render_pass, 0, &textureSamplerBinding, 1);
+}
+
+void GPUBatcher::drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites)
+{
+    if (sprites.empty() || !vertexBuffer || !indexBuffer || !instanceBuffer) return;
+
+    // Create unit quad vertices (will be transformed by shader using instance data)
+    // Position (0-1), UV (0-1), Color (white = use instance color modulation)
+    Vertex quadVertices[4] = {
+        { 0.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f },  // Top-left
+        { 1.0f, 0.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f },  // Top-right
+        { 0.0f, 1.0f,  0.0f, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f },  // Bottom-left
+        { 1.0f, 1.0f,  1.0f, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f }   // Bottom-right
+    };
+
+    // Quad indices (two triangles)
+    Uint16 quadIndices[6] = { 0, 1, 2, 2, 1, 3 };
+
+    // Upload quad vertices once (reused for all sprites)
+    {
+        SDL_GPUTransferBufferCreateInfo transferInfo = {
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(quadVertices)
+        };
+        SDL_GPUTransferBuffer* transferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &transferInfo);
+        if (transferBuffer) {
+            void* mapped = SDL_MapGPUTransferBuffer(gpu->gpu, transferBuffer, false);
+            if (mapped) {
+                memcpy(mapped, quadVertices, sizeof(quadVertices));
+                SDL_UnmapGPUTransferBuffer(gpu->gpu, transferBuffer);
+
+                SDL_GPUTransferBufferLocation transferLocation = {
+                    .transfer_buffer = transferBuffer,
+                    .offset = 0
+                };
+                SDL_GPUBufferRegion bufferRegion = {
+                    .buffer = vertexBuffer,
+                    .offset = 0,
+                    .size = sizeof(quadVertices)
+                };
+
+                SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
+                SDL_UploadToGPUBuffer(copyPass, &transferLocation, &bufferRegion, false);
+                SDL_EndGPUCopyPass(copyPass);
+            }
+            SDL_ReleaseGPUTransferBuffer(gpu->gpu, transferBuffer);
+        }
+    }
+
+    // Upload quad indices once
+    {
+        SDL_GPUTransferBufferCreateInfo indexTransferInfo = {
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = sizeof(quadIndices)
+        };
+        SDL_GPUTransferBuffer* indexTransferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &indexTransferInfo);
+        if (indexTransferBuffer) {
+            void* indexMapped = SDL_MapGPUTransferBuffer(gpu->gpu, indexTransferBuffer, false);
+            if (indexMapped) {
+                memcpy(indexMapped, quadIndices, sizeof(quadIndices));
+                SDL_UnmapGPUTransferBuffer(gpu->gpu, indexTransferBuffer);
+
+                SDL_GPUTransferBufferLocation indexTransferLocation = {
+                    .transfer_buffer = indexTransferBuffer,
+                    .offset = 0
+                };
+                SDL_GPUBufferRegion indexBufferRegion = {
+                    .buffer = indexBuffer,
+                    .offset = 0,
+                    .size = sizeof(quadIndices)
+                };
+
+                SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
+                SDL_UploadToGPUBuffer(copyPass, &indexTransferLocation, &indexBufferRegion, false);
+                SDL_EndGPUCopyPass(copyPass);
+            }
+            SDL_ReleaseGPUTransferBuffer(gpu->gpu, indexTransferBuffer);
+        }
+    }
+
+    // Prepare instance data for all sprites
+    std::vector<SpriteInstance> instances;
+    instances.reserve(sprites.size());
+
+    for (const SpriteCommand& spriteCmd : sprites) {
+        const SpriteTexture::SpriteIndexItem* item = spriteCmd.sprite->getSpriteIndex(spriteCmd.sprite_id);
+        if (!item) continue;
+
+        SpriteInstance inst;
+        inst.pos_x = spriteCmd.x;
+        inst.pos_y = spriteCmd.y;
+        inst.size_w = (float)item->r.w;
+        inst.size_h = (float)item->r.h;
+        inst.scale_x = spriteCmd.scale_x;
+        inst.scale_y = spriteCmd.scale_y;
+        inst.angle = spriteCmd.angle;
+        inst.uv_x = item->uv.x;
+        inst.uv_y = item->uv.y;
+        inst.uv_w = item->uv.w;
+        inst.uv_h = item->uv.h;
+        inst.pivot_x = (float)item->Pivot.x;
+        inst.pivot_y = (float)item->Pivot.y;
+        inst.offset_x = (float)item->Offset.x;
+        inst.offset_y = (float)item->Offset.y;
+
+        instances.push_back(inst);
+    }
+
+    if (instances.empty()) return;
+
+    // Upload instance data
+    {
+        size_t instanceDataSize = sizeof(SpriteInstance) * instances.size();
+        SDL_GPUTransferBufferCreateInfo instanceTransferInfo = {
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .size = (Uint32)instanceDataSize
+        };
+        SDL_GPUTransferBuffer* instanceTransferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &instanceTransferInfo);
+        if (instanceTransferBuffer) {
+            void* instanceMapped = SDL_MapGPUTransferBuffer(gpu->gpu, instanceTransferBuffer, false);
+            if (instanceMapped) {
+                memcpy(instanceMapped, instances.data(), instanceDataSize);
+                SDL_UnmapGPUTransferBuffer(gpu->gpu, instanceTransferBuffer);
+
+                SDL_GPUTransferBufferLocation instanceTransferLocation = {
+                    .transfer_buffer = instanceTransferBuffer,
+                    .offset = 0
+                };
+                SDL_GPUBufferRegion instanceBufferRegion = {
+                    .buffer = instanceBuffer,
+                    .offset = 0,
+                    .size = (Uint32)instanceDataSize
+                };
+
+                SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
+                SDL_UploadToGPUBuffer(copyPass, &instanceTransferLocation, &instanceBufferRegion, false);
+                SDL_EndGPUCopyPass(copyPass);
+            }
+            SDL_ReleaseGPUTransferBuffer(gpu->gpu, instanceTransferBuffer);
+        }
+    }
+
+    // Bind vertex buffer (slot 0)
+    SDL_GPUBufferBinding vertexBinding = {
+        .buffer = vertexBuffer,
+        .offset = 0
+    };
+    SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
+
+    // Bind instance buffer (slot 1)
+    SDL_GPUBufferBinding instanceBinding = {
+        .buffer = instanceBuffer,
+        .offset = 0
+    };
+    SDL_BindGPUVertexBuffers(render_pass, 1, &instanceBinding, 1);
+
+    // Bind index buffer
+    SDL_GPUBufferBinding indexBinding = {
+        .buffer = indexBuffer,
+        .offset = 0
+    };
+    SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+
+    // Draw all instances with a single draw call
+    SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)instances.size(), 0, 0, 0);
 }
