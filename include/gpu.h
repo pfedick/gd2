@@ -62,6 +62,11 @@ GPUContext& getGlobalGPUContext();
 class GPUBatcher
 {
 private:
+    struct UniformData {
+        float projection[16];  // 4x4 matrix
+        float view[16];        // 4x4 matrix
+    };
+
     float z;
     GPUContext* gpu;
 
@@ -72,12 +77,15 @@ private:
     SDL_GPUBuffer* vertexBuffer;
     SDL_GPUBuffer* indexBuffer;
     SDL_GPUBuffer* instanceBuffer;
+    SDL_GPUBuffer* uniformBuffer;  // Not used - push constants instead
+    UniformData currentUniforms;    // Current projection/view matrices
 
     struct Vertex {
         float x, y;        // Position
         float u, v;        // Texcoords
         float r, g, b, a;  // Color
     };
+
 
     struct SpriteInstance {
         float pos_x, pos_y;           // Sprite world position (pixels)
@@ -88,13 +96,6 @@ private:
         float pivot_x, pivot_y;       // Pivot point (pixels)
         float offset_x, offset_y;     // Offset (pixels)
     };
-
-    void loadShaders();
-    void createPipeline();
-    void createBuffers();
-    void cleanup();
-    void bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture);
-    void drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites);
 
     class PrimitiveCommand
     {
@@ -135,6 +136,15 @@ private:
         }
     };
 
+
+    void loadShaders();
+    void createPipeline();
+    void createBuffers();
+    void uploadStaticQuadData();
+    void cleanup();
+    void bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture);
+    void drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites);
+
     std::list<PrimitiveCommand> primitiveCommands;
     std::map<uint64_t, std::list<SpriteCommand>> spriteCommands;
 
@@ -143,6 +153,7 @@ public:
     GPUBatcher();
     ~GPUBatcher();
     void init(GPUContext* gpu);
+    void updateMatrices(int screenWidth, int screenHeight);
 
     void clearQueues(); // temporary?
     void startRenderPass();

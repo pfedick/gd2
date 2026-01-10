@@ -23,6 +23,8 @@ void Game::init()
     sdl.setGPUDevice(gpu.gpu);
     gpu_batcher.init(&gpu);
 
+    // Initialize projection/view matrices for rendering
+    gpu_batcher.updateMatrices(1920, 1080);
 }
 
 void Game::createWindow()
@@ -143,7 +145,6 @@ void Game::drawWorld()
     SDL_EndGPURenderPass(renderPass);
 
     SDL_SubmitGPUCommandBuffer(cmdbuf);
-
 }
 
 void Game::drawHUD()
