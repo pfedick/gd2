@@ -21,6 +21,7 @@ void Game::init()
     createWindow();
     gpu.init((SDL_Window*)getSDLWindow());
     sdl.setGPUDevice(gpu.gpu);
+    gpu_batcher.init(&gpu);
 
 }
 
@@ -83,7 +84,7 @@ void Game::run()
         ppltk::MouseState mouse = wm->getMouseState();
         updateUi(mouse);
 
-        gpu.clearQueues();
+        gpu_batcher.clearQueues();
         drawWorld();
         // HUD
         //drawHUD();
@@ -126,6 +127,19 @@ void Game::drawWorld()
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
     SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
+
+    gpu_batcher.startRenderPass();
+    int x = 0, y = 0;
+    for (int i = 0;i < 100;i++) {
+        gpu_batcher.addSprite(resources.Player, i, x, y, 1.0f, 1.0f, 0.0f);
+        x += 100;
+        if (x > 1800) {
+            x = 0;
+            y += 100;
+        }
+    }
+
+    gpu_batcher.endRenderPass(cmdbuf, renderPass);
     SDL_EndGPURenderPass(renderPass);
 
     SDL_SubmitGPUCommandBuffer(cmdbuf);
@@ -139,7 +153,7 @@ void Game::drawHUD()
 void Game::drawCursor(const ppltk::MouseState& mouse)
 {
     if (showui) {
-        gpu.drawSprite(resources.Cursor, 1, mouse.p.x, mouse.p.y);
+        gpu_batcher.addSprite(resources.Cursor, 1, mouse.p.x, mouse.p.y);
     }
 }
 

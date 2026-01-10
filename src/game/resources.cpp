@@ -29,6 +29,7 @@ void Resources::load(GPUContext& gpu)
 {
 	try {
 		Cursor.load(gpu, "res/ui/cursor.tex");
+		Player.load(gpu, "res/player.tex");
 	}
 	catch (const ppl7::Exception& exp) {
 		exp.print();

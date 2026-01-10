@@ -1,7 +1,6 @@
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include "gpu.h"
-#include "sprite.h"
 
 static GPUContext* globalGPUContext = NULL;
 
@@ -17,8 +16,6 @@ GPUContext::GPUContext()
 {
     gpu = NULL;
     window = NULL;
-    pass = NULL;
-    z = 0.0f;
     globalGPUContext = this;
 }
 
@@ -189,45 +186,44 @@ void GPUContext::updateGPUTexture(SDL_GPUTexture* texture, const ppl7::grafix::D
     SDL_ReleaseGPUTransferBuffer(gpu, transfer_buffer);
 }
 
-void GPUContext::clearQueues()
+SDL_GPUShader* GPUContext::loadShader(const ppl7::String& filename, SDL_GPUShaderStage stage, int num_samplers, int num_storage_textures, int num_storage_buffers, int num_uniform_buffers)
 {
-    primitiveCommands.clear();
-    spriteCommands.clear();
+    if (!gpu) {
+        throw GPUException("GPU device is not initialized");
+    }
+
+    ppl7::ByteArray buffer;
+
+    try {
+        buffer = ppl7::File::load(filename);
+    }
+    catch (const ppl7::Exception& e) {
+        throw GPUException("Failed to load shader file: %s", (const char*)filename);
+    }
+
+    SDL_GPUShaderCreateInfo shaderInfo = {
+        .code_size = (size_t)buffer.size(),
+        .code = (const Uint8*)buffer.adr(),
+        .entrypoint = "main",
+        .format = SDL_GPU_SHADERFORMAT_SPIRV,
+        .stage = stage,
+        .num_samplers = (Uint32)num_samplers,
+        .num_storage_textures = (Uint32)num_storage_textures,
+        .num_storage_buffers = (Uint32)num_storage_buffers,
+        .num_uniform_buffers = (Uint32)num_uniform_buffers
+    };
+
+    SDL_GPUShader* shader = SDL_CreateGPUShader(gpu, &shaderInfo);
+    if (!shader) {
+        throw GPUException("SDL_CreateGPUShader failed for %s: %s", (const char*)filename, SDL_GetError());
+    }
+    return shader;
 }
 
-void GPUContext::startRenderPass(SDL_GPURenderPass* pass)
+void GPUContext::releaseShader(SDL_GPUShader* shader)
 {
-    this->pass = pass;
-    z = 0.0f;
-    primitiveCommands.clear();
-    spriteCommands.clear();
+    if (gpu && shader) {
+        SDL_ReleaseGPUShader(gpu, shader);
+    }
 }
 
-void GPUContext::drawSprite(const SpriteTexture& sprite, int sprite_id, float x, float y, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation)
-{
-    SpriteCommand cmd(&sprite, sprite_id, x, y, z, scale_x, scale_y, angle, color_modulation);
-    z += 0.0001f; // Slightly increase Z to ensure correct layering
-    spriteCommands[sprite.getUniqueTextureId(sprite_id)].push_back(cmd);
-}
-
-void GPUContext::drawLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness)
-{
-    PrimitiveCommand cmd(PrimitiveCommand::Type::Line, x1, y1, x2, y2, color, thickness);
-    primitiveCommands.push_back(cmd);
-}
-
-void GPUContext::drawRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness)
-{
-    PrimitiveCommand cmd(PrimitiveCommand::Type::Rect, x, y, w, h, color);
-    primitiveCommands.push_back(cmd);
-}
-void GPUContext::fillRect(float x, float y, float w, float h, const ppl7::grafix::Color& color)
-{
-    PrimitiveCommand cmd(PrimitiveCommand::Type::FilledRect, x, y, w, h, color);
-    primitiveCommands.push_back(cmd);
-}
-
-void GPUContext::endRenderPass()
-{
-    // Nothing to do here for now
-}

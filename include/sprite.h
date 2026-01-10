@@ -130,7 +130,8 @@ public:
         int textureId;
         SDL_GPUTexture* tex;
         const ppl7::grafix::Drawable* drawable;
-        SDL_FRect r;
+        SDL_Rect r;
+        SDL_FRect uv;
         ppl7::grafix::Point Pivot;
         ppl7::grafix::Point Offset;
 
@@ -148,11 +149,15 @@ public:
             textureId = other.textureId;
             tex = other.tex;
             drawable = other.drawable;
+            r = other.r;
+            uv = other.uv;
         }
     };
 private:
     GPUContext* gpu;
     std::map<int, SDL_GPUTexture*> TextureMap;
+    std::map<int, ppl7::grafix::Size> TextureSizeMap;
+
     std::map<int, SDL_GPUTexture*> NormalMap;
     std::map<int, SDL_GPUTexture*> SpecularMap;
     std::map<int, ppl7::grafix::Image> InMemoryTextureMap;
@@ -175,6 +180,7 @@ private:
     SDL_GPUTexture* postGenerateOutlines(int sprite_id);
     SDL_GPUTexture* findTexture(int id) const;
     const ppl7::grafix::Drawable* findInMemoryTexture(int id) const;
+    const ppl7::grafix::Size& textureSize(int id) const;
 
 public:
     SpriteTexture();
@@ -185,17 +191,17 @@ public:
     void draw(ppl7::grafix::Drawable& target, int x, int y, int id) const;
     void draw(ppl7::grafix::Drawable& target, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const;
 
-    void draw(GPUContext& gpu, int x, int y, int id) const;
-    void draw(GPUContext& gpu, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const;
-    void draw(GPUContext& gpu, int x, int y, int id, const SDL_Color& color_modulation) const;
-    void drawBoundingBox(GPUContext& gpu, int x, int y, int id) const;
-    void drawBoundingBoxWithAngle(GPUContext& gpu, int x, int y, int id, float scale_x, float scale_y, float angle) const;
-    void draw(GPUContext& gpu, int id, const SDL_FRect& source, const SDL_FRect& target) const;
-    void drawScaled(GPUContext& gpu, int x, int y, int id, float scale_factor) const;
-    void drawScaled(GPUContext& gpu, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const;
-    void drawScaledWithAngle(GPUContext& gpu, int x, int y, int id, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation) const;
-    void drawOutlines(GPUContext& gpu, int x, int y, int id, float scale_factor);
-    void drawOutlinesWithAngle(GPUContext& gpu, int x, int y, int id, float scale_x, float scale_y, float angle);
+    void draw(GPUBatcher& gpu, int x, int y, int id) const;
+    void draw(GPUBatcher& gpu, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const;
+    void draw(GPUBatcher& gpu, int x, int y, int id, const SDL_Color& color_modulation) const;
+    void drawBoundingBox(GPUBatcher& gpu, int x, int y, int id) const;
+    void drawBoundingBoxWithAngle(GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle) const;
+    void draw(GPUBatcher& gpu, int id, const SDL_FRect& source, const SDL_FRect& target) const;
+    void drawScaled(GPUBatcher& gpu, int x, int y, int id, float scale_factor) const;
+    void drawScaled(GPUBatcher& gpu, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const;
+    void drawScaledWithAngle(GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation) const;
+    void drawOutlines(GPUBatcher& gpu, int x, int y, int id, float scale_factor);
+    void drawOutlinesWithAngle(GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle);
 
 
     ppl7::grafix::Size spriteSize(int id, float scale_factor) const;

@@ -95,6 +95,7 @@ private:
     SDL sdl;
     SDL_Window* sdl_window;
     GPUContext gpu;
+    GPUBatcher gpu_batcher;
     ppltk::WindowManager* wm;
     ppltk::WidgetStyle Style;
 

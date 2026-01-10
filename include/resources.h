@@ -23,12 +23,15 @@ public:
 };
 
 
+
+
 class Resources
 {
 private:
 
 public:
     SpriteTexture Cursor;
+    SpriteTexture Player;
     std::list<ppl7::String> background_images;
 
     Resources();

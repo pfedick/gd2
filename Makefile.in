@@ -30,6 +30,7 @@ OBJECTS=compile/main.o \
 	compile/game.o \
 	compile/sdl.o \
 	compile/gpu.o \
+	compile/gpubatcher.o \
 	compile/fps.o \
 	compile/config.o \
 	compile/spritetexture.o \
@@ -123,6 +124,10 @@ update_version:
 	@echo "#endif" >> tmp/version.h
 	@diff tmp/version.h include/version.h > /dev/null 2>&1; if [ $$? -ne 0 ] ; then cp tmp/version.h include/version.h; fi
 
+shader:
+	glslc res/shaders/src/sprite.vert -o res/shaders/vulkan/sprite.vert.spv
+	glslc res/shaders/src/sprite.frag -o res/shaders/vulkan/sprite.frag.spv
+
 
 compile/main.o: src/main.cpp Makefile include/sdl.h include/game.h
 	- @mkdir -p compile
@@ -135,6 +140,10 @@ compile/sdl.o: src/sdl.cpp Makefile include/sdl.h
 compile/gpu.o: src/gpu.cpp Makefile include/gpu.h
 	- @mkdir -p compile
 	$(CXX) -o compile/gpu.o -c src/gpu.cpp $(CFLAGS)
+
+compile/gpubatcher.o: src/gpubatcher.cpp Makefile include/gpu.h
+	- @mkdir -p compile
+	$(CXX) -o compile/gpubatcher.o -c src/gpubatcher.cpp $(CFLAGS)
 
 compile/game.o: src/game/game.cpp Makefile include/game.h include/version.h
 	- @mkdir -p compile
