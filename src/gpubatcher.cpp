@@ -66,9 +66,9 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         for (const SpriteCommand& spriteCmd : spriteList) {
             const SpriteTexture::SpriteIndexItem* item = spriteCmd.sprite->getSpriteIndex(spriteCmd.sprite_id);
             if (item) {
-                // Apply Offset (Shift origin).
-                float world_x = spriteCmd.x + (float)item->Offset.x;
-                float world_y = spriteCmd.y + (float)item->Offset.y;
+                // Apply Offset (Shift origin) relative to Pivot
+                float world_x = spriteCmd.x + (float)item->Offset.x * spriteCmd.scale_x;
+                float world_y = spriteCmd.y + (float)item->Offset.y * spriteCmd.scale_y;
 
                 // X: 0..W -> -1..1
                 float ndc_x = (world_x * 2.0f / screenWidth) - 1.0f;
