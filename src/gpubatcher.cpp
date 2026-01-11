@@ -8,13 +8,15 @@ GPUBatcher::GPUBatcher()
 {
     z = 0.0f;
     gpu = nullptr;
+    screenWidth = 1920;
+    screenHeight = 1080;
     fragShader = nullptr;
     vertShader = nullptr;
     spritePipeline = nullptr;
     sampler = nullptr;
     vertexBuffer = nullptr;
     indexBuffer = nullptr;
-    instanceBuffer = nullptr;
+    storageBuffer = nullptr;
     uniformBuffer = nullptr;
     memset(&currentUniforms, 0, sizeof(UniformData));
 }
@@ -32,8 +34,8 @@ void GPUBatcher::init(GPUContext* gpu)
     createPipeline();
     ppl7::PrintDebugTime("GPUBatcher::init - Pipeline created: %p\n", spritePipeline);
     createBuffers();
-    ppl7::PrintDebugTime("GPUBatcher::init - Buffers created: vert=%p, index=%p, instance=%p\n",
-        vertexBuffer, indexBuffer, instanceBuffer);
+    ppl7::PrintDebugTime("GPUBatcher::init - Buffers created: vert=%p, index=%p, storage=%p\n",
+        vertexBuffer, indexBuffer, storageBuffer);
 }
 
 void GPUBatcher::clearQueues()
@@ -49,8 +51,8 @@ void GPUBatcher::startRenderPass()
 
 void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
 {
-    if (!gpu || !gpu->gpu || !instanceBuffer) {
-        ppl7::PrintDebugTime("ERROR: prepareInstanceData - missing resources: gpu=%p, instanceBuffer=%p\n", gpu, instanceBuffer);
+    if (!gpu || !gpu->gpu || !storageBuffer) {
+        ppl7::PrintDebugTime("ERROR: prepareInstanceData - missing resources: gpu=%p, storageBuffer=%p\n", gpu, storageBuffer);
         return;
     }
 
@@ -71,11 +73,28 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         for (const SpriteCommand& spriteCmd : spriteList) {
             const SpriteTexture::SpriteIndexItem* item = spriteCmd.sprite->getSpriteIndex(spriteCmd.sprite_id);
             if (item) {
+                // Convert pixel coordinates to NDC on CPU
+                // X: 0..W -> -1..1
+                float ndc_x = (spriteCmd.x * 2.0f / screenWidth) - 1.0f;
+// Y: 0..H -> +1..-1 (Vulkan NDC: -1 is Top, +1 is Bottom, but SDL coordinate system might be flipped or our perception of Top/Bottom)
+                // If the user sees Bottom-Left for (-1, -1), then -1 is Bottom.
+                // We want 0 -> Top. If Top is +1 (OpenGL style), we use 1.0 - ...
+                // Let's try inverting Y to map 0 to -1 (Top in Vulkan) or +1 (Top in OpenGL)
+                // The user said "starts at bottom right instead of top left".
+                // Previous code: (y * 2 / H) - 1.0   => 0 -> -1.
+                // If -1 appeared at Bottom, then Y is Up.
+                // To appear at Top, we need +1.
+                float ndc_y = 1.0f - (spriteCmd.y * 2.0f / screenHeight);
+                
+                float ndc_w = (item->r.w * 2.0f / screenWidth);
+                // Flip height to grow downwards from Top-Left origin
+                float ndc_h = -(item->r.h * 2.0f / screenHeight);
+
                 SpriteInstance inst;
-                inst.pos_x = spriteCmd.x;
-                inst.pos_y = spriteCmd.y;
-                inst.size_w = (float)item->r.w;
-                inst.size_h = (float)item->r.h;
+                inst.pos_x = ndc_x;
+                inst.pos_y = ndc_y;
+                inst.size_w = ndc_w;
+                inst.size_h = ndc_h;
                 inst.scale_x = spriteCmd.scale_x;
                 inst.scale_y = spriteCmd.scale_y;
                 inst.angle = spriteCmd.angle;
@@ -87,6 +106,7 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 inst.pivot_y = (float)item->Pivot.y;
                 inst.offset_x = (float)item->Offset.x;
                 inst.offset_y = (float)item->Offset.y;
+                inst.padding = 0.0f; // Initialize padding
                 instances.push_back(inst);
             }
         }
@@ -122,7 +142,7 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 .offset = 0
             };
             SDL_GPUBufferRegion bufferRegion = {
-                .buffer = instanceBuffer,
+                .buffer = storageBuffer,
                 .offset = 0,
                 .size = (Uint32)instanceDataSize
             };
@@ -155,50 +175,45 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
     // Bind sprite pipeline
     SDL_BindGPUGraphicsPipeline(render_pass, spritePipeline);
 
-    // Push uniform data (projection/view matrices)
-    ppl7::PrintDebugTime("    Pushing matrices: proj[0]=%.3f, proj[5]=%.3f, proj[12]=%.3f, proj[13]=%.3f\n",
-        currentUniforms.projection[0], currentUniforms.projection[5],
-        currentUniforms.projection[12], currentUniforms.projection[13]);
-    SDL_PushGPUVertexUniformData(cmd, 0, &currentUniforms, sizeof(UniformData));
-
-    // Bind vertex and instance buffers
+    // Bind vertex buffer only
     SDL_GPUBufferBinding vertexBinding = {
         .buffer = vertexBuffer,
         .offset = 0
     };
     SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
 
-    SDL_GPUBufferBinding instanceBinding = {
-        .buffer = instanceBuffer,
+    // Bind storage buffer for sprite instance data
+    SDL_BindGPUVertexStorageBuffers(render_pass, 0, &storageBuffer, 1);
+
+    // Draw by texture batch
+    Uint32 instanceOffset = 0;
+    
+    // Bind index buffer once
+    SDL_GPUBufferBinding indexBinding = {
+        .buffer = indexBuffer,
         .offset = 0
     };
-    SDL_BindGPUVertexBuffers(render_pass, 1, &instanceBinding, 1);
+    SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
-    // For now: bind first texture we find and draw ALL sprites
-    // TODO: Proper multi-texture batching later
     for (const auto& [textureId, spriteList] : spriteCommands) {
         if (spriteList.empty()) continue;
 
         const SpriteCommand& firstSprite = spriteList.front();
         const SpriteTexture::SpriteIndexItem* indexItem = firstSprite.sprite->getSpriteIndex(firstSprite.sprite_id);
-        if (!indexItem || !indexItem->tex) continue;
+        if (!indexItem || !indexItem->tex) {
+             instanceOffset += (Uint32)spriteList.size();
+             continue;
+        }
 
-        // Bind texture
-        ppl7::PrintDebugTime("    Binding texture %p\n", indexItem->tex);
+        // Bind texture for this batch
+        ppl7::PrintDebugTime("    Batch: texture %p, offset=%u, count=%zu\n", indexItem->tex, instanceOffset, spriteList.size());
         bindTexture(render_pass, indexItem->tex);
 
-        // Draw ALL sprites (since we uploaded them all together)
-        SDL_GPUBufferBinding indexBinding = {
-            .buffer = indexBuffer,
-            .offset = 0
-        };
-        SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-
-        ppl7::PrintDebugTime("    DrawIndexedPrimitives: indices=6, instances=%zu\n", totalSprites);
-        SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)totalSprites, 0, 0, 0);
-
-        // Only draw once with first texture found
-        break;
+        // Draw instances for this batch only
+        // first_instance = instanceOffset
+        SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)spriteList.size(), 0, 0, instanceOffset);
+        
+        instanceOffset += (Uint32)spriteList.size();
     }
 
     primitiveCommands.clear();
@@ -244,18 +259,18 @@ void GPUBatcher::loadShaders()
     }
 
     // Load vertex shader (SPIR-V compiled from GLSL)
-    // Note: Shaders need to be compiled to SPIR-V first using glslc or similar
-    vertShader = gpu->loadShader("res/shaders/vulkan/sprite.vert.spv",
+    // Using NDC version with storage buffer (CPU-side transformation like SimpleQuadTest)
+    vertShader = gpu->loadShader("res/shaders/vulkan/sprite_ndc_storage.vert.spv",
         SDL_GPU_SHADERSTAGE_VERTEX,
         0,  // num_samplers
         0,  // num_storage_textures
-        0,  // num_storage_buffers
-        0); // num_uniform_buffers (using push constants instead)
+        1,  // num_storage_buffers
+        0); // num_uniform_buffers
 
     // Load fragment shader
-    fragShader = gpu->loadShader("res/shaders/vulkan/sprite.frag.spv",
+    fragShader = gpu->loadShader("res/shaders/vulkan/sprite_ndc_storage.frag.spv",
         SDL_GPU_SHADERSTAGE_FRAGMENT,
-        1,  // num_samplers (texture sampler)
+        1,  // num_samplers
         0,  // num_storage_textures
         0,  // num_storage_buffers
         0); // num_uniform_buffers
@@ -281,9 +296,8 @@ void GPUBatcher::createPipeline()
         throw GPUException("Failed to create sampler: %s", SDL_GetError());
     }
 
-    // Define vertex attributes
+    // Define vertex attributes (per-vertex data only)
     SDL_GPUVertexAttribute vertexAttributes[] = {
-        // Per-vertex attributes (slot 0)
         // Position (location 0)
         {
             .location = 0,
@@ -304,60 +318,10 @@ void GPUBatcher::createPipeline()
             .buffer_slot = 0,
             .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
             .offset = sizeof(float) * 4
-        },
-        // Per-instance attributes (slot 1)
-        // Sprite position (location 3)
-        {
-            .location = 3,
-            .buffer_slot = 1,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-            .offset = 0
-        },
-        // Sprite size (location 4)
-        {
-            .location = 4,
-            .buffer_slot = 1,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-            .offset = sizeof(float) * 2
-        },
-        // Sprite scale (location 5)
-        {
-            .location = 5,
-            .buffer_slot = 1,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-            .offset = sizeof(float) * 4
-        },
-        // Sprite angle (location 6)
-        {
-            .location = 6,
-            .buffer_slot = 1,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT,
-            .offset = sizeof(float) * 6
-        },
-        // Sprite UV rect (location 7)
-        {
-            .location = 7,
-            .buffer_slot = 1,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-            .offset = sizeof(float) * 7
-        },
-        // Sprite pivot (location 8)
-        {
-            .location = 8,
-            .buffer_slot = 1,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-            .offset = sizeof(float) * 11
-        },
-        // Sprite offset (location 9)
-        {
-            .location = 9,
-            .buffer_slot = 1,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-            .offset = sizeof(float) * 13
         }
     };
 
-    // Define vertex buffer layout
+    // Define vertex buffer layout (only per-vertex data)
     SDL_GPUVertexBufferDescription vertexBufferDesc[] = {
         // Slot 0: Per-vertex data
         {
@@ -365,21 +329,14 @@ void GPUBatcher::createPipeline()
             .pitch = sizeof(Vertex),
             .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
             .instance_step_rate = 0
-        },
-        // Slot 1: Per-instance data
-        {
-            .slot = 1,
-            .pitch = sizeof(SpriteInstance),
-            .input_rate = SDL_GPU_VERTEXINPUTRATE_INSTANCE,
-            .instance_step_rate = 1
         }
     };
 
     SDL_GPUVertexInputState vertexInputState = {
         .vertex_buffer_descriptions = vertexBufferDesc,
-        .num_vertex_buffers = 2,
+        .num_vertex_buffers = 1,
         .vertex_attributes = vertexAttributes,
-        .num_vertex_attributes = 10
+        .num_vertex_attributes = 3
     };
 
     // Get swapchain texture format from GPUContext's window
@@ -459,15 +416,15 @@ void GPUBatcher::createBuffers()
         throw GPUException("Failed to create index buffer: %s", SDL_GetError());
     }
 
-    // Create instance buffer (for sprite instance data)
+    // Create storage buffer for sprite instance data (GPU-readable)
     // Support up to 16K sprites per batch (should handle most cases)
-    SDL_GPUBufferCreateInfo instanceBufferInfo = {
-        .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+    SDL_GPUBufferCreateInfo storageBufferInfo = {
+        .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
         .size = sizeof(SpriteInstance) * 16384,
     };
-    instanceBuffer = SDL_CreateGPUBuffer(gpu->gpu, &instanceBufferInfo);
-    if (!instanceBuffer) {
-        throw GPUException("Failed to create instance buffer: %s", SDL_GetError());
+    storageBuffer = SDL_CreateGPUBuffer(gpu->gpu, &storageBufferInfo);
+    if (!storageBuffer) {
+        throw GPUException("Failed to create storage buffer: %s", SDL_GetError());
     }
 
     // Note: Uniform data will be pushed via SDL_PushGPUVertexUniformData, no buffer needed
@@ -546,14 +503,17 @@ void GPUBatcher::updateMatrices(int screenWidth, int screenHeight)
 {
     if (!gpu || !gpu->gpu) return;
 
+    this->screenWidth = screenWidth;
+    this->screenHeight = screenHeight;
     ppl7::PrintDebugTime("GPUBatcher::updateMatrices: screen %dx%d\n", screenWidth, screenHeight);
 
-    // Create orthographic projection matrix for 2D rendering
-    // Maps screen coordinates (0,0) to (screenWidth, screenHeight) to NDC (-1,-1) to (1,1)
+    // Create orthographic projection matrix for 2D rendering (Vulkan coordinate system)
+    // Maps screen coordinates (0,0) top-left to (screenWidth, screenHeight) bottom-right to NDC (-1,-1) to (1,1)
+    // Note: Vulkan's Y-axis points DOWN in screen space, so we flip it in the projection
     float left = 0.0f;
     float right = (float)screenWidth;
+    float top = (float)screenHeight;  // Vulkan: top > bottom for proper Y-flip
     float bottom = 0.0f;
-    float top = (float)screenHeight;
     float near = -1.0f;
     float far = 1.0f;
 
@@ -612,9 +572,9 @@ void GPUBatcher::cleanup()
         SDL_ReleaseGPUBuffer(gpu->gpu, indexBuffer);
         indexBuffer = nullptr;
     }
-    if (instanceBuffer) {
-        SDL_ReleaseGPUBuffer(gpu->gpu, instanceBuffer);
-        instanceBuffer = nullptr;
+    if (storageBuffer) {
+        SDL_ReleaseGPUBuffer(gpu->gpu, storageBuffer);
+        storageBuffer = nullptr;
     }
     // uniformBuffer removed - using push constants instead
     if (vertShader) {
@@ -649,7 +609,7 @@ void GPUBatcher::bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* tex
 
 void GPUBatcher::drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites)
 {
-    if (sprites.empty() || !vertexBuffer || !indexBuffer || !instanceBuffer) return;
+    if (sprites.empty() || !vertexBuffer || !indexBuffer || !storageBuffer) return;
 
     ppl7::PrintDebugTime("GPUBatcher::drawSprites: %zu sprites\n", sprites.size());
 
@@ -660,9 +620,8 @@ void GPUBatcher::drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* rende
     SDL_GPUBufferBinding indexBinding = { .buffer = indexBuffer, .offset = 0 };
     SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
-    // Bind instance buffer (data was uploaded before render pass)
-    SDL_GPUBufferBinding instanceBinding = { .buffer = instanceBuffer, .offset = 0 };
-    SDL_BindGPUVertexBuffers(render_pass, 1, &instanceBinding, 1);
+    // Bind storage buffer to Slot 0 (default)
+    SDL_BindGPUVertexStorageBuffers(render_pass, 0, &storageBuffer, 1);
 
     // Draw all instances
     SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)sprites.size(), 0, 0, 0);

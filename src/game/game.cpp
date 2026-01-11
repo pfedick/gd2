@@ -24,10 +24,10 @@ void Game::init()
     createWindow();
     gpu.init((SDL_Window*)getSDLWindow());
     sdl.setGPUDevice(gpu.gpu);
-    //gpu_batcher.init(&gpu);  // TODO: Fix instancing - use Storage Buffers like SDL examples
+    gpu_batcher.init(&gpu);  // Now using Storage Buffers instead of vertex buffer instancing
 
     // Initialize projection/view matrices for rendering
-    //gpu_batcher.updateMatrices(1920, 1080);
+    gpu_batcher.updateMatrices(1920, 1080);
 
     // Initialize simple test quad
     g_simpleTest = new SimpleQuadTest();
@@ -104,11 +104,11 @@ void Game::run()
         // HUD
         //drawHUD();
 
-        // UI
-        //drawWidgets();
+            // UI
+            //drawWidgets();
 
-        // Mouse
-        //drawCursor(mouse);
+            // Mouse
+            //drawCursor(mouse);
 
     }
 }
@@ -126,6 +126,27 @@ void Game::drawWorld()
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
         return;
     }
+
+    // Start render pass (resets z-order counter)
+    gpu_batcher.startRenderPass();
+
+    // Collect all sprites to batch
+
+    int x = 0, y = 0;
+    for (int i = 0; i < 100; i++) {
+        gpu_batcher.addSprite(resources.Player, i, x, y);
+        x += 100;
+        if (x >= 1800) {
+            x = 0;
+            y += 100;
+        }
+    }
+
+    //gpu_batcher.addSprite(resources.Player, 0, 0, 0);
+
+    // Upload instance data to GPU (must be BEFORE BeginGPURenderPass)
+    gpu_batcher.prepareInstanceData(cmdbuf);
+
     SDL_GPUTexture* swapchainTexture;
     if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, sdl_window, &swapchainTexture, NULL, NULL)) {
         SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
@@ -150,10 +171,13 @@ void Game::drawWorld()
     SDL_Rect scissor = { 0, 0, 1920, 1080 };
     SDL_SetGPUScissor(renderPass, &scissor);
 
-    // Draw simple test quad
-    if (g_simpleTest) {
+    // Draw simple test quad (to verify rendering works)
+    /*if (g_simpleTest) {
         g_simpleTest->draw(cmdbuf, renderPass);
-    }
+    }*/
+
+    // Draw all batched sprites
+    gpu_batcher.endRenderPass(cmdbuf, renderPass);
 
     SDL_EndGPURenderPass(renderPass);
     SDL_SubmitGPUCommandBuffer(cmdbuf);

@@ -63,6 +63,8 @@ private:
 
     float z;
     GPUContext* gpu;
+    int screenWidth;
+    int screenHeight;
 
     SDL_GPUShader* fragShader;
     SDL_GPUShader* vertShader;
@@ -70,7 +72,7 @@ private:
     SDL_GPUSampler* sampler;
     SDL_GPUBuffer* vertexBuffer;
     SDL_GPUBuffer* indexBuffer;
-    SDL_GPUBuffer* instanceBuffer;
+    SDL_GPUBuffer* storageBuffer;   // Storage buffer for sprite instances
     SDL_GPUBuffer* uniformBuffer;  // Not used - push constants instead
     UniformData currentUniforms;    // Current projection/view matrices
 
@@ -82,10 +84,11 @@ private:
 
 
     struct SpriteInstance {
-        float pos_x, pos_y;           // Sprite world position (pixels)
-        float size_w, size_h;         // Sprite size in pixels
+        float pos_x, pos_y;           // Sprite position (NDC)
+        float size_w, size_h;         // Sprite size (NDC)
         float scale_x, scale_y;       // Sprite scale factors
         float angle;                  // Rotation angle (radians)
+        float padding;                // PADDING for std430 alignment (vec4 uv must be 16-byte aligned)
         float uv_x, uv_y, uv_w, uv_h; // UV rect (normalized 0-1)
         float pivot_x, pivot_y;       // Pivot point (pixels)
         float offset_x, offset_y;     // Offset (pixels)
