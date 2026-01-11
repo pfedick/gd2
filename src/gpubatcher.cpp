@@ -121,6 +121,11 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 inst.offset_x = 0.0f;
                 inst.offset_y = 0.0f;
 
+                inst.color_r = (float)spriteCmd.color_modulation.red() / 255.0f;
+                inst.color_g = (float)spriteCmd.color_modulation.green() / 255.0f;
+                inst.color_b = (float)spriteCmd.color_modulation.blue() / 255.0f;
+                inst.color_a = (float)spriteCmd.color_modulation.alpha() / 255.0f;
+
                 instanceData.push_back(inst);
             }
         }
@@ -132,6 +137,26 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
 
     // Upload ALL instance data at once
     size_t instanceDataSize = sizeof(SpriteInstance) * instanceData.size();
+
+    // Check if we need to resize the storage buffer
+    if (instanceDataSize > storageBufferCapacity) {
+        if (storageBuffer) {
+            SDL_ReleaseGPUBuffer(gpu->gpu, storageBuffer);
+        }
+        // Grow by power of 2 or large chunks
+        storageBufferCapacity = (Uint32)(instanceDataSize * 1.5); 
+        SDL_GPUBufferCreateInfo storageBufferInfo = {
+            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+            .size = storageBufferCapacity,
+        };
+        storageBuffer = SDL_CreateGPUBuffer(gpu->gpu, &storageBufferInfo);
+        if (!storageBuffer) {
+            ppl7::PrintDebugTime("ERROR: Failed to resize storage buffer to %u bytes\n", storageBufferCapacity);
+            return;
+        }
+        ppl7::PrintDebugTime("Resized Storage Buffer to %u bytes (%zu sprites)\n", storageBufferCapacity, storageBufferCapacity / sizeof(SpriteInstance));
+    }
+
     SDL_GPUTransferBufferCreateInfo transferInfo = {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
         .size = (Uint32)instanceDataSize
@@ -419,9 +444,10 @@ void GPUBatcher::createBuffers()
 
     // Create storage buffer for sprite instance data (GPU-readable)
     // Support up to 16K sprites per batch (should handle most cases)
+    storageBufferCapacity = sizeof(SpriteInstance) * 16384;
     SDL_GPUBufferCreateInfo storageBufferInfo = {
         .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-        .size = sizeof(SpriteInstance) * 16384,
+        .size = storageBufferCapacity,
     };
     storageBuffer = SDL_CreateGPUBuffer(gpu->gpu, &storageBufferInfo);
     if (!storageBuffer) {

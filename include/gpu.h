@@ -74,6 +74,7 @@ private:
     SDL_GPUBuffer* vertexBuffer;
     SDL_GPUBuffer* indexBuffer;
     SDL_GPUBuffer* storageBuffer;   // Storage buffer for sprite instances
+    Uint32 storageBufferCapacity;   // Current capacity in bytes
     SDL_GPUBuffer* uniformBuffer;  // Not used - push constants instead
     UniformData currentUniforms;    // Current projection/view matrices
 
@@ -93,6 +94,7 @@ private:
         float uv_x, uv_y, uv_w, uv_h; // UV rect (normalized 0-1)
         float pivot_x, pivot_y;       // Pivot point (0..1)
         float offset_x, offset_y;     // Unused
+        float color_r, color_g, color_b, color_a; // Color Modulation
     };
 
     class PrimitiveCommand

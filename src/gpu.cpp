@@ -56,7 +56,7 @@ void GPUContext::init(SDL_Window* window)
     SDL_SetGPUAllowedFramesInFlight(gpu, 1);
 
     // Use VSYNC for tearing-free 60 FPS, but rely on FramesInFlight=2 to keep latency low
-    SDL_SetGPUSwapchainParameters(gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_VSYNC);
+    SDL_SetGPUSwapchainParameters(gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_IMMEDIATE);
     this->window = window;
 }
 

@@ -112,6 +112,8 @@ private:
     void drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
     void drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
 
+    uint64_t frame_count = 0;
+    double time_accumulator = 0.0f;
 
 public:
     Resources resources;

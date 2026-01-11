@@ -15,6 +15,7 @@ struct SpriteInstance {
     vec4 uv;            // Sprite UV rect (x, y, w, h) normalized 0-1 (offset 32)
     vec2 pivot;         // Sprite pivot point (Normalized 0..1 relative to size)
     vec2 offset;        // Unused
+    vec4 color;         // Color Modulation (offset 64)
 };
 
 // Storage buffer for sprite instances (readonly)
@@ -33,7 +34,9 @@ void main() {
     
     // Calculate UV coordinates
     frag_texcoord = sprite.uv.xy + in_texcoord * sprite.uv.zw;
-    frag_color = in_color;
+    
+    // Pass color from instance data
+    frag_color = sprite.color;
 
     // 1. Get local vector from pivot (in 0..1 unit space)
     vec2 local = in_position - sprite.pivot;

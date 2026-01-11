@@ -80,8 +80,10 @@ void Game::run()
     sdl.setCursor(resources.Cursor.getDrawable(1), resources.Cursor.getPivot(1));
     ppl7::ppl_time_t last_second = ppl7::GetTime();
     quitGame = false;
-    //fps.enableDebug(true);
+    fps.enableDebug(true);
     while (!quitGame) {
+        double start_time = ppl7::GetMicrotime();
+
         ppl7::ppl_time_t current_second = ppl7::GetTime();
         if (current_second > last_second) {
             last_second = current_second;
@@ -126,7 +128,14 @@ void Game::run()
 
         // Frame done
         SDL_SubmitGPUCommandBuffer(cmdbuf);
-        ppl7::PrintDebug("FPS: %d\n", fps.getFPS());
+        double frame_time = ppl7::GetMicrotime() - start_time;
+        frame_count++;
+        time_accumulator += frame_time;
+        if ((frame_count % 60) == 0) {
+            ppl7::PrintDebug("Frametime: %0.3f ms\n", 1000.0 * (frame_time / frame_count));
+            frame_count = 0;
+            time_accumulator = 0.0f;
+        }
 
     }
 }
@@ -160,12 +169,12 @@ void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture
 
 void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
-
     // Start render pass (resets z-order counter)
     gpu_batcher.startRenderPass();
 
     // Collect all sprites to batch
 
+    /*
     int x = 100, y = 200;
     for (int i = 0; i < 100; i++) {
         gpu_batcher.addSprite(resources.Player, i, x, y);
@@ -175,11 +184,15 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
             y += 200;
         }
     }
+    */
+    for (int i = 0; i < 100; i++) {
+        gpu_batcher.addSprite(resources.Player, ppl7::rand(0, 200), ppl7::rand(0, 1920), ppl7::rand(0, 1080), 1.0f, 1.0f, 0.0f);
+    }
 
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 2.0f, 2.0f);
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 0.5f, 0.5f);
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 90.0f);
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 180.0f);
+
+    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 0.0f, ppl7::grafix::Color(255, 0, 0, 255));
+    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 90.0f, ppl7::grafix::Color(0, 255, 0, 255));
+    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 180.0f, ppl7::grafix::Color(0, 0, 255, 255));
     gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 270.0f);
 
 
@@ -215,6 +228,7 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
     gpu_batcher.endRenderPass(cmdbuf, renderPass);
 
     SDL_EndGPURenderPass(renderPass);
+
 
 }
 
