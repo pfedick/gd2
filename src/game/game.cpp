@@ -198,7 +198,7 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
 
     // Example Usage
     gpu_batcher.addLine(100, 100, 200, 200, ppl7::grafix::Color(255, 0, 0, 255), 10.0f);
-    gpu_batcher.addRect(300, 100, 50, 50, ppl7::grafix::Color(0, 255, 0, 255));
+    gpu_batcher.addRect(300, 100, 50, 50, ppl7::grafix::Color(0, 255, 0, 255), 10.0f);
     gpu_batcher.addFilledRect(400, 100, 50, 50, ppl7::grafix::Color(0, 0, 255, 255));
 
     // Upload instance data to GPU (must be BEFORE BeginGPURenderPass)

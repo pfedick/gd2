@@ -206,9 +206,43 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
             float ndc_y = 1.0f - (y * 2.0f / screenHeight);
             primitives.push_back({ ndc_x, ndc_y, 0.0f,
                (float)c.red() / 255.0f, (float)c.green() / 255.0f, (float)c.blue() / 255.0f, (float)c.alpha() / 255.0f });
-        };
+            };
 
-        // First pass: Filled Rects -> Triangles
+        // Helper to add thick line as quad (2 triangles)
+        auto pushThickLine = [&](float x1, float y1, float x2, float y2, float thickness, const ppl7::grafix::Color& c) {
+            float dx = x2 - x1;
+            float dy = y2 - y1;
+            float len = sqrtf(dx * dx + dy * dy);
+            if (len == 0.0f) return;
+
+            float ux = dx / len;
+            float uy = dy / len;
+            // Normal (perpendicular) vector
+            float nx = -uy;
+            float ny = ux;
+
+            float halfWidth = thickness * 0.5f;
+            float ox = nx * halfWidth;
+            float oy = ny * halfWidth;
+
+            // 4 corners
+            float p1x = x1 + ox; float p1y = y1 + oy;
+            float p2x = x1 - ox; float p2y = y1 - oy;
+            float p3x = x2 - ox; float p3y = y2 - oy;
+            float p4x = x2 + ox; float p4y = y2 + oy;
+
+            // Triangle 1
+            pushV(p1x, p1y, c);
+            pushV(p2x, p2y, c);
+            pushV(p3x, p3y, c);
+
+            // Triangle 2
+            pushV(p1x, p1y, c);
+            pushV(p3x, p3y, c);
+            pushV(p4x, p4y, c);
+            };
+
+        // First pass: Triangles (Filled Rects + Thick Lines/Rects)
         for (const auto& cmd : primitiveCommands) {
             if (cmd.type == PrimitiveCommand::Type::FilledRect) {
                 float x2 = cmd.x1 + cmd.w;
@@ -217,22 +251,80 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 pushV(cmd.x1, cmd.y1, cmd.color);
                 pushV(cmd.x1, y2, cmd.color);
                 pushV(x2, cmd.y1, cmd.color);
-                
+
                 // Triangle 2 (CCW)
                 pushV(x2, cmd.y1, cmd.color);
                 pushV(cmd.x1, y2, cmd.color);
                 pushV(x2, y2, cmd.color);
             }
+            else if (cmd.type == PrimitiveCommand::Type::Line && cmd.thickness > 1.0f) {
+                pushThickLine(cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.thickness, cmd.color);
+            }
+            else if (cmd.type == PrimitiveCommand::Type::Rect && cmd.thickness > 1.0f) {
+                // Ensure crisp "Square Join" corners by drawing 4 overlapping rectangles
+                // Note: This logic assumes axis-aligned rectangles.
+                float halfWidth = cmd.thickness * 0.5f;
+
+                float left = cmd.x1 - halfWidth;
+                float right = cmd.x1 + cmd.w + halfWidth;
+                float top = cmd.y1 - halfWidth;
+                float bottom = cmd.y1 + cmd.h + halfWidth;
+
+                // Top Bar (full width)
+                // x: [left, right], y: [top, top + thickness]
+                {
+                    float y1 = top;
+                    float y2 = top + cmd.thickness;
+                    pushV(left, y1, cmd.color); pushV(left, y2, cmd.color); pushV(right, y1, cmd.color);
+                    pushV(right, y1, cmd.color); pushV(left, y2, cmd.color); pushV(right, y2, cmd.color);
+                }
+
+                // Bottom Bar (full width)
+                // x: [left, right], y: [bottom - thickness, bottom]
+                {
+                    float y1 = bottom - cmd.thickness;
+                    float y2 = bottom;
+                    pushV(left, y1, cmd.color); pushV(left, y2, cmd.color); pushV(right, y1, cmd.color);
+                    pushV(right, y1, cmd.color); pushV(left, y2, cmd.color); pushV(right, y2, cmd.color);
+                }
+
+                // Left Bar (between top/bottom bars)
+                // x: [left, left + thickness], y: [top + thickness, bottom - thickness]
+                {
+                    float x1 = left;
+                    float x2 = left + cmd.thickness;
+                    float y1 = top + cmd.thickness;
+                    float y2 = bottom - cmd.thickness;
+                    // Only draw if height is positive (otherwise bars overlap/cross)
+                    if (y2 > y1) {
+                        pushV(x1, y1, cmd.color); pushV(x1, y2, cmd.color); pushV(x2, y1, cmd.color);
+                        pushV(x2, y1, cmd.color); pushV(x1, y2, cmd.color); pushV(x2, y2, cmd.color);
+                    }
+                }
+
+                // Right Bar (between top/bottom bars)
+                // x: [right - thickness, right], y: [top + thickness, bottom - thickness]
+                {
+                    float x1 = right - cmd.thickness;
+                    float x2 = right;
+                    float y1 = top + cmd.thickness;
+                    float y2 = bottom - cmd.thickness;
+                    if (y2 > y1) {
+                        pushV(x1, y1, cmd.color); pushV(x1, y2, cmd.color); pushV(x2, y1, cmd.color);
+                        pushV(x2, y1, cmd.color); pushV(x1, y2, cmd.color); pushV(x2, y2, cmd.color);
+                    }
+                }
+            }
         }
         primitiveTriangleVertexCount = (Uint32)primitives.size();
 
-        // Second pass: Lines and Rect Outlines -> Lines
+        // Second pass: Thin Lines/Rects (Native LineList)
         for (const auto& cmd : primitiveCommands) {
-            if (cmd.type == PrimitiveCommand::Type::Line) {
+            if (cmd.type == PrimitiveCommand::Type::Line && cmd.thickness <= 1.0f) {
                 pushV(cmd.x1, cmd.y1, cmd.color);
                 pushV(cmd.x2, cmd.y2, cmd.color);
             }
-            else if (cmd.type == PrimitiveCommand::Type::Rect) {
+            else if (cmd.type == PrimitiveCommand::Type::Rect && cmd.thickness <= 1.0f) {
                 float x2 = cmd.x1 + cmd.w;
                 float y2 = cmd.y1 + cmd.h;
                 // Top
@@ -249,6 +341,7 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 pushV(cmd.x1, cmd.y1, cmd.color);
             }
         }
+
         primitiveLineVertexCount = (Uint32)primitives.size() - primitiveTriangleVertexCount;
 
         if (!primitives.empty()) {
@@ -393,19 +486,16 @@ void GPUBatcher::addSprite(const SpriteTexture& sprite, int sprite_id, float x, 
 
 void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness)
 {
-    PrimitiveCommand cmd(PrimitiveCommand::Type::Line, x1, y1, x2, y2, color, thickness);
-    primitiveCommands.push_back(cmd);
+    primitiveCommands.push_back(PrimitiveCommand::Line(x1, y1, x2, y2, color, thickness));
 }
 
 void GPUBatcher::addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness)
 {
-    PrimitiveCommand cmd(PrimitiveCommand::Type::Rect, x, y, w, h, color);
-    primitiveCommands.push_back(cmd);
+    primitiveCommands.push_back(PrimitiveCommand::Rect(PrimitiveCommand::Type::Rect, x, y, w, h, color, thickness));
 }
 void GPUBatcher::addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color)
 {
-    PrimitiveCommand cmd(PrimitiveCommand::Type::FilledRect, x, y, w, h, color);
-    primitiveCommands.push_back(cmd);
+    primitiveCommands.push_back(PrimitiveCommand::Rect(PrimitiveCommand::Type::FilledRect, x, y, w, h, color));
 }
 
 void GPUBatcher::loadShaders()
@@ -430,9 +520,9 @@ void GPUBatcher::loadShaders()
         0,  // num_storage_textures
         0,  // num_storage_buffers
         0); // num_uniform_buffers
-    
+
     // Load primitive shaders
-    primitiveVertShader = gpu->loadShader("res/shaders/vulkan/primitive.vert.spv", 
+    primitiveVertShader = gpu->loadShader("res/shaders/vulkan/primitive.vert.spv",
         SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 0);
     primitiveFragShader = gpu->loadShader("res/shaders/vulkan/primitive.frag.spv",
         SDL_GPU_SHADERSTAGE_FRAGMENT, 0, 0, 0, 0);

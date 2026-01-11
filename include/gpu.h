@@ -124,18 +124,31 @@ private:
             FilledRect
         };
 
-        Type type;
-        float x1, y1, x2, y2;
-        float w, h;
+        Type type = Type::Line;
+        float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+        float w = 0, h = 0;
         ppl7::grafix::Color color;
-        float thickness;
+        float thickness = 0.0f;
 
-        PrimitiveCommand(Type type, float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness)
-            : type(type), x1(x1), y1(y1), x2(x2), y2(y2), color(color), thickness(thickness) {
+        PrimitiveCommand() = default;
+
+        static PrimitiveCommand Line(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness) {
+            PrimitiveCommand cmd;
+            cmd.type = Type::Line;
+            cmd.x1 = x1; cmd.y1 = y1; cmd.x2 = x2; cmd.y2 = y2;
+            cmd.color = color;
+            cmd.thickness = thickness;
+            return cmd;
         }
 
-        PrimitiveCommand(Type type, float x, float y, float w, float h, const ppl7::grafix::Color& color)
-            : type(type), x1(x), y1(y), w(w), h(h), color(color), thickness(0.0f) {
+        static PrimitiveCommand Rect(Type type, float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness = 0.0f) {
+            PrimitiveCommand cmd;
+            cmd.type = type;
+            cmd.x1 = x; cmd.y1 = y;
+            cmd.w = w; cmd.h = h;
+            cmd.color = color;
+            cmd.thickness = thickness;
+            return cmd;
         }
     };
 
