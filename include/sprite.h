@@ -221,6 +221,8 @@ public:
     SDL_FRect getSpriteSource(int id) const;
     const SpriteIndexItem* getSpriteIndex(int id) const;
     ppl7::grafix::Point spriteOffset(int id) const;
+    ppl7::grafix::Point getPivot(int id) const;
+
 
     uint64_t getUniqueTextureId(int id) const;
 };

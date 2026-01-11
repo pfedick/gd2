@@ -5,6 +5,7 @@ FPS::FPS()
 	fps_start_time = ppl7::GetTime();
 	fps_frame_count = 0;
 	fps = 0;
+	debug = false;
 }
 
 int FPS::getFPS() const
@@ -20,6 +21,13 @@ void FPS::update()
 		fps_start_time = now;
 		fps = fps_frame_count;
 		fps_frame_count = 0;
+		if (debug) {
+			ppl7::PrintDebug("FPS: %d\n", fps);
+		}
 	}
 }
 
+void FPS::enableDebug(bool enable)
+{
+	debug = enable;
+}

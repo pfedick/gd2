@@ -41,24 +41,24 @@ void start(int argc, char** argv)
     ppl7::grafix::Grafix gfx;
     ppltk::WindowManager_SDL3 wm;
     Game game;
-    //try {
-    game.init();
-    game.init_grafix();
-    if (ppl7::HaveArgv(argc, argv, "-l")) {
-        ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
-        //game.loadLevel(level);
-    }
-    game.run();
-    /*
+    try {
+        game.init();
+        game.init_grafix();
+        if (ppl7::HaveArgv(argc, argv, "-l")) {
+            ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
+            //game.loadLevel(level);
+        }
+        game.run();
+
     }
     catch (const ppl7::Exception& ex) {
         ex.print();
         throw;
     }
-        */
 
 
-        //game.audiosystem.shutdown();
+
+    //game.audiosystem.shutdown();
 }
 
 #ifdef WIN32

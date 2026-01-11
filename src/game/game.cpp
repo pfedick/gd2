@@ -56,6 +56,7 @@ void Game::createWindow()
     //SDL_RenderSetLogicalSize(renderer, 1920, 1080);
     wm->setGameControllerFocus(this);
 
+    //SDL_HideCursor();
     SDL_HideCursor();
 
     WidgetDrawbuffer.create(1920, 1080, ppl7::grafix::RGBFormat::A8R8G8B8);
@@ -74,8 +75,11 @@ void Game::init_grafix()
 
 void Game::run()
 {
+    SDL_ShowCursor();
+    sdl.setCursor(resources.Cursor.getDrawable(1), resources.Cursor.getPivot(1));
     ppl7::ppl_time_t last_second = ppl7::GetTime();
     quitGame = false;
+    //fps.enableDebug(true);
     while (!quitGame) {
         ppl7::ppl_time_t current_second = ppl7::GetTime();
         if (current_second > last_second) {
@@ -85,18 +89,37 @@ void Game::run()
         wm->handleEvents();
         ppltk::MouseState mouse = wm->getMouseState();
         updateUi(mouse);
-
         gpu_batcher.clearQueues();
-        drawWorld();
+
+        SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
+        if (cmdbuf == NULL)
+        {
+            SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
+            continue;
+        }
+        SDL_GPUTexture* swapchainTexture;
+        if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, sdl_window, &swapchainTexture, NULL, NULL)) {
+            SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
+            continue;
+        }
+        if (swapchainTexture == NULL) {
+            // Das kann passieren, wenn das Fenster minimiert ist
+            SDL_SubmitGPUCommandBuffer(cmdbuf);
+            continue;
+        }
+        fps.update();
+
+
+        drawWorld(cmdbuf, swapchainTexture);
         // HUD
-        //drawHUD();
-        void drawUi();
+        drawHUD(cmdbuf, swapchainTexture);
 
-        // UI
-        //drawWidgets();
+        // Ui and Mouse if enabled
+        drawUi(cmdbuf, swapchainTexture, mouse);
 
-        // Mouse
-        //drawCursor(mouse);
+        // Frame done
+        SDL_SubmitGPUCommandBuffer(cmdbuf);
+        ppl7::PrintDebug("FPS: %d\n", fps.getFPS());
 
     }
 }
@@ -106,22 +129,30 @@ void Game::updateUi(const ppltk::MouseState& mouse)
 
 }
 
-void Game::drawUi(const ppltk::MouseState& mouse)
+void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
 {
     if (!showui) return;
+    gpu_batcher.startRenderPass();
+    //gpu_batcher.addSprite(resources.Cursor, 1, mouse.p.x, mouse.p.y);
 
+    gpu_batcher.prepareInstanceData(cmdbuf);
+    SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
+    colorTargetInfo.texture = swapchainTexture;
+    colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };  // Black background
+    colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+    colorTargetInfo.cycle = false;  // CRITICAL: SDL examples use false!
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
+
+    gpu_batcher.endRenderPass(cmdbuf, renderPass);
+
+    SDL_EndGPURenderPass(renderPass);
     //drawWidgets();
-    drawCursor(mouse);
 }
 
-void Game::drawWorld()
+void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
-    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
-    if (cmdbuf == NULL)
-    {
-        SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
-        return;
-    }
 
     // Start render pass (resets z-order counter)
     gpu_batcher.startRenderPass();
@@ -142,15 +173,6 @@ void Game::drawWorld()
     // Upload instance data to GPU (must be BEFORE BeginGPURenderPass)
     gpu_batcher.prepareInstanceData(cmdbuf);
 
-    SDL_GPUTexture* swapchainTexture;
-    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, sdl_window, &swapchainTexture, NULL, NULL)) {
-        SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
-        return;
-    }
-    if (swapchainTexture == NULL) {
-        // Das kann passieren, wenn das Fenster minimiert ist
-        return;
-    }
     SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
     colorTargetInfo.texture = swapchainTexture;
     colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };  // Black background
@@ -171,20 +193,12 @@ void Game::drawWorld()
     gpu_batcher.endRenderPass(cmdbuf, renderPass);
 
     SDL_EndGPURenderPass(renderPass);
-    SDL_SubmitGPUCommandBuffer(cmdbuf);
+
 }
 
-void Game::drawHUD()
+void Game::drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
 }
-
-void Game::drawCursor(const ppltk::MouseState& mouse)
-{
-    if (showui) {
-        gpu_batcher.addSprite(resources.Cursor, 1, mouse.p.x, mouse.p.y);
-    }
-}
-
 
 void Game::quitEvent(ppltk::Event* event)
 {

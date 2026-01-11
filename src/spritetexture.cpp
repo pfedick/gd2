@@ -694,6 +694,16 @@ void SpriteTexture::setPivot(int id, int x, int y)
 	it->second.Pivot.setPoint(x, y);
 }
 
+ppl7::grafix::Point SpriteTexture::getPivot(int id) const
+{
+	std::map<int, SpriteIndexItem>::const_iterator it;
+	it = SpriteList.find(id);
+	ppl7::grafix::Point p;
+	if (it == SpriteList.end()) return p;
+	return it->second.Pivot;
+}
+
+
 const SpriteTexture::SpriteIndexItem* SpriteTexture::getSpriteIndex(int id) const
 {
 	std::map<int, SpriteIndexItem>::const_iterator it;

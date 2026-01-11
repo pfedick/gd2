@@ -50,7 +50,7 @@ static SDL_PixelFormat RGBFormat2SDLFormat(const ppl7::grafix::RGBFormat& format
 	case ppl7::grafix::RGBFormat::B8G8R8:
 		return SDL_PIXELFORMAT_XBGR8888;
 	default:
-		throw ppl7::grafix::UnsupportedColorFormatException();
+		throw ppl7::grafix::UnsupportedColorFormatException("format=%d", (int)format);
 	}
 	throw ppl7::grafix::UnsupportedColorFormatException();
 }
@@ -67,6 +67,7 @@ SDL::VideoDisplay::VideoDisplay(int id, const ppl7::String& name)
 SDL::SDL()
 {
 	renderer = NULL;
+	currentCursor = NULL;
 	screensaver_enabled = SDL_ScreenSaverEnabled();
 	if (screensaver_enabled) {
 		SDL_DisableScreenSaver();
@@ -76,6 +77,11 @@ SDL::SDL()
 
 SDL::~SDL()
 {
+	if (currentCursor) {
+		SDL_DestroyCursor(currentCursor);
+		currentCursor = NULL;
+	}
+
 	if (screensaver_enabled) {
 		SDL_EnableScreenSaver();
 	}
@@ -313,3 +319,37 @@ void SDL::getDisplayModes(int display_id, std::list<DisplayMode>& mode_list)
 
 
 
+SDL_Surface* SDL::createSurfaceFromDrawable(const ppl7::grafix::Drawable& drawable)
+{
+	SDL_Surface* surface = SDL_CreateSurfaceFrom(
+		drawable.width(),
+		drawable.height(),
+		RGBFormat2SDLFormat(drawable.rgbformat()),
+		drawable.adr(),
+		drawable.pitch()
+	);
+	if (!surface) {
+		throw SDLException("SDL_CreateSurfaceFrom failed: %s", SDL_GetError());
+	}
+	return surface;
+}
+
+void SDL::setCursor(const ppl7::grafix::Drawable& cursorImage, const ppl7::grafix::Point& hotSpot)
+{
+	SDL_Surface* surface = createSurfaceFromDrawable(cursorImage);
+	SDL_Cursor* cursor = SDL_CreateColorCursor(
+		surface,
+		hotSpot.x,
+		hotSpot.y
+	);
+	if (!cursor) {
+		throw SDLException("SDL_CreateColorCursor failed: %s", SDL_GetError());
+	}
+	SDL_SetCursor(cursor);
+	SDL_DestroySurface(surface);
+	if (currentCursor) {
+		SDL_DestroyCursor(currentCursor);
+	}
+	currentCursor = cursor;
+
+}

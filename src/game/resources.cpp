@@ -28,6 +28,8 @@ Resources::Resources()
 void Resources::load(GPUContext& gpu)
 {
 	try {
+		Cursor.enableMemoryBuffer(true);
+		Cursor.enableSDLBuffer(false);
 		Cursor.load(gpu, "res/ui/cursor.tex");
 		Player.load(gpu, "res/player.tex");
 	}

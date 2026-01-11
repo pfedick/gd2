@@ -81,10 +81,12 @@ private:
     ppl7::ppl_time_t fps_start_time;
     int fps_frame_count;
     int fps;
+    bool debug;
 public:
     FPS();
     int getFPS() const;
     void update();
+    void enableDebug(bool enable);
 };
 
 
@@ -106,12 +108,15 @@ private:
     bool quitGame = false;
     bool showui = true;
 
-    void drawUi(const ppltk::MouseState& mouse);
+    void drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse);
+    void drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
+    void drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
 
 
 public:
     Resources resources;
     Config config;
+    FPS fps;
     Game();
 
     void init();
@@ -121,10 +126,6 @@ public:
 
     void run();
     void updateUi(const ppltk::MouseState& mouse);
-
-    void drawWorld();
-    void drawHUD();
-    void drawCursor(const ppltk::MouseState& mouse);
 
     // EventHandler
     void quitEvent(ppltk::Event* event);

@@ -31,6 +31,7 @@ class SDL
 private:
 	SDL_Renderer* renderer;
 	SDL_GPUDevice* gpu;
+	SDL_Cursor* currentCursor;
 	bool screensaver_enabled;
 
 
@@ -74,6 +75,9 @@ public:
 
 
 	static SDL_Texture* createTexture(SDL_Renderer* renderer, const ppl7::grafix::Drawable& d);
+
+	void setCursor(const ppl7::grafix::Drawable& cursorImage, const ppl7::grafix::Point& hotSpot);
+	SDL_Surface* createSurfaceFromDrawable(const ppl7::grafix::Drawable& drawable);
 
 };
 

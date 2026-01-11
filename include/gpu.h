@@ -46,8 +46,6 @@ public:
 
     SDL_GPUShader* loadShader(const ppl7::String& filename, SDL_GPUShaderStage stage, int num_samplers, int num_storage_textures, int num_storage_buffers, int num_uniform_buffers);
     void releaseShader(SDL_GPUShader* shader);
-
-
 };
 
 GPUContext& getGlobalGPUContext();

@@ -47,6 +47,13 @@ void GPUContext::init(SDL_Window* window)
         gpu = NULL;
         throw GPUException("SDL_ClaimWindowForGPUDevice failed: %s", SDL_GetError());
     }
+
+    // Limit frames in flight to 2 to minimize input lag (Double Buffering behavior)
+    // This prevents the CPU from running too far ahead of the GPU
+    SDL_SetGPUAllowedFramesInFlight(gpu, 1);
+
+    // Use VSYNC for tearing-free 60 FPS, but rely on FramesInFlight=2 to keep latency low
+    SDL_SetGPUSwapchainParameters(gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_VSYNC);
     this->window = window;
 }
 
