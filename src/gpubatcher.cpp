@@ -81,7 +81,7 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 float ndc_x = (world_x * 2.0f / screenWidth) - 1.0f;
                 // Y: +1 (Top) ... -1 (Bottom)
                 float ndc_y = 1.0f - (world_y * 2.0f / screenHeight);
-                
+
                 float ndc_w = (item->r.w * 2.0f / screenWidth);
                 float ndc_h = -(item->r.h * 2.0f / screenHeight);
 
@@ -93,15 +93,15 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 inst.scale_x = spriteCmd.scale_x;
                 inst.scale_y = spriteCmd.scale_y;
                 inst.angle = spriteCmd.angle * (3.14159265f / 180.0f);
-                
+
                 inst.uv_x = item->uv.x;
                 inst.uv_y = item->uv.y;
                 inst.uv_w = item->uv.w;
                 inst.uv_h = item->uv.h;
-                
+
                 inst.pivot_x = (item->r.w > 0) ? (float)item->Pivot.x / item->r.w : 0.0f;
                 inst.pivot_y = (item->r.h > 0) ? (float)item->Pivot.y / item->r.h : 0.0f;
-                
+
                 inst.offset_x = 0.0f;
                 inst.offset_y = 0.0f;
                 inst.padding = 0.0f; // Initialize padding
