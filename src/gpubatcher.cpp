@@ -144,7 +144,7 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
             SDL_ReleaseGPUBuffer(gpu->gpu, storageBuffer);
         }
         // Grow by power of 2 or large chunks
-        storageBufferCapacity = (Uint32)(instanceDataSize * 1.5); 
+        storageBufferCapacity = (Uint32)(instanceDataSize * 1.5);
         SDL_GPUBufferCreateInfo storageBufferInfo = {
             .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
             .size = storageBufferCapacity,
