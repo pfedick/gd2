@@ -51,10 +51,12 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         return;
     }
 
-    // Collect ALL sprites into one big list (ignoring texture batching for now)
     const size_t MAX_INSTANCES_PER_BATCH = 16384;
-    std::vector<SpriteInstance> instances;
-    instances.reserve(MAX_INSTANCES_PER_BATCH);
+    instanceData.clear();
+    // Pre-allocate to avoid reallocations, but don't shrink if it's already large enough
+    if (instanceData.capacity() < MAX_INSTANCES_PER_BATCH) {
+        instanceData.reserve(MAX_INSTANCES_PER_BATCH);
+    }
 
     // Upload instance data for all sprite batches
     for (const auto& [textureId, spriteList] : spriteCommands) {
@@ -96,17 +98,17 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 inst.offset_x = 0.0f;
                 inst.offset_y = 0.0f;
                 inst.padding = 0.0f; // Initialize padding
-                instances.push_back(inst);
+                instanceData.push_back(inst);
             }
         }
     }
 
-    if (instances.empty()) {
+    if (instanceData.empty()) {
         return;
     }
 
     // Upload ALL instance data at once
-    size_t instanceDataSize = sizeof(SpriteInstance) * instances.size();
+    size_t instanceDataSize = sizeof(SpriteInstance) * instanceData.size();
     SDL_GPUTransferBufferCreateInfo transferInfo = {
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
         .size = (Uint32)instanceDataSize
@@ -115,7 +117,7 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
     if (transferBuffer) {
         void* mapped = SDL_MapGPUTransferBuffer(gpu->gpu, transferBuffer, false);
         if (mapped) {
-            memcpy(mapped, instances.data(), instanceDataSize);
+            memcpy(mapped, instanceData.data(), instanceDataSize);
             SDL_UnmapGPUTransferBuffer(gpu->gpu, transferBuffer);
 
             SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);

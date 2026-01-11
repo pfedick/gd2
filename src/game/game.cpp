@@ -90,12 +90,13 @@ void Game::run()
         drawWorld();
         // HUD
         //drawHUD();
+        void drawUi();
 
-            // UI
-            //drawWidgets();
+        // UI
+        //drawWidgets();
 
-            // Mouse
-            //drawCursor(mouse);
+        // Mouse
+        //drawCursor(mouse);
 
     }
 }
@@ -103,6 +104,14 @@ void Game::run()
 void Game::updateUi(const ppltk::MouseState& mouse)
 {
 
+}
+
+void Game::drawUi(const ppltk::MouseState& mouse)
+{
+    if (!showui) return;
+
+    //drawWidgets();
+    drawCursor(mouse);
 }
 
 void Game::drawWorld()
@@ -129,7 +138,6 @@ void Game::drawWorld()
         }
     }
 
-    //gpu_batcher.addSprite(resources.Player, 0, 0, 0);
 
     // Upload instance data to GPU (must be BEFORE BeginGPURenderPass)
     gpu_batcher.prepareInstanceData(cmdbuf);
@@ -159,6 +167,7 @@ void Game::drawWorld()
     SDL_SetGPUScissor(renderPass, &scissor);
 
     // Draw all batched sprites
+    //gpu_batcher.prepareInstanceData(cmdbuf);
     gpu_batcher.endRenderPass(cmdbuf, renderPass);
 
     SDL_EndGPURenderPass(renderPass);

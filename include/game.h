@@ -106,6 +106,8 @@ private:
     bool quitGame = false;
     bool showui = true;
 
+    void drawUi(const ppltk::MouseState& mouse);
+
 
 public:
     Resources resources;
