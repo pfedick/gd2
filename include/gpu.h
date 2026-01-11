@@ -82,14 +82,13 @@ private:
 
 
     struct SpriteInstance {
-        float pos_x, pos_y;           // Sprite position (NDC)
-        float size_w, size_h;         // Sprite size (NDC)
-        float scale_x, scale_y;       // Sprite scale factors
-        float angle;                  // Rotation angle (radians)
-        float padding;                // PADDING for std430 alignment (vec4 uv must be 16-byte aligned)
+        float pos_x, pos_y;           // Sprite position (NDC) center/pivot
+        float m00, m01;               // Transform Matrix Col 1
+        float m10, m11;               // Transform Matrix Col 2
+        float pad1, pad2;             // PADDING (was angle+padding)
         float uv_x, uv_y, uv_w, uv_h; // UV rect (normalized 0-1)
-        float pivot_x, pivot_y;       // Pivot point (pixels)
-        float offset_x, offset_y;     // Offset (pixels)
+        float pivot_x, pivot_y;       // Pivot point (0..1)
+        float offset_x, offset_y;     // Unused
     };
 
     class PrimitiveCommand

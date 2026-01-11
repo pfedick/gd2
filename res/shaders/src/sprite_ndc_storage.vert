@@ -7,14 +7,13 @@ layout(location = 2) in vec4 in_color;      // Color modulation
 
 // Sprite instance data in storage buffer (NDC coordinates)
 struct SpriteInstance {
-    vec2 pos;           // Sprite position (NDC)
-    vec2 size;          // Sprite size (NDC)
-    vec2 scale;         // Sprite scale factors
-    float angle;        // Sprite rotation angle (radians)
-    float padding;      // Explicit padding to match C++ alignment (16-byte alignment forcée par vec4 uv)
-    vec4 uv;            // Sprite UV rect (x, y, w, h) normalized 0-1
+    vec2 pos;           // Sprite position (NDC) - PIVOT POINT
+    vec2 m_row1;        // Transform Row 1 (m00, m01) - packed as vec2 for alignment (offset 8)
+    vec2 m_row2;        // Transform Row 2 (m10, m11) - packed as vec2 for alignment (offset 16)
+    vec2 _pad;          // Padding (offset 24)
+    vec4 uv;            // Sprite UV rect (x, y, w, h) normalized 0-1 (offset 32)
     vec2 pivot;         // Sprite pivot point (Normalized 0..1 relative to size)
-    vec2 offset;        // Sprite offset (Unused for now, baked into pos)
+    vec2 offset;        // Unused
 };
 
 // Storage buffer for sprite instances (readonly)
@@ -35,28 +34,18 @@ void main() {
     frag_texcoord = sprite.uv.xy + in_texcoord * sprite.uv.zw;
     frag_color = in_color;
 
-    // Vertex Logic with Pivot and Rotation
-    // 1. Start with Vertex 0..1
-    vec2 pos = in_position; 
+    // 1. Get local vector from pivot (in 0..1 unit space)
+    vec2 local = in_position - sprite.pivot;
+
+    // 2. Apply pre-calculated Scale+Rotate+Aspect Matrix
+    // m_row1 holds m00, m01
+    // m_row2 holds m10, m11
+    // x_new = local.x * m00 + local.y * m01
+    // y_new = local.x * m10 + local.y * m11
+    vec2 rotated;
+    rotated.x = local.x * sprite.m_row1.x + local.y * sprite.m_row1.y;
+    rotated.y = local.x * sprite.m_row2.x + local.y * sprite.m_row2.y;
     
-    // 2. Shift so Pivot is at local (0,0)
-    // sprite.pivot is expected to be normalized (0..1)
-    pos -= sprite.pivot; 
-    
-    // 3. Scale by Size (NDC dimensions)
-    // Note: size.y is negative in our C++ setup to flip Y axis
-    pos *= sprite.size * sprite.scale;
-    
-    // 4. Rotate
-    float c = cos(sprite.angle);
-    float s = sin(sprite.angle);
-    // Standard rotation around (0,0) - which is now our pivot
-    float x = pos.x * c - pos.y * s;
-    float y = pos.x * s + pos.y * c;
-    pos = vec2(x, y);
-    
-    // 5. Translate to Target Position (NDC)
-    vec2 final_pos = pos + sprite.pos;
-    
-    gl_Position = vec4(final_pos, 0.0, 1.0);
+    // 3. Add to Pivot position (NDC)
+    gl_Position = vec4(rotated + sprite.pos, 0.0, 1.0);
 }

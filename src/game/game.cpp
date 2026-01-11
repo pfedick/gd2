@@ -171,6 +171,10 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
 
     gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 2.0f, 2.0f);
     gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 0.5f, 0.5f);
+    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 90.0f);
+    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 180.0f);
+    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 270.0f);
+
 
     // Upload instance data to GPU (must be BEFORE BeginGPURenderPass)
     gpu_batcher.prepareInstanceData(cmdbuf);

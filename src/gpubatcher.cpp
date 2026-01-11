@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include "gpu.h"
@@ -66,38 +68,59 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         for (const SpriteCommand& spriteCmd : spriteList) {
             const SpriteTexture::SpriteIndexItem* item = spriteCmd.sprite->getSpriteIndex(spriteCmd.sprite_id);
             if (item) {
-                // Apply Offset (Shift origin) relative to Pivot
-                float world_x = spriteCmd.x + (float)item->Offset.x * spriteCmd.scale_x;
-                float world_y = spriteCmd.y + (float)item->Offset.y * spriteCmd.scale_y;
+                // Determine Pivot Point in Texture Coordinates (Pixels relative to Texture Top-Left)
+                // Legacy: center = Pivot - Offset
+                float pivot_pixel_x = (float)item->Pivot.x - (float)item->Offset.x;
+                float pivot_pixel_y = (float)item->Pivot.y - (float)item->Offset.y;
+
+                // Set world position to the desired Pivot Point (x,y)
+                // The shader assumes 'pos' is the center of rotation/scaling.
+                float world_x = spriteCmd.x;
+                float world_y = spriteCmd.y;
 
                 // X: 0..W -> -1..1
                 float ndc_x = (world_x * 2.0f / screenWidth) - 1.0f;
                 // Y: +1 (Top) ... -1 (Bottom)
                 float ndc_y = 1.0f - (world_y * 2.0f / screenHeight);
 
-                float ndc_w = (item->r.w * 2.0f / screenWidth);
-                float ndc_h = -(item->r.h * 2.0f / screenHeight);
+                float rad = spriteCmd.angle * (M_PI / 180.0f);
+                float c = cosf(rad);
+                float s = sinf(rad);
+
+                // Pixel dimensions of the sprite
+                float sw = (float)item->r.w * spriteCmd.scale_x;
+                float sh = (float)item->r.h * spriteCmd.scale_y;
+
+                // Matrix calculation to transform (0..1) unit vector to Rotated NDC
+                float m00 = (2.0f / screenWidth) * sw * c;
+                float m01 = (2.0f / screenWidth) * sh * (-s);
+                float m10 = (-2.0f / screenHeight) * sw * s;
+                float m11 = (-2.0f / screenHeight) * sh * c;
 
                 SpriteInstance inst;
                 inst.pos_x = ndc_x;
                 inst.pos_y = ndc_y;
-                inst.size_w = ndc_w;
-                inst.size_h = ndc_h;
-                inst.scale_x = spriteCmd.scale_x;
-                inst.scale_y = spriteCmd.scale_y;
-                inst.angle = spriteCmd.angle * (3.14159265f / 180.0f);
+
+                inst.m00 = m00;
+                inst.m01 = m01;
+                inst.m10 = m10;
+                inst.m11 = m11;
+
+                inst.pad1 = 0.0f;
+                inst.pad2 = 0.0f;
 
                 inst.uv_x = item->uv.x;
                 inst.uv_y = item->uv.y;
                 inst.uv_w = item->uv.w;
                 inst.uv_h = item->uv.h;
 
-                inst.pivot_x = (item->r.w > 0) ? (float)item->Pivot.x / item->r.w : 0.0f;
-                inst.pivot_y = (item->r.h > 0) ? (float)item->Pivot.y / item->r.h : 0.0f;
+                // Normalize pivot relative to texture size
+                inst.pivot_x = (item->r.w > 0) ? pivot_pixel_x / (float)item->r.w : 0.0f;
+                inst.pivot_y = (item->r.h > 0) ? pivot_pixel_y / (float)item->r.h : 0.0f;
 
                 inst.offset_x = 0.0f;
                 inst.offset_y = 0.0f;
-                inst.padding = 0.0f; // Initialize padding
+
                 instanceData.push_back(inst);
             }
         }
