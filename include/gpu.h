@@ -70,11 +70,23 @@ private:
     SDL_GPUShader* fragShader;
     SDL_GPUShader* vertShader;
     SDL_GPUGraphicsPipeline* spritePipeline;
+
+    SDL_GPUShader* primitiveVertShader;
+    SDL_GPUShader* primitiveFragShader;
+    SDL_GPUGraphicsPipeline* primitivePipeline;     // LINELIST
+    SDL_GPUGraphicsPipeline* primitiveFillPipeline; // TRIANGLELIST
+
     SDL_GPUSampler* sampler;
     SDL_GPUBuffer* vertexBuffer;
     SDL_GPUBuffer* indexBuffer;
     SDL_GPUBuffer* storageBuffer;   // Storage buffer for sprite instances
     Uint32 storageBufferCapacity;   // Current capacity in bytes
+
+    SDL_GPUBuffer* primitiveVertexBuffer;
+    Uint32 primitiveVertexCapacity;
+    Uint32 primitiveTriangleVertexCount;
+    Uint32 primitiveLineVertexCount;
+
     SDL_GPUBuffer* uniformBuffer;  // Not used - push constants instead
     UniformData currentUniforms;    // Current projection/view matrices
 
@@ -83,6 +95,12 @@ private:
         float u, v;        // Texcoords
         float r, g, b, a;  // Color
     };
+
+    struct PrimitiveVertex {
+        float x, y, z;
+        float r, g, b, a;
+    };
+
 
 
     struct SpriteInstance {
@@ -144,8 +162,10 @@ private:
     void cleanup();
     void bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture);
     void drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites);
+    void drawPrimitives(SDL_GPURenderPass* render_pass);
 
     std::list<PrimitiveCommand> primitiveCommands;
+
     std::map<uint64_t, std::list<SpriteCommand>> spriteCommands;
     std::vector<SpriteInstance> instanceData;
 

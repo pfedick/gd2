@@ -14,11 +14,18 @@ GPUBatcher::GPUBatcher()
     screenHeight = 1080;
     fragShader = nullptr;
     vertShader = nullptr;
+    primitiveVertShader = nullptr;
+    primitiveFragShader = nullptr;
     spritePipeline = nullptr;
+    primitivePipeline = nullptr;
+    primitiveFillPipeline = nullptr;
     sampler = nullptr;
     vertexBuffer = nullptr;
     indexBuffer = nullptr;
     storageBuffer = nullptr;
+    primitiveVertexBuffer = nullptr;
+    storageBufferCapacity = 0;
+    primitiveVertexCapacity = 0;
     uniformBuffer = nullptr;
     memset(&currentUniforms, 0, sizeof(UniformData));
 }
@@ -183,7 +190,102 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         }
         SDL_ReleaseGPUTransferBuffer(gpu->gpu, transferBuffer);
     }
+
+    // --- Prepare Primitives ---
+    primitiveTriangleVertexCount = 0;
+    primitiveLineVertexCount = 0;
+
+    if (!primitiveCommands.empty()) {
+        std::vector<PrimitiveVertex> primitives;
+        // Reserve some memory to avoid reallocations
+        primitives.reserve(primitiveCommands.size() * 4);
+
+        // Helper to add vertex
+        auto pushV = [&](float x, float y, const ppl7::grafix::Color& c) {
+            float ndc_x = (x * 2.0f / screenWidth) - 1.0f;
+            float ndc_y = 1.0f - (y * 2.0f / screenHeight);
+            primitives.push_back({ ndc_x, ndc_y, 0.0f,
+               (float)c.red() / 255.0f, (float)c.green() / 255.0f, (float)c.blue() / 255.0f, (float)c.alpha() / 255.0f });
+        };
+
+        // First pass: Filled Rects -> Triangles
+        for (const auto& cmd : primitiveCommands) {
+            if (cmd.type == PrimitiveCommand::Type::FilledRect) {
+                float x2 = cmd.x1 + cmd.w;
+                float y2 = cmd.y1 + cmd.h;
+                // Triangle 1 (CCW)
+                pushV(cmd.x1, cmd.y1, cmd.color);
+                pushV(cmd.x1, y2, cmd.color);
+                pushV(x2, cmd.y1, cmd.color);
+                
+                // Triangle 2 (CCW)
+                pushV(x2, cmd.y1, cmd.color);
+                pushV(cmd.x1, y2, cmd.color);
+                pushV(x2, y2, cmd.color);
+            }
+        }
+        primitiveTriangleVertexCount = (Uint32)primitives.size();
+
+        // Second pass: Lines and Rect Outlines -> Lines
+        for (const auto& cmd : primitiveCommands) {
+            if (cmd.type == PrimitiveCommand::Type::Line) {
+                pushV(cmd.x1, cmd.y1, cmd.color);
+                pushV(cmd.x2, cmd.y2, cmd.color);
+            }
+            else if (cmd.type == PrimitiveCommand::Type::Rect) {
+                float x2 = cmd.x1 + cmd.w;
+                float y2 = cmd.y1 + cmd.h;
+                // Top
+                pushV(cmd.x1, cmd.y1, cmd.color);
+                pushV(x2, cmd.y1, cmd.color);
+                // Right
+                pushV(x2, cmd.y1, cmd.color);
+                pushV(x2, y2, cmd.color);
+                // Bottom
+                pushV(x2, y2, cmd.color);
+                pushV(cmd.x1, y2, cmd.color);
+                // Left
+                pushV(cmd.x1, y2, cmd.color);
+                pushV(cmd.x1, cmd.y1, cmd.color);
+            }
+        }
+        primitiveLineVertexCount = (Uint32)primitives.size() - primitiveTriangleVertexCount;
+
+        if (!primitives.empty()) {
+            size_t dataSize = primitives.size() * sizeof(PrimitiveVertex);
+            if (dataSize > primitiveVertexCapacity) {
+                if (primitiveVertexBuffer) SDL_ReleaseGPUBuffer(gpu->gpu, primitiveVertexBuffer);
+                primitiveVertexCapacity = (Uint32)(dataSize * 1.5);
+                SDL_GPUBufferCreateInfo desc = {
+                    .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
+                    .size = primitiveVertexCapacity
+                };
+                primitiveVertexBuffer = SDL_CreateGPUBuffer(gpu->gpu, &desc);
+            }
+
+            // Upload
+            SDL_GPUTransferBufferCreateInfo tInfo = {
+               .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)dataSize
+            };
+            SDL_GPUTransferBuffer* tBuf = SDL_CreateGPUTransferBuffer(gpu->gpu, &tInfo);
+            if (tBuf) {
+                void* map = SDL_MapGPUTransferBuffer(gpu->gpu, tBuf, false);
+                if (map) {
+                    memcpy(map, primitives.data(), dataSize);
+                    SDL_UnmapGPUTransferBuffer(gpu->gpu, tBuf);
+
+                    SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
+                    SDL_GPUTransferBufferLocation loc = { .transfer_buffer = tBuf, .offset = 0 };
+                    SDL_GPUBufferRegion reg = { .buffer = primitiveVertexBuffer, .offset = 0, .size = (Uint32)dataSize };
+                    SDL_UploadToGPUBuffer(cp, &loc, &reg, false);
+                    SDL_EndGPUCopyPass(cp);
+                }
+                SDL_ReleaseGPUTransferBuffer(gpu->gpu, tBuf);
+            }
+        }
+    }
 }
+
 
 void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass)
 {
@@ -245,9 +347,39 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
         instanceOffset += (Uint32)spriteList.size();
     }
 
+    drawPrimitives(render_pass);
+
     primitiveCommands.clear();
     spriteCommands.clear();
 }
+
+void GPUBatcher::drawPrimitives(SDL_GPURenderPass* render_pass)
+{
+    if ((primitiveTriangleVertexCount == 0 && primitiveLineVertexCount == 0) || !primitiveVertexBuffer) {
+        return;
+    }
+
+    // Bind primitive vertex buffer
+    SDL_GPUBufferBinding vertexBinding = {
+        .buffer = primitiveVertexBuffer,
+        .offset = 0
+    };
+    SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
+
+    // 1. Draw Triangles (FilledRects)
+    if (primitiveTriangleVertexCount > 0 && primitiveFillPipeline) {
+        SDL_BindGPUGraphicsPipeline(render_pass, primitiveFillPipeline);
+        SDL_DrawGPUPrimitives(render_pass, primitiveTriangleVertexCount, 1, 0, 0);
+    }
+
+    // 2. Draw Lines (Lines, RectOutlines)
+    if (primitiveLineVertexCount > 0 && primitivePipeline) {
+        SDL_BindGPUGraphicsPipeline(render_pass, primitivePipeline);
+        // Offset is primitiveTriangleVertexCount
+        SDL_DrawGPUPrimitives(render_pass, primitiveLineVertexCount, 1, primitiveTriangleVertexCount, 0);
+    }
+}
+
 
 
 
@@ -298,7 +430,14 @@ void GPUBatcher::loadShaders()
         0,  // num_storage_textures
         0,  // num_storage_buffers
         0); // num_uniform_buffers
+    
+    // Load primitive shaders
+    primitiveVertShader = gpu->loadShader("res/shaders/vulkan/primitive.vert.spv", 
+        SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 0);
+    primitiveFragShader = gpu->loadShader("res/shaders/vulkan/primitive.frag.spv",
+        SDL_GPU_SHADERSTAGE_FRAGMENT, 0, 0, 0, 0);
 }
+
 
 void GPUBatcher::createPipeline()
 {
@@ -414,7 +553,100 @@ void GPUBatcher::createPipeline()
     if (!spritePipeline) {
         throw GPUException("Failed to create graphics pipeline: %s", SDL_GetError());
     }
+
+    // --- Create Primitive Pipeline (LineList) ---
+    SDL_GPUVertexAttribute primitiveAttributes[] = {
+        // Position (location 0) - vec3
+        {
+            .location = 0,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+            .offset = 0
+        },
+        // Color (location 1) - vec4
+        {
+            .location = 1,
+            .buffer_slot = 0,
+            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+            .offset = sizeof(float) * 3
+        }
+    };
+
+    SDL_GPUVertexBufferDescription primitiveBufferDesc[] = {
+        {
+            .slot = 0,
+            .pitch = sizeof(PrimitiveVertex),
+            .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
+            .instance_step_rate = 0
+        }
+    };
+
+    SDL_GPUVertexInputState primitiveVertexInput = {
+        .vertex_buffer_descriptions = primitiveBufferDesc,
+        .num_vertex_buffers = 1,
+        .vertex_attributes = primitiveAttributes,
+        .num_vertex_attributes = 2
+    };
+
+    SDL_GPUColorTargetDescription primitiveColorTargets[] = {
+        {
+            .format = SDL_GetGPUSwapchainTextureFormat(gpu->gpu, gpu->window),
+            .blend_state = {
+                .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                .color_blend_op = SDL_GPU_BLENDOP_ADD,
+                .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA, // src alpha
+                .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, // 1-src alpha
+                .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+                .enable_blend = true,
+            }
+        }
+    };
+
+    SDL_GPUGraphicsPipelineCreateInfo primitivePipelineInfo = {
+        .vertex_shader = primitiveVertShader,
+        .fragment_shader = primitiveFragShader,
+        .vertex_input_state = primitiveVertexInput,
+        .primitive_type = SDL_GPU_PRIMITIVETYPE_LINELIST,
+        .rasterizer_state = {
+            .fill_mode = SDL_GPU_FILLMODE_FILL,
+            .cull_mode = SDL_GPU_CULLMODE_NONE,
+            .front_face = SDL_GPU_FRONTFACE_CLOCKWISE,
+        },
+        .multisample_state = {
+            .sample_count = SDL_GPU_SAMPLECOUNT_1,
+        },
+        .depth_stencil_state = {
+            .compare_op = SDL_GPU_COMPAREOP_ALWAYS, // Overlay: Ignore depth
+            .back_stencil_state = {},
+            .front_stencil_state = {},
+            .compare_mask = 0,
+            .write_mask = 0,
+            .enable_depth_test = false, // Disable depth testing
+            .enable_depth_write = false,
+            .enable_stencil_test = false,
+        },
+        .target_info = {
+            .color_target_descriptions = primitiveColorTargets,
+            .num_color_targets = 1,
+            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM, // Match default
+            .has_depth_stencil_target = true,
+        }
+    };
+
+    primitivePipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &primitivePipelineInfo);
+    if (!primitivePipeline) {
+        throw GPUException("Failed to create primitive pipeline: %s", SDL_GetError());
+    }
+
+    // --- Create Primitive Fill Pipeline (TriangleList) ---
+    primitivePipelineInfo.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+    primitiveFillPipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &primitivePipelineInfo);
+    if (!primitiveFillPipeline) {
+        throw GPUException("Failed to create primitive fill pipeline: %s", SDL_GetError());
+    }
 }
+
 
 void GPUBatcher::createBuffers()
 {
@@ -580,6 +812,15 @@ void GPUBatcher::cleanup()
         SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, spritePipeline);
         spritePipeline = nullptr;
     }
+    if (primitivePipeline) {
+        SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, primitivePipeline);
+        primitivePipeline = nullptr;
+    }
+    if (primitiveFillPipeline) {
+        SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, primitiveFillPipeline);
+        primitiveFillPipeline = nullptr;
+    }
+
     if (sampler) {
         SDL_ReleaseGPUSampler(gpu->gpu, sampler);
         sampler = nullptr;
@@ -596,16 +837,33 @@ void GPUBatcher::cleanup()
         SDL_ReleaseGPUBuffer(gpu->gpu, storageBuffer);
         storageBuffer = nullptr;
     }
-    // uniformBuffer removed - using push constants instead
-    if (vertShader) {
-        gpu->releaseShader(vertShader);
-        vertShader = nullptr;
+    if (primitiveVertexBuffer) {
+        SDL_ReleaseGPUBuffer(gpu->gpu, primitiveVertexBuffer);
+        primitiveVertexBuffer = nullptr;
     }
+    if (uniformBuffer) {
+        SDL_ReleaseGPUBuffer(gpu->gpu, uniformBuffer);
+        uniformBuffer = nullptr;
+    }
+
     if (fragShader) {
-        gpu->releaseShader(fragShader);
+        SDL_ReleaseGPUShader(gpu->gpu, fragShader);
         fragShader = nullptr;
     }
+    if (vertShader) {
+        SDL_ReleaseGPUShader(gpu->gpu, vertShader);
+        vertShader = nullptr;
+    }
+    if (primitiveFragShader) {
+        SDL_ReleaseGPUShader(gpu->gpu, primitiveFragShader);
+        primitiveFragShader = nullptr;
+    }
+    if (primitiveVertShader) {
+        SDL_ReleaseGPUShader(gpu->gpu, primitiveVertShader);
+        primitiveVertShader = nullptr;
+    }
 }
+
 void GPUBatcher::bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture)
 {
     if (!texture || !sampler) {
