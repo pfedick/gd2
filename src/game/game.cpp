@@ -132,13 +132,13 @@ void Game::drawWorld()
 
     // Collect all sprites to batch
 
-    int x = 0, y = 0;
+    int x = 100, y = 200;
     for (int i = 0; i < 100; i++) {
         gpu_batcher.addSprite(resources.Player, i, x, y);
         x += 100;
         if (x >= 1800) {
-            x = 0;
-            y += 100;
+            x = 100;
+            y += 200;
         }
     }
 

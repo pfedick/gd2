@@ -73,21 +73,16 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         for (const SpriteCommand& spriteCmd : spriteList) {
             const SpriteTexture::SpriteIndexItem* item = spriteCmd.sprite->getSpriteIndex(spriteCmd.sprite_id);
             if (item) {
-                // Convert pixel coordinates to NDC on CPU
+                // Apply Offset (Shift origin).
+                float world_x = spriteCmd.x + (float)item->Offset.x;
+                float world_y = spriteCmd.y + (float)item->Offset.y;
+
                 // X: 0..W -> -1..1
-                float ndc_x = (spriteCmd.x * 2.0f / screenWidth) - 1.0f;
-// Y: 0..H -> +1..-1 (Vulkan NDC: -1 is Top, +1 is Bottom, but SDL coordinate system might be flipped or our perception of Top/Bottom)
-                // If the user sees Bottom-Left for (-1, -1), then -1 is Bottom.
-                // We want 0 -> Top. If Top is +1 (OpenGL style), we use 1.0 - ...
-                // Let's try inverting Y to map 0 to -1 (Top in Vulkan) or +1 (Top in OpenGL)
-                // The user said "starts at bottom right instead of top left".
-                // Previous code: (y * 2 / H) - 1.0   => 0 -> -1.
-                // If -1 appeared at Bottom, then Y is Up.
-                // To appear at Top, we need +1.
-                float ndc_y = 1.0f - (spriteCmd.y * 2.0f / screenHeight);
+                float ndc_x = (world_x * 2.0f / screenWidth) - 1.0f;
+                // Y: +1 (Top) ... -1 (Bottom)
+                float ndc_y = 1.0f - (world_y * 2.0f / screenHeight);
                 
                 float ndc_w = (item->r.w * 2.0f / screenWidth);
-                // Flip height to grow downwards from Top-Left origin
                 float ndc_h = -(item->r.h * 2.0f / screenHeight);
 
                 SpriteInstance inst;
@@ -97,15 +92,18 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 inst.size_h = ndc_h;
                 inst.scale_x = spriteCmd.scale_x;
                 inst.scale_y = spriteCmd.scale_y;
-                inst.angle = spriteCmd.angle;
+                inst.angle = spriteCmd.angle * (3.14159265f / 180.0f);
+                
                 inst.uv_x = item->uv.x;
                 inst.uv_y = item->uv.y;
                 inst.uv_w = item->uv.w;
                 inst.uv_h = item->uv.h;
-                inst.pivot_x = (float)item->Pivot.x;
-                inst.pivot_y = (float)item->Pivot.y;
-                inst.offset_x = (float)item->Offset.x;
-                inst.offset_y = (float)item->Offset.y;
+                
+                inst.pivot_x = (item->r.w > 0) ? (float)item->Pivot.x / item->r.w : 0.0f;
+                inst.pivot_y = (item->r.h > 0) ? (float)item->Pivot.y / item->r.h : 0.0f;
+                
+                inst.offset_x = 0.0f;
+                inst.offset_y = 0.0f;
                 inst.padding = 0.0f; // Initialize padding
                 instances.push_back(inst);
             }
@@ -187,7 +185,7 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
 
     // Draw by texture batch
     Uint32 instanceOffset = 0;
-    
+
     // Bind index buffer once
     SDL_GPUBufferBinding indexBinding = {
         .buffer = indexBuffer,
@@ -201,8 +199,8 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
         const SpriteCommand& firstSprite = spriteList.front();
         const SpriteTexture::SpriteIndexItem* indexItem = firstSprite.sprite->getSpriteIndex(firstSprite.sprite_id);
         if (!indexItem || !indexItem->tex) {
-             instanceOffset += (Uint32)spriteList.size();
-             continue;
+            instanceOffset += (Uint32)spriteList.size();
+            continue;
         }
 
         // Bind texture for this batch
@@ -212,7 +210,7 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
         // Draw instances for this batch only
         // first_instance = instanceOffset
         SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)spriteList.size(), 0, 0, instanceOffset);
-        
+
         instanceOffset += (Uint32)spriteList.size();
     }
 
