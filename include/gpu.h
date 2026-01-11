@@ -31,13 +31,16 @@ class GPUContext
 {
 public:
     SDL_GPUDevice* gpu;
-    SDL_Window* window;  // Public so SimpleQuadTest can access it
+    SDL_Window* window;
+    SDL_GPUTexture* depthTexture;
+    int depthWidth, depthHeight;
 
     GPUContext();
     ~GPUContext();
 
     void init(SDL_Window* window);
     void shutdown();
+    void manageDepthBuffer(int width, int height);
 
     void initGPUDevice();
     SDL_GPUTexture* createGPUTexture(const ppl7::grafix::Drawable& surface);
@@ -85,7 +88,8 @@ private:
         float pos_x, pos_y;           // Sprite position (NDC) center/pivot
         float m00, m01;               // Transform Matrix Col 1
         float m10, m11;               // Transform Matrix Col 2
-        float pad1, pad2;             // PADDING (was angle+padding)
+        float pos_z;                  // Z-index from addSprite
+        float pad2;                   // PADDING
         float uv_x, uv_y, uv_w, uv_h; // UV rect (normalized 0-1)
         float pivot_x, pivot_y;       // Pivot point (0..1)
         float offset_x, offset_y;     // Unused

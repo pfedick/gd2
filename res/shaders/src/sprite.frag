@@ -15,5 +15,11 @@ void main() {
     vec4 tex_color = texture(tex_sampler, frag_texcoord);
     
     // Apply color modulation
-    out_color = tex_color * frag_color;
+    vec4 final_color = tex_color * frag_color;
+
+    if (final_color.a < 0.1) {
+        discard;
+    }
+
+    out_color = final_color;
 }

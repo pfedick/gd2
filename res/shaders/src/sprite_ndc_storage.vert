@@ -10,7 +10,8 @@ struct SpriteInstance {
     vec2 pos;           // Sprite position (NDC) - PIVOT POINT
     vec2 m_row1;        // Transform Row 1 (m00, m01) - packed as vec2 for alignment (offset 8)
     vec2 m_row2;        // Transform Row 2 (m10, m11) - packed as vec2 for alignment (offset 16)
-    vec2 _pad;          // Padding (offset 24)
+    float pos_z;        // Z-Depth (offset 24)
+    float _pad;         // Padding (offset 28)
     vec4 uv;            // Sprite UV rect (x, y, w, h) normalized 0-1 (offset 32)
     vec2 pivot;         // Sprite pivot point (Normalized 0..1 relative to size)
     vec2 offset;        // Unused
@@ -47,5 +48,5 @@ void main() {
     rotated.y = local.x * sprite.m_row2.x + local.y * sprite.m_row2.y;
     
     // 3. Add to Pivot position (NDC)
-    gl_Position = vec4(rotated + sprite.pos, 0.0, 1.0);
+    gl_Position = vec4(rotated + sprite.pos, sprite.pos_z, 1.0);
 }

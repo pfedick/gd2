@@ -62,6 +62,7 @@ void Game::createWindow()
     WidgetDrawbuffer.create(1920, 1080, ppl7::grafix::RGBFormat::A8R8G8B8);
     this->setWidgetDrawbuffer(&WidgetDrawbuffer);
 
+    gpu.manageDepthBuffer(1920, 1080);
 }
 
 
@@ -107,6 +108,12 @@ void Game::run()
             SDL_SubmitGPUCommandBuffer(cmdbuf);
             continue;
         }
+
+        // Ensure Depth Buffer matches window size
+        int w, h;
+        SDL_GetWindowSizeInPixels(sdl_window, &w, &h);
+        gpu.manageDepthBuffer(w, h);
+
         fps.update();
 
 
@@ -186,7 +193,16 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false;  // CRITICAL: SDL examples use false!
 
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
+    SDL_GPUDepthStencilTargetInfo depthTargetInfo = { 0 };
+    depthTargetInfo.texture = gpu.depthTexture;
+    depthTargetInfo.clear_depth = 1.0f;
+    depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+    depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
+    depthTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
+    depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
+    depthTargetInfo.cycle = false;
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
 
     // Set viewport and scissor
     SDL_GPUViewport viewport = { 0.0f, 0.0f, 1920.0f, 1080.0f, 0.0f, 1.0f };

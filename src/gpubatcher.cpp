@@ -44,7 +44,7 @@ void GPUBatcher::clearQueues()
 
 void GPUBatcher::startRenderPass()
 {
-    z = 0.0f;
+    z = 0.5f;
 }
 
 void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
@@ -106,7 +106,7 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 inst.m10 = m10;
                 inst.m11 = m11;
 
-                inst.pad1 = 0.0f;
+                inst.pos_z = spriteCmd.z;
                 inst.pad2 = 0.0f;
 
                 inst.uv_x = item->uv.x;
@@ -229,7 +229,7 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
 void GPUBatcher::addSprite(const SpriteTexture& sprite, int sprite_id, float x, float y, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation)
 {
     SpriteCommand cmd(&sprite, sprite_id, x, y, z, scale_x, scale_y, angle, color_modulation);
-    z += 0.0001f; // Slightly increase Z to ensure correct layering
+    z -= 0.0001f; // Slightly increase Z to ensure correct layering
     uint64_t texId = sprite.getUniqueTextureId(sprite_id);
     spriteCommands[texId].push_back(cmd);
 }
@@ -373,13 +373,15 @@ void GPUBatcher::createPipeline()
             .sample_count = SDL_GPU_SAMPLECOUNT_1,
         },
         .depth_stencil_state = {
-            .enable_depth_test = false,
-            .enable_depth_write = false,
+            .compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
+            .enable_depth_test = true,
+            .enable_depth_write = true,
         },
         .target_info = {
             .color_target_descriptions = &colorTarget,
             .num_color_targets = 1,
-            .has_depth_stencil_target = false
+            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+            .has_depth_stencil_target = true
         }
     };
 
