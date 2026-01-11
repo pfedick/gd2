@@ -4,8 +4,8 @@
 layout(location = 0) in vec2 frag_texcoord;
 layout(location = 1) in vec4 frag_color;
 
-// Texture sampler
-layout(binding = 0) uniform sampler2D tex_sampler;
+// Texture sampler - Use Set 2 Binding 0 to avoid collision with Storage Buffer (Set 0 Binding 0)
+layout(set = 2, binding = 0) uniform sampler2D tex_sampler;
 
 // Output
 layout(location = 0) out vec4 out_color;

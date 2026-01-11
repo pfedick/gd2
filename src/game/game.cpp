@@ -1,7 +1,4 @@
 #include "game.h"
-#include "simpletest.h"
-
-extern SimpleQuadTest* g_simpleTest;
 
 
 ppl7::grafix::Point GetViewPos()
@@ -28,10 +25,6 @@ void Game::init()
 
     // Initialize projection/view matrices for rendering
     gpu_batcher.updateMatrices(1920, 1080);
-
-    // Initialize simple test quad
-    g_simpleTest = new SimpleQuadTest();
-    g_simpleTest->init(&gpu, 1920, 1080);
 }
 
 void Game::createWindow()
@@ -74,12 +67,6 @@ void Game::createWindow()
 void Game::init_grafix()
 {
     resources.load(gpu);
-
-    // Initialize simple test
-    if (!g_simpleTest) {
-        g_simpleTest = new SimpleQuadTest();
-        g_simpleTest->init(&gpu, 1920, 1080);
-    }
 
     ppl7::PrintDebug("Grafix initialized\n");
 }
@@ -170,11 +157,6 @@ void Game::drawWorld()
     SDL_SetGPUViewport(renderPass, &viewport);
     SDL_Rect scissor = { 0, 0, 1920, 1080 };
     SDL_SetGPUScissor(renderPass, &scissor);
-
-    // Draw simple test quad (to verify rendering works)
-    /*if (g_simpleTest) {
-        g_simpleTest->draw(cmdbuf, renderPass);
-    }*/
 
     // Draw all batched sprites
     gpu_batcher.endRenderPass(cmdbuf, renderPass);
