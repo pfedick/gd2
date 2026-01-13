@@ -1,9 +1,13 @@
 // Vertical Blur Fragment Shader
 #version 450
 
-layout(binding = 0) uniform sampler2D inputTexture;
-layout(binding = 1, std140) uniform BlurParams {
+// Texture Input -> Set 2, Binding 0
+layout(set = 2, binding = 0) uniform sampler2D inputTexture;
+// Params -> Set 3, Binding 0
+// Hinweis: Wir nutzen Binding 0, das müssen wir im C++ Code bei PushGPUFragmentUniformData beachten!
+layout(set = 3, binding = 0, std140) uniform BlurParams {
     float blurStrength;  // 0.0 - 1.0
+    float _padding;
     vec2 texelSize;
 };
 

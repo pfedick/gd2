@@ -8,4 +8,5 @@ void main()
     // Benötigt keinen Vertex-Input-Buffer!
     frag_texcoord = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
     gl_Position = vec4(frag_texcoord * 2.0f - 1.0f, 0.0f, 1.0f);
+    frag_texcoord.y = 1.0 - frag_texcoord.y; 
 }

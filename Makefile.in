@@ -66,6 +66,8 @@ shaders:
 	glslc res/shaders/src/ndc_textured.vert -o res/shaders/vulkan/ndc_textured.vert.spv
 	glslc -fshader-stage=fragment res/shaders/src/blur_horizontal.glsl -o res/shaders/vulkan/blur_horizontal.spv
 	glslc -fshader-stage=fragment res/shaders/src/blur_vertical.glsl -o res/shaders/vulkan/blur_vertical.spv
+	@# --- Debug ---
+	glslc res/shaders/src/copy.frag -o res/shaders/vulkan/copy.frag.spv
 
 
 mingw: update_version

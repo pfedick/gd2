@@ -15,6 +15,30 @@ Game::Game(GPUContext& gpu)
     wm = (ppltk::WindowManager_SDL3*)ppltk::GetWindowManager();
     Style.setStyle(ppltk::WidgetStyle::Dark);
     quitGame = false;
+    render_target_layer = NULL;
+    render_target_tmp1 = NULL;
+    render_target_tmp2 = NULL;
+    depthTexture = NULL;
+}
+
+Game::~Game()
+{
+    if (render_target_layer) {
+        gpu.destroyGPUTexture(render_target_layer);
+        render_target_layer = NULL;
+    }
+    if (render_target_tmp1) {
+        gpu.destroyGPUTexture(render_target_tmp1);
+        render_target_tmp1 = NULL;
+    }
+    if (render_target_tmp2) {
+        gpu.destroyGPUTexture(render_target_tmp2);
+        render_target_tmp2 = NULL;
+    }
+    if (depthTexture) {
+        gpu.destroyGPUTexture(depthTexture);
+        depthTexture = NULL;
+    }
 }
 
 void Game::init()
@@ -25,7 +49,7 @@ void Game::init()
     sdl.setGPUDevice(gpu.gpu);
     gpu_batcher.init(&gpu);  // Now using Storage Buffers instead of vertex buffer instancing
 
-    renderPipelines.init(gpu.gpu);
+    renderPipelines.init(gpu.gpu, (SDL_Window*)getSDLWindow());
     // Initialize projection/view matrices for rendering
     gpu_batcher.updateMatrices(1920, 1080);
 }
@@ -65,7 +89,6 @@ void Game::createWindow()
     WidgetDrawbuffer.create(1920, 1080, ppl7::grafix::RGBFormat::A8R8G8B8);
     this->setWidgetDrawbuffer(&WidgetDrawbuffer);
 
-    gpu.manageDepthBuffer(1920, 1080);
 }
 
 
@@ -73,9 +96,36 @@ void Game::init_grafix()
 {
     resources.load(gpu);
 
+
     ppl7::PrintDebug("Grafix initialized\n");
 }
 
+
+void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
+{
+    if (size == render_target_size) return;
+    render_target_size = size;
+
+    if (render_target_layer) {
+        gpu.destroyGPUTexture(render_target_layer);
+    }
+    render_target_layer = gpu.createRenderTarget(size.width, size.height);
+
+    if (render_target_tmp1) {
+        gpu.destroyGPUTexture(render_target_tmp1);
+    }
+    render_target_tmp1 = gpu.createRenderTarget(size.width, size.height);
+
+    if (render_target_tmp2) {
+        gpu.destroyGPUTexture(render_target_tmp2);
+    }
+    render_target_tmp2 = gpu.createRenderTarget(size.width, size.height);
+
+    if (depthTexture) {
+        gpu.destroyGPUTexture(depthTexture);
+    }
+    depthTexture = gpu.createDepthBuffer(size.width, size.height);
+}
 
 void Game::run()
 {
@@ -117,7 +167,7 @@ void Game::run()
         // Ensure Depth Buffer matches window size
         int w, h;
         SDL_GetWindowSizeInPixels(sdl_window, &w, &h);
-        gpu.manageDepthBuffer(w, h);
+        createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
 
         fps.update();
 
@@ -156,7 +206,7 @@ void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture
 
     gpu_batcher.prepareInstanceData(cmdbuf);
     SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
-    colorTargetInfo.texture = swapchainTexture;
+    colorTargetInfo.texture = render_target_layer;
     colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };  // Black background
     colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
@@ -169,6 +219,14 @@ void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture
     SDL_EndGPURenderPass(renderPass);
     //drawWidgets();
 }
+
+struct BlurParams {
+    float blurStrength;
+    float padding;      // WICHTIG: 4 Bytes Füllmaterial für std140 Alignment
+    float texelSizeX;
+    float texelSizeY;
+};
+
 
 void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
@@ -192,6 +250,7 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
         gpu_batcher.addSprite(resources.Player, ppl7::rand(0, 200), ppl7::rand(0, 1920), ppl7::rand(0, 1080), 1.0f, 1.0f, 0.0f);
     }
 
+    gpu_batcher.addSprite(resources.Player, 27, 100, 200, 1.0f, 1.0f, 0.0f);
 
     gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 0.0f, ppl7::grafix::Color(255, 0, 0, 255));
     gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 90.0f, ppl7::grafix::Color(0, 255, 0, 255));
@@ -208,14 +267,14 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
     gpu_batcher.prepareInstanceData(cmdbuf);
 
     SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
-    colorTargetInfo.texture = swapchainTexture;
-    colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };  // Black background
+    colorTargetInfo.texture = render_target_layer;
+    colorTargetInfo.clear_color = (SDL_FColor){ 0.3f, 0.0f, 0.0f, 1.0f };  // Black background
     colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false;  // CRITICAL: SDL examples use false!
 
     SDL_GPUDepthStencilTargetInfo depthTargetInfo = { 0 };
-    depthTargetInfo.texture = gpu.depthTexture;
+    depthTargetInfo.texture = depthTexture;
     depthTargetInfo.clear_depth = 1.0f;
     depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
@@ -227,15 +286,92 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
 
     // Set viewport and scissor
     SDL_GPUViewport viewport = { 0.0f, 0.0f, 1920.0f, 1080.0f, 0.0f, 1.0f };
-    SDL_SetGPUViewport(renderPass, &viewport);
     SDL_Rect scissor = { 0, 0, 1920, 1080 };
-    SDL_SetGPUScissor(renderPass, &scissor);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
 
     // Draw all batched sprites
     //gpu_batcher.prepareInstanceData(cmdbuf);
     gpu_batcher.endRenderPass(cmdbuf, renderPass);
+    SDL_EndGPURenderPass(renderPass);
+
+    SDL_GPUColorTargetInfo targetInfo = {};
+    SDL_GPUTextureSamplerBinding binding = {};
+
+
+    // *******************************************************
+    // Postprocessing passes would go here...
+
+    BlurParams params;
+    params.blurStrength = 0.5f;
+    params.padding = 0.0f;      // Egal was hier steht
+    params.texelSizeX = 1.0f / (float)render_target_size.width;  // Breite der Textur
+    params.texelSizeY = 1.0f / (float)render_target_size.height; // Höhe der Textur
+
+    // Slot Index 0 (passend zu binding = 0 im Shader, Set 3 ist implizit für Fragment Uniforms)
+    SDL_PushGPUFragmentUniformData(cmdbuf, 0, &params, sizeof(BlurParams));
+
+
+    targetInfo.texture = render_target_tmp1; // Ziel: Temp Textur
+    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE;
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, &viewport);
+    SDL_SetGPUScissor(renderPass, &scissor);
+
+    SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.blurHorizontalPipeline);
+    binding.texture = render_target_layer;
+    binding.sampler = renderPipelines.samplerClamp; // Einen Clamp-Sampler benutzen!
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
 
     SDL_EndGPURenderPass(renderPass);
+
+    targetInfo.texture = render_target_tmp2;
+    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE; // Wir überschreiben alles
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, &viewport);
+    SDL_SetGPUScissor(renderPass, &scissor);
+
+    SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.blurVerticalPipeline);
+
+    // Eingabe-Textur binden (das Bild aus Pass 2)
+    binding.texture = render_target_tmp1;
+    binding.sampler = renderPipelines.samplerClamp;
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+    SDL_EndGPURenderPass(renderPass);
+
+
+
+
+    // Copy to swapchain
+    targetInfo.texture = swapchainTexture;
+    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE;
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
+
+
+    SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.copyPipeline);
+    binding.texture = render_target_tmp2;
+    binding.sampler = renderPipelines.samplerClamp; // Einen Clamp-Sampler benutzen!
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+
+    SDL_EndGPURenderPass(renderPass);
+
+
 
 
 }

@@ -16,9 +16,6 @@ GPUContext::GPUContext()
 {
     gpu = NULL;
     window = NULL;
-    depthTexture = NULL;
-    depthWidth = 0;
-    depthHeight = 0;
     globalGPUContext = this;
 }
 
@@ -62,43 +59,11 @@ void GPUContext::initializeWindow(SDL_Window* window)
     this->window = window;
 }
 
-void GPUContext::manageDepthBuffer(int width, int height)
-{
-    if (!gpu) return;
-    if (depthTexture && depthWidth == width && depthHeight == height) return;
 
-    if (depthTexture) {
-        SDL_ReleaseGPUTexture(gpu, depthTexture);
-        depthTexture = NULL;
-    }
-
-    SDL_GPUTextureCreateInfo depthInfo = {
-        .type = SDL_GPU_TEXTURETYPE_2D,
-        .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM, // 16-bit depth is enough for 2D
-        .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
-        .width = (Uint32)width,
-        .height = (Uint32)height,
-        .layer_count_or_depth = 1,
-        .num_levels = 1,
-    };
-    depthTexture = SDL_CreateGPUTexture(gpu, &depthInfo);
-    if (!depthTexture) {
-        ppl7::PrintDebugTime("WARNING: Failed to create Depth Texture: %s\n", SDL_GetError());
-    }
-    else {
-        depthWidth = width;
-        depthHeight = height;
-        ppl7::PrintDebugTime("Created Depth Texture %dx%d\n", width, height);
-    }
-}
 
 void GPUContext::shutdown()
 {
     if (gpu) {
-        if (depthTexture) {
-            SDL_ReleaseGPUTexture(gpu, depthTexture);
-            depthTexture = NULL;
-        }
         if (window) SDL_ReleaseWindowFromGPUDevice(gpu, window);
         SDL_DestroyGPUDevice(gpu);
         gpu = NULL;
@@ -282,3 +247,49 @@ void GPUContext::releaseShader(SDL_GPUShader* shader)
     }
 }
 
+
+SDL_GPUTexture* GPUContext::createRenderTarget(int width, int height)
+{
+    if (!gpu) {
+        throw GPUException("GPU device is not initialized");
+    }
+    // Textur-Beschreibung
+    SDL_GPUTextureCreateInfo texture_info = {
+    .type = SDL_GPU_TEXTURETYPE_2D,
+    .format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM,  // BGRA matches PPL7 byte order
+    .usage = SDL_GPU_TEXTUREUSAGE_COLOR_TARGET | SDL_GPU_TEXTUREUSAGE_SAMPLER,  // For rendering and shader sampling
+    .width = (Uint32)width,
+    .height = (Uint32)height,
+    .layer_count_or_depth = 1,
+    .num_levels = 1,
+    };
+    // Textur erstellen
+    SDL_GPUTexture* texture = SDL_CreateGPUTexture(gpu, &texture_info);
+    if (!texture) {
+        throw GPUException("SDL_CreateGPUTexture failed: %s", SDL_GetError());
+    }
+    return texture;
+}
+
+
+SDL_GPUTexture* GPUContext::createDepthBuffer(int width, int height)
+{
+    if (!gpu) {
+        throw GPUException("GPU device is not initialized");
+    }
+
+    SDL_GPUTextureCreateInfo depthInfo = {
+        .type = SDL_GPU_TEXTURETYPE_2D,
+        .format = SDL_GPU_TEXTUREFORMAT_D16_UNORM, // 16-bit depth is enough for 2D
+        .usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+        .width = (Uint32)width,
+        .height = (Uint32)height,
+        .layer_count_or_depth = 1,
+        .num_levels = 1,
+    };
+    SDL_GPUTexture* depthTexture = SDL_CreateGPUTexture(gpu, &depthInfo);
+    if (!depthTexture) {
+        throw GPUException("SDL_CreateGPUTexture failed: %s", SDL_GetError());
+    }
+    return depthTexture;
+}

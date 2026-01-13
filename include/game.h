@@ -105,7 +105,16 @@ private:
 
     ppl7::grafix::Image WidgetDrawbuffer;
 
+    SDL_GPUTexture* render_target_layer;
+    SDL_GPUTexture* render_target_tmp1;
+    SDL_GPUTexture* render_target_tmp2;
+    SDL_GPUTexture* depthTexture;
+
+
+    ppl7::grafix::Size render_target_size;
+
     void createWindow();
+    void createRenderTargetsIfRequired(const ppl7::grafix::Size& size);
 
     bool quitGame = false;
     bool showui = true;
@@ -123,6 +132,7 @@ public:
     Config config;
     FPS fps;
     Game(GPUContext& gpu);
+    ~Game();
 
     void init();
     void init_grafix();

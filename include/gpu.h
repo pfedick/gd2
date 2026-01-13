@@ -32,8 +32,6 @@ class GPUContext
 public:
     SDL_GPUDevice* gpu;
     SDL_Window* window;
-    SDL_GPUTexture* depthTexture;
-    int depthWidth, depthHeight;
 
     GPUContext();
     ~GPUContext();
@@ -42,7 +40,6 @@ public:
 
     void initializeWindow(SDL_Window* window);
     void shutdown();
-    void manageDepthBuffer(int width, int height);
 
     void initGPUDevice();
     SDL_GPUTexture* createGPUTexture(const ppl7::grafix::Drawable& surface);
@@ -51,6 +48,10 @@ public:
 
     SDL_GPUShader* loadShader(const ppl7::String& filename, SDL_GPUShaderStage stage, int num_samplers, int num_storage_textures, int num_storage_buffers, int num_uniform_buffers);
     void releaseShader(SDL_GPUShader* shader);
+
+    SDL_GPUTexture* createRenderTarget(int width, int height);
+    SDL_GPUTexture* createDepthBuffer(int width, int height);
+
 };
 
 GPUContext& getGlobalGPUContext();
