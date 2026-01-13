@@ -1,5 +1,34 @@
 # AI Coding Guide for gd2 / PPL7 / PPLTK
 
+## Current Focus: 2D Deferred Lighting Roadmap
+(Context from session: Jan 13 2026 - User wants Global/Spot/Point lights + Shadows + Normal Maps)
+
+**Phase 1: G-Buffer Setup (MRT)**
+- Enable **Multiple Render Targets** in the sprite pipeline.
+- Output 1: Albedo (Color)
+- Output 2: Normal Map (RGB encoded XYZ).
+- Requires updating `SpritePipeline` and `sprite.frag` to write to location 0 and 1.
+
+**Phase 2: Light Accumulation Pass**
+- Create new render target `render_target_light` (cleared with ambient color, e.g. dark blue/black).
+- Use **Additive Blending** pipeline.
+- Render "Light Quads" (geometry at light position) into this target.
+- Shader logic: 
+  - Read Normal Map from G-Buffer.
+  - Calculate `dot(LightDir, Normal)` and Distance Attenuation.
+  - Output light color intensity.
+
+**Phase 3: Composite Pass**
+- Final step: Multiply Albedo with Light Accumulation result.
+- `FinalColor = Albedo * LightResult`.
+
+**Phase 4: Shadows (Method A: Raymarching/2D Shadow Casting)**
+- Create `OcclusionMap` (Solid pixels = 1.0, Air = 0.0).
+- In the Light Shader: Perform simple 2D Raymarching from Pixel to LightPos using the OcclusionMap.
+- If ray hits wall -> Light = 0.0 (Shadow).
+
+---
+
 ## General AI Assistant Guidelines
 
 **Code generation philosophy**: Avoid generating large blocks of code the user doesn't understand. Instead:
@@ -82,17 +111,27 @@ SDL_SubmitGPUCommandBuffer(cmd);
 SDL_PresentGPUWindow(window);
 ```
 
-## Lighting & Normal Mapping
+## Lighting & Normal Mapping (Detailed Strategy)
 
-**Asset structure**: Each sprite/tile holds albedo (RGB) and normal map (RG with Y-up convention or packed XY). Optionally store roughness/emissive in a third channel or separate texture.
+**Architecture: 2D Deferred / Hybrid**
+- **G-Buffer Pass**: Render all sprites (layers + entities) to MRT (Multiple Render Targets): 
+  - Target 0: Albedo (RGB)
+  - Target 1: Normal (RGB, encoded [0..1]) + optionally Roughness/Emissive/Occlusion in Alpha.
+- **Light Accumulation Pass**:
+  - Bind "G-Buffer Normal" as input sampler.
+  - Clear LightMap with Ambient Color.
+  - Draw Light Primitives (Quads covering the light radius) with **Additive Blending**.
+  - **Shader**: Sample Normal at screen pos; `lighting = dot(normalize(LightPos - PixelPos), Normal) * attenuation`.
+- **Composite Pass**:
+  - `FinalColor = Albedo * LightMap`.
 
-**Shader approach**:
-- Vertex: output world/tangent-space basis, UV, layer depth.
-- Fragment: sample albedo + normal map; apply per-light loop (start with 1–2 point lights + ambient).
-- Uniforms: view/projection matrices, light positions/colors, camera position (for specular).
-- Return lit color = albedo × (ambient + Σ(diffuse + specular)).
+**Assets**:
+- Start with 2 Textures per Sprite: `sprite_color.png` (RGBA) and `sprite_normal.png` (RGB, flat blue = `0.5, 0.5, 1.0`).
 
-**Performance**: Use instancing or single large vertex buffer per layer. Avoid per-sprite pipeline switches; batch by bind group (texture sets).
+**Shadows (Method A: 2D Raymarching)**
+- Requires an **Occlusion Map** (could be a separate low-res texture or the Alpha channel of the Normal Target).
+- Light Shader steps uniform ray towards light source; checks occlusion pixels.
+- Use `step_size` appropriate for pixel art resolution to avoid artifacts.
 
 ## Parallax Scrolling & Depth Blur
 
