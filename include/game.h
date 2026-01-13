@@ -4,6 +4,7 @@
 #include "sdl.h"
 #include "gpu.h"
 #include "resources.h"
+#include "renderpipelines.h"
 
 #define APP_COMPANY "Patrick F.-Productions"
 #define APP_NAME "The Magican"
@@ -96,9 +97,10 @@ class Game : private ppltk::Window
 private:
     SDL sdl;
     SDL_Window* sdl_window;
-    GPUContext gpu;
+    GPUContext& gpu;
     GPUBatcher gpu_batcher;
-    ppltk::WindowManager* wm;
+
+    ppltk::WindowManager_SDL3* wm;
     ppltk::WidgetStyle Style;
 
     ppl7::grafix::Image WidgetDrawbuffer;
@@ -116,10 +118,11 @@ private:
     double time_accumulator = 0.0f;
 
 public:
+    RenderPipelines renderPipelines;
     Resources resources;
     Config config;
     FPS fps;
-    Game();
+    Game(GPUContext& gpu);
 
     void init();
     void init_grafix();

@@ -40,7 +40,19 @@ void start(int argc, char** argv)
 
     ppl7::grafix::Grafix gfx;
     ppltk::WindowManager_SDL3 wm;
-    Game game;
+
+    /*
+    SDL_GPUDevice* gpu = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, true, "vulkan");
+    if (!gpu) {
+        printf("Failed to create GPU device: %s", SDL_GetError());
+        return;
+    }
+    wm.enableGPURenderer(gpu);
+    */
+
+    GPUContext gpu;
+    gpu.initializeGPUDevice();
+    Game game(gpu);
     try {
         game.init();
         game.init_grafix();

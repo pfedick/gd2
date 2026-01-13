@@ -27,9 +27,9 @@ GPUContext::~GPUContext()
     shutdown();
 }
 
-void GPUContext::init(SDL_Window* window)
+void GPUContext::initializeGPUDevice()
 {
-    shutdown();
+    if (gpu) shutdown();
     // Force SPIRV (Vulkan) since we only have SPIRV shaders compiled
     gpu = SDL_CreateGPUDevice(
         SDL_GPU_SHADERFORMAT_SPIRV,  // Only SPIRV -> forces Vulkan backend
@@ -40,10 +40,11 @@ void GPUContext::init(SDL_Window* window)
         throw GPUException("SDL_CreateGPUDevice failed: %s", SDL_GetError());
     }
 
-    // Log which backend was chosen
-    const char* driver = SDL_GetGPUDeviceDriver(gpu);
-    ppl7::PrintDebugTime("GPU Device created with driver: %s\n", driver ? driver : "unknown");
+}
 
+void GPUContext::initializeWindow(SDL_Window* window)
+{
+    /*
     // Claim window for GPU device and initialize swapchain
     if (!SDL_ClaimWindowForGPUDevice(gpu, window)) {
         SDL_DestroyGPUDevice(gpu);
@@ -56,7 +57,8 @@ void GPUContext::init(SDL_Window* window)
     SDL_SetGPUAllowedFramesInFlight(gpu, 1);
 
     // Use VSYNC for tearing-free 60 FPS, but rely on FramesInFlight=2 to keep latency low
-    SDL_SetGPUSwapchainParameters(gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_IMMEDIATE);
+    SDL_SetGPUSwapchainParameters(gpu, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_VSYNC);
+    */
     this->window = window;
 }
 

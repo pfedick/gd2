@@ -9,27 +9,30 @@ ppl7::grafix::Point GetViewPos()
 
 
 
-Game::Game()
+Game::Game(GPUContext& gpu)
+    : ppltk::Window(), gpu(gpu)
 {
-    wm = ppltk::GetWindowManager();
+    wm = (ppltk::WindowManager_SDL3*)ppltk::GetWindowManager();
     Style.setStyle(ppltk::WidgetStyle::Dark);
     quitGame = false;
-
 }
+
 void Game::init()
 {
+    wm->enableGPURenderer(gpu.gpu);
     createWindow();
-    gpu.init((SDL_Window*)getSDLWindow());
+    gpu.initializeWindow((SDL_Window*)getSDLWindow());
     sdl.setGPUDevice(gpu.gpu);
     gpu_batcher.init(&gpu);  // Now using Storage Buffers instead of vertex buffer instancing
 
+    renderPipelines.init(gpu.gpu);
     // Initialize projection/view matrices for rendering
     gpu_batcher.updateMatrices(1920, 1080);
 }
 
 void Game::createWindow()
 {
-    int flags = ppltk::Window::WaitVsync | ppltk::Window::NoSDLRenderer;
+    int flags = ppltk::Window::WaitVsync;
     config.windowMode = Config::WindowMode::Window;
     config.ScreenResolution = ppl7::grafix::Size(1920, 1080);
     if (config.windowMode == Config::WindowMode::Window) {

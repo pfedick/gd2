@@ -38,7 +38,9 @@ public:
     GPUContext();
     ~GPUContext();
 
-    void init(SDL_Window* window);
+    void initializeGPUDevice();
+
+    void initializeWindow(SDL_Window* window);
     void shutdown();
     void manageDepthBuffer(int width, int height);
 
