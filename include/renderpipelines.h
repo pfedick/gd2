@@ -35,6 +35,7 @@ public:
     SDL_GPUGraphicsPipeline* blurHorizontalPipeline;
     SDL_GPUGraphicsPipeline* blurVerticalPipeline;
     SDL_GPUGraphicsPipeline* copyPipeline;
+    SDL_GPUGraphicsPipeline* uiPipeline;
     SDL_GPUSampler* samplerClamp;
 
     RenderPipelines();

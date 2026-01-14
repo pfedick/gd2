@@ -91,12 +91,15 @@ public:
 };
 
 
+class MainMenue;
+class StatusBar;
 
 class Game : private ppltk::Window
 {
 private:
     SDL sdl;
     SDL_Window* sdl_window;
+    SDL_Renderer* sdl_renderer;
     GPUContext& gpu;
     GPUBatcher gpu_batcher;
 
@@ -125,6 +128,9 @@ private:
 
     uint64_t frame_count = 0;
     double time_accumulator = 0.0f;
+
+    MainMenue* mainmenue;
+    StatusBar* statusbar;
 
 public:
     RenderPipelines renderPipelines;

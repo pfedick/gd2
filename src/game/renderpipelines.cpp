@@ -146,6 +146,21 @@ void RenderPipelines::createPipelines()
         ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for copy: %s\n", SDL_GetError());
         throw SDLException("SDL_CreateGPUGraphicsPipeline failed for copy: %s", SDL_GetError());
     }
+
+    // Pipeline für UI (Copy mit Blending)
+    targetDesc.blend_state.enable_blend = true;
+    targetDesc.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
+    targetDesc.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+    targetDesc.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
+    targetDesc.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+    targetDesc.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+    targetDesc.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
+
+    uiPipeline = SDL_CreateGPUGraphicsPipeline(gpu_device, &pipelineInfo);
+    if (!uiPipeline) {
+        ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for UI: %s\n", SDL_GetError());
+        throw SDLException("SDL_CreateGPUGraphicsPipeline failed for UI: %s", SDL_GetError());
+    }
 }
 
 void RenderPipelines::createSamplers()

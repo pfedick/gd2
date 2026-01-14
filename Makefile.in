@@ -45,11 +45,12 @@ OBJECTS=compile/main.o \
 	compile/audio_audiosystem.o
 
 
+UI=compile/ui_menue.o \
+	compile/ui_statusbar.o
 
 
-
-$(PROGRAM): update_version ppl7 ppl_toolkit shaders $(OBJECTS)
-	$(CXX) -o $(PROGRAM) $(OBJECTS) $(LIBS)
+$(PROGRAM): update_version ppl7 ppl_toolkit shaders $(OBJECTS) $(UI)
+	$(CXX) -o $(PROGRAM) $(OBJECTS) $(UI) $(LIBS)
 	-chmod 755 $(PROGRAM)
 
 all: update_version $(PROGRAM) texmaker
@@ -207,3 +208,11 @@ compile/audio_audiosystem.o: src/audio/audiosystem.cpp Makefile include/audio.h
 	- @mkdir -p compile
 	$(CXX) -o compile/audio_audiosystem.o -c src/audio/audiosystem.cpp $(CFLAGS)
 
+
+compile/ui_menue.o: src/ui/menue.cpp Makefile include/game.h include/ui/menue.h
+	- @mkdir -p compile
+	$(CXX) -o compile/ui_menue.o -c src/ui/menue.cpp $(CFLAGS)
+
+compile/ui_statusbar.o: src/ui/statusbar.cpp Makefile include/game.h include/ui/statusbar.h
+	- @mkdir -p compile
+	$(CXX) -o compile/ui_statusbar.o -c src/ui/statusbar.cpp $(CFLAGS)

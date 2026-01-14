@@ -1,5 +1,6 @@
 #include "game.h"
-
+#include "ui/menue.h"
+#include "ui/statusbar.h"
 
 ppl7::grafix::Point GetViewPos()
 {
@@ -13,12 +14,17 @@ Game::Game(GPUContext& gpu)
     : ppltk::Window(), gpu(gpu)
 {
     wm = (ppltk::WindowManager_SDL3*)ppltk::GetWindowManager();
+    wm->enableGPURenderer(gpu.gpu);
     Style.setStyle(ppltk::WidgetStyle::Dark);
+    wm->setWidgetStyle(Style);
     quitGame = false;
     render_target_layer = NULL;
     render_target_tmp1 = NULL;
     render_target_tmp2 = NULL;
     depthTexture = NULL;
+    mainmenue = NULL;
+    statusbar = NULL;
+
 }
 
 Game::~Game()
@@ -70,7 +76,7 @@ void Game::createWindow()
     }
     setFlags(flags);
     enableFixedUiSize(true, 1920, 1080);
-    setWindowTitle("George Decker");
+    setWindowTitle("GD2 Prototype");
     ppl7::grafix::Image icon;
     icon.load("res/icon_128.png");
     setWindowIcon(icon);
@@ -79,6 +85,8 @@ void Game::createWindow()
     setSize(config.ScreenResolution);
     wm->createWindow(*this);
     sdl_window = (SDL_Window*)getSDLWindow();
+    sdl_renderer = (SDL_Renderer*)getRenderer();
+    sdl.setRenderer(sdl_renderer);
     //setPos(0,0);
     //SDL_RenderSetLogicalSize(renderer, 1920, 1080);
     wm->setGameControllerFocus(this);
@@ -86,8 +94,14 @@ void Game::createWindow()
     //SDL_HideCursor();
     SDL_HideCursor();
 
-    WidgetDrawbuffer.create(1920, 1080, ppl7::grafix::RGBFormat::A8R8G8B8);
-    this->setWidgetDrawbuffer(&WidgetDrawbuffer);
+    //WidgetDrawbuffer.create(1920, 1080, ppl7::grafix::RGBFormat::A8R8G8B8);
+    //this->setWidgetDrawbuffer(&WidgetDrawbuffer);
+
+    mainmenue = new MainMenue(0, 0, 1920, 30, this);
+    this->addChild(mainmenue);
+
+    statusbar = new StatusBar(0, 1080 - 30, 1920, 30);
+    this->addChild(statusbar);
 
 }
 
@@ -201,23 +215,45 @@ void Game::updateUi(const ppltk::MouseState& mouse)
 void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
 {
     if (!showui) return;
-    gpu_batcher.startRenderPass();
-    //gpu_batcher.addSprite(resources.Cursor, 1, mouse.p.x, mouse.p.y);
 
-    gpu_batcher.prepareInstanceData(cmdbuf);
-    SDL_GPUColorTargetInfo colorTargetInfo = { 0 };
-    colorTargetInfo.texture = render_target_layer;
-    colorTargetInfo.clear_color = (SDL_FColor){ 0.0f, 0.0f, 0.0f, 1.0f };  // Black background
-    colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
-    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.cycle = false;  // CRITICAL: SDL examples use false!
+    // 1. Draw widgets into PPLTK internal texture
+    this->drawWidgets();
+    // Flush SDL_Renderer so the texture update commands are submitted
+    if (sdl_renderer) SDL_FlushRenderer(sdl_renderer);
 
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
+    // 2. Access the PPLTK internal texture and draw it as overlay
+    SDL_Texture* uiTex = (SDL_Texture*)wm->getBackbufferTexture(*this);
+    if (uiTex) {
+        SDL_PropertiesID props = SDL_GetTextureProperties(uiTex);
+        SDL_GPUTexture* gpuTex = (SDL_GPUTexture*)SDL_GetPointerProperty(props, SDL_PROP_TEXTURE_GPU_TEXTURE_POINTER, NULL);
 
-    gpu_batcher.endRenderPass(cmdbuf, renderPass);
+        if (gpuTex) {
+            SDL_GPUColorTargetInfo targetInfo = { 0 };
+            targetInfo.texture = swapchainTexture;
+            // Load existing content (game world), don't clear
+            targetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+            targetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
-    SDL_EndGPURenderPass(renderPass);
-    //drawWidgets();
+            SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+            // Viewport/Scissor to match window
+            SDL_SetGPUViewport(renderPass, NULL);
+            SDL_SetGPUScissor(renderPass, NULL);
+
+            SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.uiPipeline);
+
+            SDL_GPUTextureSamplerBinding binding;
+            binding.texture = gpuTex;
+            binding.sampler = renderPipelines.samplerClamp;
+            SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+            // Draw Fullscreen Quad
+            SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+            SDL_EndGPURenderPass(renderPass);
+        }
+        else {
+            ppl7::PrintDebug("ERROR: Could not get GPU Texture from PPLTK UI Surface!\n");
+        }
+    }
 }
 
 struct BlurParams {

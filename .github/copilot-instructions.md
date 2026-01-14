@@ -1,6 +1,18 @@
 # AI Coding Guide for gd2 / PPL7 / PPLTK
 
-## Current Focus: 2D Deferred Lighting Roadmap
+## Current Focus: User Interface Implementation (SDL3 + PPLTK)
+(Context: Jan 14 2026 - User works on UI logic using SDL 3.4+ Hybrid Renderer)
+
+**Strategy: Hybrid GPU/Renderer**
+- **SDL 3.4+** allows creating an `SDL_Renderer` that uses an existing `SDL_GPUDevice`.
+- Use `SDL_CreateRendererWithProperties` with `SDL_PROP_RENDERER_CREATE_GPU_DEVICE_POINTER`.
+- This enables `ppltk` (which likely uses `SDL_Renderer` logic) to draw directly into the same swapchain/window as our manual GPU rendering.
+- **Workflow**:
+  1. Render Game World (Manual GPU API) -> Swapchain/Intermediate.
+  2. Render UI (SDL_Renderer via ppltk) -> Swapchain on top.
+  3. Present.
+
+## Previous Focus: 2D Deferred Lighting Roadmap
 (Context from session: Jan 13 2026 - User wants Global/Spot/Point lights + Shadows + Normal Maps)
 
 **Phase 1: G-Buffer Setup (MRT)**
@@ -30,6 +42,10 @@
 ---
 
 ## General AI Assistant Guidelines
+
+**User Preferences**
+- **Language**: German (Informal / "Du").
+- **Edit Policy**: ALWAYS ask for confirmation before applying file edits, even for small changes. Propose the change first, then wait for approval.
 
 **Code generation philosophy**: Avoid generating large blocks of code the user doesn't understand. Instead:
 - Explain concepts and patterns step-by-step
@@ -210,6 +226,7 @@ When rendering at screen resolution, sprite quality depends on asset resolution:
 
 ## Migration Notes from SDL2 / DeckerGame
 
+- **Update (Jan 2026/SDL 3.4+):** `SDL_Renderer` can now run on top of `SDL_GPUDevice`. Use `SDL_CreateRendererWithProperties` to share the context. This allows mixing high-level 2D drawing (UI) with low-level GPU pipelines (Game World).
 - `SDL_Texture` (renderer) → `SDL_GPUTexture` (explicit GPU resource). No implicit blits; issue draw calls with bound data.
 - Shaders are **explicit pipelines** from compiled bytecode (SPIR-V/DXIL/MSL depending on backend). Compile GLSL/HLSL offline or use SDL_shader helpers at runtime.
 - Render targets are explicit: offscreen blur requires `SDL_GPUTexture` with `SDL_TEXTUREUSAGE_RENDERTARGET`.
