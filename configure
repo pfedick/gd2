@@ -699,6 +699,7 @@ NASMDEBUGFLAGS
 NASMFLAGS
 NASM
 nasm
+HAVE_SDL3_GPU_RENDERER
 SDL3_CONFIG
 SDL3_FRAMEWORK
 SDL3_LIBS
@@ -17045,21 +17046,42 @@ printf "%s\n" "$sdl_framework" >&6; }
         no_sdl=yes
       fi
     fi
+  fi
 
-    if test "$SDL3_CONFIG" != "no"; then
-      if test "x$sdl_pc" = "xno"; then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SDL3 - version >= $min_sdl_version" >&5
+  if test "x$no_sdl" = x ; then
+      if test "x$sdl_pc" = "xyes"; then
+        sdl_major_version=`$SDL3_CONFIG --modversion | \
+               sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
+        sdl_minor_version=`$SDL3_CONFIG --modversion | \
+               sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
+        sdl_micro_version=`$SDL3_CONFIG --modversion | \
+               sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
+      else
+        if test "$SDL3_CONFIG" != "no" ; then
+          if test "x$sdl_pc" = "xno"; then
+             { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SDL3 - version >= $min_sdl_version" >&5
 printf %s "checking for SDL3 - version >= $min_sdl_version... " >&6; }
-        SDL3_CFLAGS=`$SDL3_CONFIG $sdl_config_args --cflags`
-        SDL3_LIBS=`$SDL3_CONFIG $sdl_config_args --libs`
+             SDL3_CFLAGS=`$SDL3_CONFIG $sdl_config_args --cflags`
+             SDL3_LIBS=`$SDL3_CONFIG $sdl_config_args --libs`
+          fi
+
+          sdl_major_version=`$SDL3_CONFIG $sdl_config_args --version | \
+                 sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
+          sdl_minor_version=`$SDL3_CONFIG $sdl_config_args --version | \
+                 sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
+          sdl_micro_version=`$SDL3_CONFIG $sdl_config_args --version | \
+                 sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
+        fi
       fi
 
-      sdl_major_version=`$SDL3_CONFIG $sdl_config_args --version | \
-             sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
-      sdl_minor_version=`$SDL3_CONFIG $sdl_config_args --version | \
-             sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
-      sdl_micro_version=`$SDL3_CONFIG $sdl_config_args --version | \
-             sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
+            if test "$sdl_major_version" -gt 3 || \
+         (test "$sdl_major_version" -eq 3 && test "$sdl_minor_version" -ge 4); then
+
+printf "%s\n" "#define HAVE_SDL3_GPU_RENDERER 1" >>confdefs.h
+
+
+      fi
+
       if test "x$enable_sdltest" = "xyes" ; then
         ac_save_CFLAGS="$CFLAGS"
         ac_save_CXXFLAGS="$CXXFLAGS"
@@ -17159,7 +17181,6 @@ printf "%s\n" "no" >&6; }
 printf "%s\n" "yes" >&6; }
         fi
       fi
-    fi
   fi
   if test "$SDL3_CONFIG" = "no"; then
     no_sdl="yes"
