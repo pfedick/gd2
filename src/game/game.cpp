@@ -14,7 +14,7 @@ Game::Game(GPUContext& gpu)
     : ppltk::Window(), gpu(gpu)
 {
     wm = (ppltk::WindowManager_SDL3*)ppltk::GetWindowManager();
-    wm->enableGPURenderer(gpu.gpu);
+    //wm->enableGPURenderer(gpu.gpu);
     Style.setStyle(ppltk::WidgetStyle::Dark);
     wm->setWidgetStyle(Style);
     quitGame = false;
@@ -49,7 +49,8 @@ Game::~Game()
 
 void Game::init()
 {
-    wm->enableGPURenderer(gpu.gpu);
+    wm->useGPUAPI(gpu.gpu);
+    //wm->enableGPURenderer(gpu.gpu);
     createWindow();
     gpu.initializeWindow((SDL_Window*)getSDLWindow());
     sdl.setGPUDevice(gpu.gpu);
@@ -215,45 +216,43 @@ void Game::updateUi(const ppltk::MouseState& mouse)
 void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
 {
     if (!showui) return;
+    statusbar->setFps(fps.getFPS());
 
     // 1. Draw widgets into PPLTK internal texture
     this->drawWidgets();
-    // Flush SDL_Renderer so the texture update commands are submitted
-    if (sdl_renderer) SDL_FlushRenderer(sdl_renderer);
+    wm->updateGPUTexture(*this, cmdbuf);
 
-    // 2. Access the PPLTK internal texture and draw it as overlay
-    SDL_Texture* uiTex = (SDL_Texture*)wm->getBackbufferTexture(*this);
-    if (uiTex) {
-        SDL_PropertiesID props = SDL_GetTextureProperties(uiTex);
-        SDL_GPUTexture* gpuTex = (SDL_GPUTexture*)SDL_GetPointerProperty(props, SDL_PROP_TEXTURE_GPU_TEXTURE_POINTER, NULL);
+    SDL_GPUTexture* gpuTex = (SDL_GPUTexture*)wm->getGPUTexture(*this);
 
-        if (gpuTex) {
-            SDL_GPUColorTargetInfo targetInfo = { 0 };
-            targetInfo.texture = swapchainTexture;
-            // Load existing content (game world), don't clear
-            targetInfo.load_op = SDL_GPU_LOADOP_LOAD;
-            targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+    if (gpuTex) {
+        // 2. Draw PPLTK texture as overlay in final swapchain texture
+        ppl7::PrintDebug("Drawing UI overlay\n");
+        SDL_GPUColorTargetInfo targetInfo = { 0 };
+        targetInfo.texture = swapchainTexture;
+        // Load existing content (game world), don't clear
+        targetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+        targetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
-            SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
-            // Viewport/Scissor to match window
-            SDL_SetGPUViewport(renderPass, NULL);
-            SDL_SetGPUScissor(renderPass, NULL);
+        SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+        // Viewport/Scissor to match window
+        SDL_SetGPUViewport(renderPass, NULL);
+        SDL_SetGPUScissor(renderPass, NULL);
 
-            SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.uiPipeline);
+        SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.uiPipeline);
 
-            SDL_GPUTextureSamplerBinding binding;
-            binding.texture = gpuTex;
-            binding.sampler = renderPipelines.samplerClamp;
-            SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+        SDL_GPUTextureSamplerBinding binding;
+        binding.texture = gpuTex;
+        binding.sampler = renderPipelines.samplerClamp;
+        SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
 
-            // Draw Fullscreen Quad
-            SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
-            SDL_EndGPURenderPass(renderPass);
-        }
-        else {
-            ppl7::PrintDebug("ERROR: Could not get GPU Texture from PPLTK UI Surface!\n");
-        }
+        // Draw Fullscreen Quad
+        SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+        SDL_EndGPURenderPass(renderPass);
     }
+    else {
+        ppl7::PrintDebug("ERROR: Could not get GPU Texture from PPLTK UI Surface!\n");
+    }
+
 }
 
 struct BlurParams {
@@ -271,7 +270,7 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
 
     // Collect all sprites to batch
 
-    /*
+
     int x = 100, y = 200;
     for (int i = 0; i < 100; i++) {
         gpu_batcher.addSprite(resources.Player, i, x, y);
@@ -281,10 +280,12 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
             y += 200;
         }
     }
-    */
+
+    /*
     for (int i = 0; i < 100; i++) {
         gpu_batcher.addSprite(resources.Player, ppl7::rand(0, 200), ppl7::rand(0, 1920), ppl7::rand(0, 1080), 1.0f, 1.0f, 0.0f);
     }
+    */
 
     gpu_batcher.addSprite(resources.Player, 27, 100, 200, 1.0f, 1.0f, 0.0f);
 
