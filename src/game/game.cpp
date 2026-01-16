@@ -148,7 +148,6 @@ void Game::run()
     sdl.setCursor(resources.Cursor.getDrawable(1), resources.Cursor.getPivot(1));
     ppl7::ppl_time_t last_second = ppl7::GetTime();
     quitGame = false;
-    fps.enableDebug(true);
     while (!quitGame) {
         double start_time = ppl7::GetMicrotime();
 
@@ -226,7 +225,7 @@ void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture
 
     if (gpuTex) {
         // 2. Draw PPLTK texture as overlay in final swapchain texture
-        ppl7::PrintDebug("Drawing UI overlay\n");
+        //ppl7::PrintDebug("Drawing UI overlay\n");
         SDL_GPUColorTargetInfo targetInfo = { 0 };
         targetInfo.texture = swapchainTexture;
         // Load existing content (game world), don't clear
