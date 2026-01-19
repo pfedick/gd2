@@ -4,6 +4,39 @@ BreakBeforeBraces: Custom
 AllowShortIfStatementsOnASingleLine: true
 SortIncludes: false
 
+# Erzwingt die Einrückbreite auf 4, unabhängig vom Stil
+IndentWidth: 4
+
+# Stellt sicher, dass Code in Namespaces konsistent eingerückt wird
+# 'None' = keine Einrückung (alles linksbündig im Namespace)
+# 'All'  = alles wird eingerückt (so wie du es vermutlich willst)
+NamespaceIndentation: None
+
+# Erzwingt den Zeilenumbruch vor dem Doppelpunkt
+BreakConstructorInitializers: BeforeColon
+
+# Verhindert, dass alle Initialisierungen in eine Zeile gequetscht werden,
+# falls sie kurz genug wären.
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+
+# (Optional für neuere clang-format Versionen ab v13+)
+# Dies stellt sicher, dass die Liste immer umgebrochen wird.
+PackConstructorInitializers: Never
+
+# Optional: Damit .h Dateien immer als C++ behandelt werden
+Language: Cpp
+Standard: Latest
+
+# Setzt die Einrückung der Modifizierer (public, private) relativ zur Klasse.
+# 0 bedeutet: Sie stehen auf derselben Ebene wie die Methoden/Variablen.
+# -4 bedeutet: Sie stehen ganz links am Rand der Klasse.
+AccessModifierOffset: -4
+
+# Stellt sicher, dass der Inhalt von Klassen eingerückt wird
+IndentAccessModifiers: false
+
+PointerAlignment: Left
+
 BraceWrapping:
     AfterFunction: true
     AfterControlStatement: Never
