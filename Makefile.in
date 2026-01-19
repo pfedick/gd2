@@ -39,6 +39,7 @@ OBJECTS=compile/main.o \
 	compile/resources.o \
 	compile/renderpipelines.o \
 	compile/background.o \
+	compile/colorpalette.o \
 	compile/audio_audioinstance.o \
 	compile/audio_audiopool.o \
 	compile/audio_audiosample.o \
@@ -46,8 +47,13 @@ OBJECTS=compile/main.o \
 	compile/audio_audiosystem.o
 
 
-UI=compile/ui_menue.o \
-	compile/ui_statusbar.o
+UI=compile/ui/menue.o \
+	compile/ui/statusbar.o \
+	compile/ui/tileselection.o \
+	compile/ui/spriteselection.o \
+	compile/ui/worldwidget.o \
+	compile/ui/hud.o
+
 
 WIDGETS = compile/widgets/colorwidget.o \
 	compile/widgets/controllerbuttonselector.o \
@@ -119,10 +125,10 @@ ppl_toolkit:
 	cd ppltk && $(MAKE) -j
 
 clean:
-	-rm -f compile/*.o $(PROGRAM) *.core
+	-rm -f compile/* $(PROGRAM) *.core
 
 cleanall:
-	-rm -f compile/*.o $(PROGRAM) *.core
+	-rm -f compile/* $(PROGRAM) *.core
 	cd pplib && $(MAKE) clean
 	cd ppltk && $(MAKE) clean
 
@@ -182,6 +188,10 @@ compile/fps.o: src/game/fps.cpp Makefile include/game.h
 	- @mkdir -p compile
 	$(CXX) -o compile/fps.o -c src/game/fps.cpp $(CFLAGS)
 
+compile/colorpalette.o: src/game/colorpalette.cpp Makefile include/colorpalette.h
+	- @mkdir -p compile
+	$(CXX) -o compile/colorpalette.o -c src/game/colorpalette.cpp $(CFLAGS)
+
 compile/renderpipelines.o: src/game/renderpipelines.cpp Makefile include/renderpipelines.h
 	- @mkdir -p compile
 	$(CXX) -o compile/renderpipelines.o -c src/game/renderpipelines.cpp $(CFLAGS)
@@ -224,13 +234,41 @@ compile/audio_audiosystem.o: src/audio/audiosystem.cpp Makefile include/audio.h
 	$(CXX) -o compile/audio_audiosystem.o -c src/audio/audiosystem.cpp $(CFLAGS)
 
 ### UI ##########################################################################
-compile/ui_menue.o: src/ui/menue.cpp Makefile include/game.h include/ui/menue.h
-	- @mkdir -p compile
-	$(CXX) -o compile/ui_menue.o -c src/ui/menue.cpp $(CFLAGS)
+compile/ui/menue.o: src/ui/menue.cpp Makefile include/game.h include/ui/menue.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/menue.o -c src/ui/menue.cpp $(CFLAGS)
 
-compile/ui_statusbar.o: src/ui/statusbar.cpp Makefile include/game.h include/ui/statusbar.h
-	- @mkdir -p compile
-	$(CXX) -o compile/ui_statusbar.o -c src/ui/statusbar.cpp $(CFLAGS)
+compile/ui/statusbar.o: src/ui/statusbar.cpp Makefile include/game.h include/ui/statusbar.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/statusbar.o -c src/ui/statusbar.cpp $(CFLAGS)
+
+compile/ui/hud.o: src/ui/hud.cpp Makefile include/game.h include/ui/hud.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/hud.o -c src/ui/hud.cpp $(CFLAGS)
+
+compile/ui/leveldialog.o: src/ui/leveldialog.cpp Makefile include/game.h include/ui/leveldialog.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/leveldialog.o -c src/ui/leveldialog.cpp $(CFLAGS)
+
+compile/ui/metrics.o: src/ui/metrics.cpp Makefile include/game.h include/ui/metrics.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/metrics.o -c src/ui/metrics.cpp $(CFLAGS)
+
+compile/ui/objectselection.o: src/ui/objectselection.cpp Makefile include/game.h include/ui/objectselection.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/objectselection.o -c src/ui/objectselection.cpp $(CFLAGS)
+
+compile/ui/spriteselection.o: src/ui/spriteselection.cpp Makefile include/game.h include/ui/spriteselection.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/spriteselection.o -c src/ui/spriteselection.cpp $(CFLAGS)
+
+compile/ui/tileselection.o: src/ui/tileselection.cpp Makefile include/game.h include/ui/tileselection.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/tileselection.o -c src/ui/tileselection.cpp $(CFLAGS)
+
+compile/ui/worldwidget.o: src/ui/worldwidget.cpp Makefile include/game.h include/ui/worldwidget.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/worldwidget.o -c src/ui/worldwidget.cpp $(CFLAGS)
 
 
 ### WIDGETS #####################################################################

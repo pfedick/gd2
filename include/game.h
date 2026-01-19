@@ -1,20 +1,22 @@
 
+#include <ppl7-grafix.h>
+#include <ppl7.h>
+
 #include "gpu.h"
 #include "renderpipelines.h"
 #include "resources.h"
 #include "sdl.h"
-#include <ppl7-grafix.h>
-#include <ppl7.h>
+#include "level.h"
 
 #define APP_COMPANY "Patrick F.-Productions"
 #define APP_NAME "The Magican"
 
 class Config
 {
-  private:
+private:
     ppl7::String ConfigFile;
 
-  public:
+public:
     enum class DifficultyLevel
     {
         easy = 1,
@@ -48,7 +50,7 @@ class Config
     // Controller
     class Controller
     {
-      public:
+    public:
         int deadzone;
         int axis_walk;
         int axis_jump;
@@ -75,13 +77,13 @@ class Config
 
 class FPS
 {
-  private:
+private:
     ppl7::ppl_time_t fps_start_time;
     int fps_frame_count;
     int fps;
     bool debug;
 
-  public:
+public:
     FPS();
     int getFPS() const;
     void update();
@@ -93,60 +95,61 @@ class StatusBar;
 
 class Game : private ppltk::Window
 {
-  private:
+private:
     SDL sdl;
-    SDL_Window *sdl_window;
-    SDL_Renderer *sdl_renderer;
-    GPUContext &gpu;
+    SDL_Window* sdl_window;
+    SDL_Renderer* sdl_renderer;
+    GPUContext& gpu;
     GPUBatcher gpu_batcher;
 
-    ppltk::WindowManager_SDL3 *wm;
+    ppltk::WindowManager_SDL3* wm;
     ppltk::WidgetStyle Style;
 
     ppl7::grafix::Image WidgetDrawbuffer;
 
-    SDL_GPUTexture *render_target_layer;
-    SDL_GPUTexture *render_target_tmp1;
-    SDL_GPUTexture *render_target_tmp2;
-    SDL_GPUTexture *depthTexture;
+    SDL_GPUTexture* render_target_layer;
+    SDL_GPUTexture* render_target_tmp1;
+    SDL_GPUTexture* render_target_tmp2;
+    SDL_GPUTexture* depthTexture;
 
     ppl7::grafix::Size render_target_size;
 
     void createWindow();
-    void createRenderTargetsIfRequired(const ppl7::grafix::Size &size);
+    void createRenderTargetsIfRequired(const ppl7::grafix::Size& size);
 
     bool quitGame = false;
     bool showui = true;
 
-    void drawUi(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainTexture, const ppltk::MouseState &mouse);
-    void drawWorld(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainTexture);
-    void drawHUD(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainTexture);
+    void drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse);
+    void drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
+    void drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
 
     uint64_t frame_count = 0;
     double time_accumulator = 0.0f;
 
-    MainMenue *mainmenue;
-    StatusBar *statusbar;
+    MainMenue* mainmenue;
+    StatusBar* statusbar;
 
-  public:
+public:
+    Level level;
     RenderPipelines renderPipelines;
     Resources resources;
     Config config;
     FPS fps;
-    Game(GPUContext &gpu);
+    Game(GPUContext& gpu);
     ~Game();
 
     void init();
     void init_grafix();
 
-    void loadLevel(const ppl7::String &filename);
+    void loadLevel(const ppl7::String& filename);
 
     void run();
-    void updateUi(const ppltk::MouseState &mouse);
+    void updateUi(const ppltk::MouseState& mouse);
 
     // EventHandler
-    void quitEvent(ppltk::Event *event);
-    void closeEvent(ppltk::Event *event);
+    void quitEvent(ppltk::Event* event);
+    void closeEvent(ppltk::Event* event);
 };
 
-Game &GetGame();
+Game& GetGame();

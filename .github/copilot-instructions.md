@@ -102,7 +102,6 @@ The engine separates Game Logic (SDL3 GPU) and UI (PPLTK/`SDL_Renderer`).
 **Dependencies**: SDL3, zlib, bzip2, pcre2, freetype, libpng, libjpeg, dav1d, assimp (checked in `configure.ac`).
 
 ### Code Conventions
-- **Types**: Use `ppl7::String` and `ppl7::Array` instead of STL where possible.
 - **Exceptions**: Use `throw ppl7::Exception("msg")` or `GPUException` for errors.
 - **SDL3**: 
   - Prefer `SDL_GPUDevice` pipelines for game rendering.

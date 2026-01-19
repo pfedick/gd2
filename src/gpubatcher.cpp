@@ -5,7 +5,6 @@
 #include "gpu.h"
 #include "sprite.h"
 
-
 GPUBatcher::GPUBatcher()
 {
     z = 0.0f;
@@ -161,13 +160,11 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
             ppl7::PrintDebugTime("ERROR: Failed to resize storage buffer to %u bytes\n", storageBufferCapacity);
             return;
         }
-        ppl7::PrintDebugTime("Resized Storage Buffer to %u bytes (%zu sprites)\n", storageBufferCapacity, storageBufferCapacity / sizeof(SpriteInstance));
+        ppl7::PrintDebugTime("Resized Storage Buffer to %u bytes (%zu sprites)\n", storageBufferCapacity,
+                             storageBufferCapacity / sizeof(SpriteInstance));
     }
 
-    SDL_GPUTransferBufferCreateInfo transferInfo = {
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = (Uint32)instanceDataSize
-    };
+    SDL_GPUTransferBufferCreateInfo transferInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)instanceDataSize};
     SDL_GPUTransferBuffer* transferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &transferInfo);
     if (transferBuffer) {
         void* mapped = SDL_MapGPUTransferBuffer(gpu->gpu, transferBuffer, false);
@@ -176,15 +173,8 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
             SDL_UnmapGPUTransferBuffer(gpu->gpu, transferBuffer);
 
             SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
-            SDL_GPUTransferBufferLocation transferLocation = {
-                .transfer_buffer = transferBuffer,
-                .offset = 0
-            };
-            SDL_GPUBufferRegion bufferRegion = {
-                .buffer = storageBuffer,
-                .offset = 0,
-                .size = (Uint32)instanceDataSize
-            };
+            SDL_GPUTransferBufferLocation transferLocation = {.transfer_buffer = transferBuffer, .offset = 0};
+            SDL_GPUBufferRegion bufferRegion = {.buffer = storageBuffer, .offset = 0, .size = (Uint32)instanceDataSize};
             SDL_UploadToGPUBuffer(copyPass, &transferLocation, &bufferRegion, false);
             SDL_EndGPUCopyPass(copyPass);
         }
@@ -204,9 +194,9 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         auto pushV = [&](float x, float y, const ppl7::grafix::Color& c) {
             float ndc_x = (x * 2.0f / screenWidth) - 1.0f;
             float ndc_y = 1.0f - (y * 2.0f / screenHeight);
-            primitives.push_back({ ndc_x, ndc_y, 0.0f,
-               (float)c.red() / 255.0f, (float)c.green() / 255.0f, (float)c.blue() / 255.0f, (float)c.alpha() / 255.0f });
-            };
+            primitives.push_back({ndc_x, ndc_y, 0.0f, (float)c.red() / 255.0f, (float)c.green() / 255.0f, (float)c.blue() / 255.0f,
+                                  (float)c.alpha() / 255.0f});
+        };
 
         // Helper to add thick line as quad (2 triangles)
         auto pushThickLine = [&](float x1, float y1, float x2, float y2, float thickness, const ppl7::grafix::Color& c) {
@@ -226,10 +216,14 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
             float oy = ny * halfWidth;
 
             // 4 corners
-            float p1x = x1 + ox; float p1y = y1 + oy;
-            float p2x = x1 - ox; float p2y = y1 - oy;
-            float p3x = x2 - ox; float p3y = y2 - oy;
-            float p4x = x2 + ox; float p4y = y2 + oy;
+            float p1x = x1 + ox;
+            float p1y = y1 + oy;
+            float p2x = x1 - ox;
+            float p2y = y1 - oy;
+            float p3x = x2 - ox;
+            float p3y = y2 - oy;
+            float p4x = x2 + ox;
+            float p4y = y2 + oy;
 
             // Triangle 1
             pushV(p1x, p1y, c);
@@ -240,7 +234,7 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
             pushV(p1x, p1y, c);
             pushV(p3x, p3y, c);
             pushV(p4x, p4y, c);
-            };
+        };
 
         // First pass: Triangles (Filled Rects + Thick Lines/Rects)
         for (const auto& cmd : primitiveCommands) {
@@ -256,11 +250,9 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 pushV(x2, cmd.y1, cmd.color);
                 pushV(cmd.x1, y2, cmd.color);
                 pushV(x2, y2, cmd.color);
-            }
-            else if (cmd.type == PrimitiveCommand::Type::Line && cmd.thickness > 1.0f) {
+            } else if (cmd.type == PrimitiveCommand::Type::Line && cmd.thickness > 1.0f) {
                 pushThickLine(cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.thickness, cmd.color);
-            }
-            else if (cmd.type == PrimitiveCommand::Type::Rect && cmd.thickness > 1.0f) {
+            } else if (cmd.type == PrimitiveCommand::Type::Rect && cmd.thickness > 1.0f) {
                 // Ensure crisp "Square Join" corners by drawing 4 overlapping rectangles
                 // Note: This logic assumes axis-aligned rectangles.
                 float halfWidth = cmd.thickness * 0.5f;
@@ -275,8 +267,12 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 {
                     float y1 = top;
                     float y2 = top + cmd.thickness;
-                    pushV(left, y1, cmd.color); pushV(left, y2, cmd.color); pushV(right, y1, cmd.color);
-                    pushV(right, y1, cmd.color); pushV(left, y2, cmd.color); pushV(right, y2, cmd.color);
+                    pushV(left, y1, cmd.color);
+                    pushV(left, y2, cmd.color);
+                    pushV(right, y1, cmd.color);
+                    pushV(right, y1, cmd.color);
+                    pushV(left, y2, cmd.color);
+                    pushV(right, y2, cmd.color);
                 }
 
                 // Bottom Bar (full width)
@@ -284,8 +280,12 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 {
                     float y1 = bottom - cmd.thickness;
                     float y2 = bottom;
-                    pushV(left, y1, cmd.color); pushV(left, y2, cmd.color); pushV(right, y1, cmd.color);
-                    pushV(right, y1, cmd.color); pushV(left, y2, cmd.color); pushV(right, y2, cmd.color);
+                    pushV(left, y1, cmd.color);
+                    pushV(left, y2, cmd.color);
+                    pushV(right, y1, cmd.color);
+                    pushV(right, y1, cmd.color);
+                    pushV(left, y2, cmd.color);
+                    pushV(right, y2, cmd.color);
                 }
 
                 // Left Bar (between top/bottom bars)
@@ -297,8 +297,12 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                     float y2 = bottom - cmd.thickness;
                     // Only draw if height is positive (otherwise bars overlap/cross)
                     if (y2 > y1) {
-                        pushV(x1, y1, cmd.color); pushV(x1, y2, cmd.color); pushV(x2, y1, cmd.color);
-                        pushV(x2, y1, cmd.color); pushV(x1, y2, cmd.color); pushV(x2, y2, cmd.color);
+                        pushV(x1, y1, cmd.color);
+                        pushV(x1, y2, cmd.color);
+                        pushV(x2, y1, cmd.color);
+                        pushV(x2, y1, cmd.color);
+                        pushV(x1, y2, cmd.color);
+                        pushV(x2, y2, cmd.color);
                     }
                 }
 
@@ -310,8 +314,12 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                     float y1 = top + cmd.thickness;
                     float y2 = bottom - cmd.thickness;
                     if (y2 > y1) {
-                        pushV(x1, y1, cmd.color); pushV(x1, y2, cmd.color); pushV(x2, y1, cmd.color);
-                        pushV(x2, y1, cmd.color); pushV(x1, y2, cmd.color); pushV(x2, y2, cmd.color);
+                        pushV(x1, y1, cmd.color);
+                        pushV(x1, y2, cmd.color);
+                        pushV(x2, y1, cmd.color);
+                        pushV(x2, y1, cmd.color);
+                        pushV(x1, y2, cmd.color);
+                        pushV(x2, y2, cmd.color);
                     }
                 }
             }
@@ -323,8 +331,7 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
             if (cmd.type == PrimitiveCommand::Type::Line && cmd.thickness <= 1.0f) {
                 pushV(cmd.x1, cmd.y1, cmd.color);
                 pushV(cmd.x2, cmd.y2, cmd.color);
-            }
-            else if (cmd.type == PrimitiveCommand::Type::Rect && cmd.thickness <= 1.0f) {
+            } else if (cmd.type == PrimitiveCommand::Type::Rect && cmd.thickness <= 1.0f) {
                 float x2 = cmd.x1 + cmd.w;
                 float y2 = cmd.y1 + cmd.h;
                 // Top
@@ -349,17 +356,12 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
             if (dataSize > primitiveVertexCapacity) {
                 if (primitiveVertexBuffer) SDL_ReleaseGPUBuffer(gpu->gpu, primitiveVertexBuffer);
                 primitiveVertexCapacity = (Uint32)(dataSize * 1.5);
-                SDL_GPUBufferCreateInfo desc = {
-                    .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-                    .size = primitiveVertexCapacity
-                };
+                SDL_GPUBufferCreateInfo desc = {.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = primitiveVertexCapacity};
                 primitiveVertexBuffer = SDL_CreateGPUBuffer(gpu->gpu, &desc);
             }
 
             // Upload
-            SDL_GPUTransferBufferCreateInfo tInfo = {
-               .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)dataSize
-            };
+            SDL_GPUTransferBufferCreateInfo tInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)dataSize};
             SDL_GPUTransferBuffer* tBuf = SDL_CreateGPUTransferBuffer(gpu->gpu, &tInfo);
             if (tBuf) {
                 void* map = SDL_MapGPUTransferBuffer(gpu->gpu, tBuf, false);
@@ -368,8 +370,8 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                     SDL_UnmapGPUTransferBuffer(gpu->gpu, tBuf);
 
                     SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
-                    SDL_GPUTransferBufferLocation loc = { .transfer_buffer = tBuf, .offset = 0 };
-                    SDL_GPUBufferRegion reg = { .buffer = primitiveVertexBuffer, .offset = 0, .size = (Uint32)dataSize };
+                    SDL_GPUTransferBufferLocation loc = {.transfer_buffer = tBuf, .offset = 0};
+                    SDL_GPUBufferRegion reg = {.buffer = primitiveVertexBuffer, .offset = 0, .size = (Uint32)dataSize};
                     SDL_UploadToGPUBuffer(cp, &loc, &reg, false);
                     SDL_EndGPUCopyPass(cp);
                 }
@@ -378,7 +380,6 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         }
     }
 }
-
 
 void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass)
 {
@@ -395,16 +396,13 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
         return;
     }
 
-    //ppl7::PrintDebugTime("  endRenderPass: Drawing %zu sprites\n", totalSprites);
+    // ppl7::PrintDebugTime("  endRenderPass: Drawing %zu sprites\n", totalSprites);
 
     // Bind sprite pipeline
     SDL_BindGPUGraphicsPipeline(render_pass, spritePipeline);
 
     // Bind vertex buffer only
-    SDL_GPUBufferBinding vertexBinding = {
-        .buffer = vertexBuffer,
-        .offset = 0
-    };
+    SDL_GPUBufferBinding vertexBinding = {.buffer = vertexBuffer, .offset = 0};
     SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
 
     // Bind storage buffer for sprite instance data
@@ -414,10 +412,7 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
     Uint32 instanceOffset = 0;
 
     // Bind index buffer once
-    SDL_GPUBufferBinding indexBinding = {
-        .buffer = indexBuffer,
-        .offset = 0
-    };
+    SDL_GPUBufferBinding indexBinding = {.buffer = indexBuffer, .offset = 0};
     SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
     for (const auto& [textureId, spriteList] : spriteCommands) {
@@ -453,10 +448,7 @@ void GPUBatcher::drawPrimitives(SDL_GPURenderPass* render_pass)
     }
 
     // Bind primitive vertex buffer
-    SDL_GPUBufferBinding vertexBinding = {
-        .buffer = primitiveVertexBuffer,
-        .offset = 0
-    };
+    SDL_GPUBufferBinding vertexBinding = {.buffer = primitiveVertexBuffer, .offset = 0};
     SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
 
     // 1. Draw Triangles (FilledRects)
@@ -473,10 +465,14 @@ void GPUBatcher::drawPrimitives(SDL_GPURenderPass* render_pass)
     }
 }
 
-
-
-
-void GPUBatcher::addSprite(const SpriteTexture& sprite, int sprite_id, float x, float y, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation)
+void GPUBatcher::addSprite(const SpriteTexture& sprite,
+                           int sprite_id,
+                           float x,
+                           float y,
+                           float scale_x,
+                           float scale_y,
+                           float angle,
+                           const ppl7::grafix::Color& color_modulation)
 {
     SpriteCommand cmd(&sprite, sprite_id, x, y, z, scale_x, scale_y, angle, color_modulation);
     z -= 0.0001f; // Slightly increase Z to ensure correct layering
@@ -506,28 +502,23 @@ void GPUBatcher::loadShaders()
 
     // Load vertex shader (SPIR-V compiled from GLSL)
     // Using NDC version with storage buffer (CPU-side transformation like SimpleQuadTest)
-    vertShader = gpu->loadShader("res/shaders/vulkan/sprite_ndc_storage.vert.spv",
-        SDL_GPU_SHADERSTAGE_VERTEX,
-        0,  // num_samplers
-        0,  // num_storage_textures
-        1,  // num_storage_buffers
-        0); // num_uniform_buffers
+    vertShader = gpu->loadShader("res/shaders/vulkan/sprite_ndc_storage.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX,
+                                 0,  // num_samplers
+                                 0,  // num_storage_textures
+                                 1,  // num_storage_buffers
+                                 0); // num_uniform_buffers
 
     // Load fragment shader
-    fragShader = gpu->loadShader("res/shaders/vulkan/sprite_ndc_storage.frag.spv",
-        SDL_GPU_SHADERSTAGE_FRAGMENT,
-        1,  // num_samplers
-        0,  // num_storage_textures
-        0,  // num_storage_buffers
-        0); // num_uniform_buffers
+    fragShader = gpu->loadShader("res/shaders/vulkan/sprite_ndc_storage.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
+                                 1,  // num_samplers
+                                 0,  // num_storage_textures
+                                 0,  // num_storage_buffers
+                                 0); // num_uniform_buffers
 
     // Load primitive shaders
-    primitiveVertShader = gpu->loadShader("res/shaders/vulkan/primitive.vert.spv",
-        SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 0);
-    primitiveFragShader = gpu->loadShader("res/shaders/vulkan/primitive.frag.spv",
-        SDL_GPU_SHADERSTAGE_FRAGMENT, 0, 0, 0, 0);
+    primitiveVertShader = gpu->loadShader("res/shaders/vulkan/primitive.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 0);
+    primitiveFragShader = gpu->loadShader("res/shaders/vulkan/primitive.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 0, 0, 0, 0);
 }
-
 
 void GPUBatcher::createPipeline()
 {
@@ -552,92 +543,63 @@ void GPUBatcher::createPipeline()
     // Define vertex attributes (per-vertex data only)
     SDL_GPUVertexAttribute vertexAttributes[] = {
         // Position (location 0)
-        {
-            .location = 0,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-            .offset = 0
-        },
+        {.location = 0, .buffer_slot = 0, .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2, .offset = 0},
         // Texcoord (location 1)
-        {
-            .location = 1,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-            .offset = sizeof(float) * 2
-        },
+        {.location = 1, .buffer_slot = 0, .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2, .offset = sizeof(float) * 2},
         // Color (location 2)
-        {
-            .location = 2,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-            .offset = sizeof(float) * 4
-        }
-    };
+        {.location = 2, .buffer_slot = 0, .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4, .offset = sizeof(float) * 4}};
 
     // Define vertex buffer layout (only per-vertex data)
     SDL_GPUVertexBufferDescription vertexBufferDesc[] = {
         // Slot 0: Per-vertex data
-        {
-            .slot = 0,
-            .pitch = sizeof(Vertex),
-            .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
-            .instance_step_rate = 0
-        }
-    };
+        {.slot = 0, .pitch = sizeof(Vertex), .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX, .instance_step_rate = 0}};
 
-    SDL_GPUVertexInputState vertexInputState = {
-        .vertex_buffer_descriptions = vertexBufferDesc,
-        .num_vertex_buffers = 1,
-        .vertex_attributes = vertexAttributes,
-        .num_vertex_attributes = 3
-    };
+    SDL_GPUVertexInputState vertexInputState = {.vertex_buffer_descriptions = vertexBufferDesc,
+                                                .num_vertex_buffers = 1,
+                                                .vertex_attributes = vertexAttributes,
+                                                .num_vertex_attributes = 3};
 
     // Get swapchain texture format from GPUContext's window
     SDL_GPUTextureFormat swapchainFormat = SDL_GetGPUSwapchainTextureFormat(gpu->gpu, gpu->window);
-    //ppl7::PrintDebugTime("GPUBatcher: Swapchain format = %d\n", (int)swapchainFormat);
+    // ppl7::PrintDebugTime("GPUBatcher: Swapchain format = %d\n", (int)swapchainFormat);
 
     // Color target description
-    SDL_GPUColorTargetDescription colorTarget = {
-        .format = swapchainFormat,
-        .blend_state = {
-            .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-            .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-            .color_blend_op = SDL_GPU_BLENDOP_ADD,
-            .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
-            .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-            .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-            .color_write_mask = SDL_GPU_COLORCOMPONENT_R | SDL_GPU_COLORCOMPONENT_G |
-                                SDL_GPU_COLORCOMPONENT_B | SDL_GPU_COLORCOMPONENT_A,
-            .enable_blend = true
-        }
-    };
+    SDL_GPUColorTargetDescription colorTarget = {.format = swapchainFormat,
+                                                 .blend_state = {.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                                                                 .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                                                                 .color_blend_op = SDL_GPU_BLENDOP_ADD,
+                                                                 .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,
+                                                                 .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                                                                 .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+                                                                 .color_write_mask = SDL_GPU_COLORCOMPONENT_R | SDL_GPU_COLORCOMPONENT_G |
+                                                                                     SDL_GPU_COLORCOMPONENT_B | SDL_GPU_COLORCOMPONENT_A,
+                                                                 .enable_blend = true}};
 
     // Create graphics pipeline
-    SDL_GPUGraphicsPipelineCreateInfo pipelineInfo = {
-        .vertex_shader = vertShader,
-        .fragment_shader = fragShader,
-        .vertex_input_state = vertexInputState,
-        .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
-        .rasterizer_state = {
-            .fill_mode = SDL_GPU_FILLMODE_FILL,
-            .cull_mode = SDL_GPU_CULLMODE_NONE,
-            .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,
-        },
-        .multisample_state = {
-            .sample_count = SDL_GPU_SAMPLECOUNT_1,
-        },
-        .depth_stencil_state = {
-            .compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
-            .enable_depth_test = true,
-            .enable_depth_write = true,
-        },
-        .target_info = {
-            .color_target_descriptions = &colorTarget,
-            .num_color_targets = 1,
-            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
-            .has_depth_stencil_target = true
-        }
-    };
+    SDL_GPUGraphicsPipelineCreateInfo pipelineInfo = {.vertex_shader = vertShader,
+                                                      .fragment_shader = fragShader,
+                                                      .vertex_input_state = vertexInputState,
+                                                      .primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST,
+                                                      .rasterizer_state =
+                                                          {
+                                                              .fill_mode = SDL_GPU_FILLMODE_FILL,
+                                                              .cull_mode = SDL_GPU_CULLMODE_NONE,
+                                                              .front_face = SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE,
+                                                          },
+                                                      .multisample_state =
+                                                          {
+                                                              .sample_count = SDL_GPU_SAMPLECOUNT_1,
+                                                          },
+                                                      .depth_stencil_state =
+                                                          {
+                                                              .compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
+                                                              .enable_depth_test = true,
+                                                              .enable_depth_write = true,
+                                                          },
+                                                      .target_info = {.color_target_descriptions = &colorTarget,
+                                                                      .num_color_targets = 1,
+                                                                      .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+                                                                      .has_depth_stencil_target = true}};
 
     spritePipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
     if (!spritePipeline) {
@@ -647,82 +609,61 @@ void GPUBatcher::createPipeline()
     // --- Create Primitive Pipeline (LineList) ---
     SDL_GPUVertexAttribute primitiveAttributes[] = {
         // Position (location 0) - vec3
-        {
-            .location = 0,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-            .offset = 0
-        },
+        {.location = 0, .buffer_slot = 0, .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3, .offset = 0},
         // Color (location 1) - vec4
-        {
-            .location = 1,
-            .buffer_slot = 0,
-            .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-            .offset = sizeof(float) * 3
-        }
-    };
+        {.location = 1, .buffer_slot = 0, .format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4, .offset = sizeof(float) * 3}};
 
     SDL_GPUVertexBufferDescription primitiveBufferDesc[] = {
-        {
-            .slot = 0,
-            .pitch = sizeof(PrimitiveVertex),
-            .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX,
-            .instance_step_rate = 0
-        }
-    };
+        {.slot = 0, .pitch = sizeof(PrimitiveVertex), .input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX, .instance_step_rate = 0}};
 
-    SDL_GPUVertexInputState primitiveVertexInput = {
-        .vertex_buffer_descriptions = primitiveBufferDesc,
-        .num_vertex_buffers = 1,
-        .vertex_attributes = primitiveAttributes,
-        .num_vertex_attributes = 2
-    };
+    SDL_GPUVertexInputState primitiveVertexInput = {.vertex_buffer_descriptions = primitiveBufferDesc,
+                                                    .num_vertex_buffers = 1,
+                                                    .vertex_attributes = primitiveAttributes,
+                                                    .num_vertex_attributes = 2};
 
     SDL_GPUColorTargetDescription primitiveColorTargets[] = {
-        {
-            .format = SDL_GetGPUSwapchainTextureFormat(gpu->gpu, gpu->window),
-            .blend_state = {
-                .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-                .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-                .color_blend_op = SDL_GPU_BLENDOP_ADD,
-                .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA, // src alpha
-                .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, // 1-src alpha
-                .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
-                .enable_blend = true,
-            }
-        }
-    };
+        {.format = SDL_GetGPUSwapchainTextureFormat(gpu->gpu, gpu->window),
+         .blend_state = {
+             .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+             .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+             .color_blend_op = SDL_GPU_BLENDOP_ADD,
+             .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,           // src alpha
+             .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, // 1-src alpha
+             .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
+             .enable_blend = true,
+         }}};
 
-    SDL_GPUGraphicsPipelineCreateInfo primitivePipelineInfo = {
-        .vertex_shader = primitiveVertShader,
-        .fragment_shader = primitiveFragShader,
-        .vertex_input_state = primitiveVertexInput,
-        .primitive_type = SDL_GPU_PRIMITIVETYPE_LINELIST,
-        .rasterizer_state = {
-            .fill_mode = SDL_GPU_FILLMODE_FILL,
-            .cull_mode = SDL_GPU_CULLMODE_NONE,
-            .front_face = SDL_GPU_FRONTFACE_CLOCKWISE,
-        },
-        .multisample_state = {
-            .sample_count = SDL_GPU_SAMPLECOUNT_1,
-        },
-        .depth_stencil_state = {
-            .compare_op = SDL_GPU_COMPAREOP_ALWAYS, // Overlay: Ignore depth
-            .back_stencil_state = {},
-            .front_stencil_state = {},
-            .compare_mask = 0,
-            .write_mask = 0,
-            .enable_depth_test = false, // Disable depth testing
-            .enable_depth_write = false,
-            .enable_stencil_test = false,
-        },
-        .target_info = {
-            .color_target_descriptions = primitiveColorTargets,
-            .num_color_targets = 1,
-            .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM, // Match default
-            .has_depth_stencil_target = true,
-        }
-    };
+    SDL_GPUGraphicsPipelineCreateInfo primitivePipelineInfo = {.vertex_shader = primitiveVertShader,
+                                                               .fragment_shader = primitiveFragShader,
+                                                               .vertex_input_state = primitiveVertexInput,
+                                                               .primitive_type = SDL_GPU_PRIMITIVETYPE_LINELIST,
+                                                               .rasterizer_state =
+                                                                   {
+                                                                       .fill_mode = SDL_GPU_FILLMODE_FILL,
+                                                                       .cull_mode = SDL_GPU_CULLMODE_NONE,
+                                                                       .front_face = SDL_GPU_FRONTFACE_CLOCKWISE,
+                                                                   },
+                                                               .multisample_state =
+                                                                   {
+                                                                       .sample_count = SDL_GPU_SAMPLECOUNT_1,
+                                                                   },
+                                                               .depth_stencil_state =
+                                                                   {
+                                                                       .compare_op = SDL_GPU_COMPAREOP_ALWAYS, // Overlay: Ignore depth
+                                                                       .back_stencil_state = {},
+                                                                       .front_stencil_state = {},
+                                                                       .compare_mask = 0,
+                                                                       .write_mask = 0,
+                                                                       .enable_depth_test = false, // Disable depth testing
+                                                                       .enable_depth_write = false,
+                                                                       .enable_stencil_test = false,
+                                                                   },
+                                                               .target_info = {
+                                                                   .color_target_descriptions = primitiveColorTargets,
+                                                                   .num_color_targets = 1,
+                                                                   .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM, // Match default
+                                                                   .has_depth_stencil_target = true,
+                                                               }};
 
     primitivePipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &primitivePipelineInfo);
     if (!primitivePipeline) {
@@ -737,7 +678,6 @@ void GPUBatcher::createPipeline()
     }
 }
 
-
 void GPUBatcher::createBuffers()
 {
     if (!gpu || !gpu->gpu) {
@@ -747,7 +687,7 @@ void GPUBatcher::createBuffers()
     // Create vertex buffer (for single quad - reused for all sprites)
     SDL_GPUBufferCreateInfo vertexBufferInfo = {
         .usage = SDL_GPU_BUFFERUSAGE_VERTEX,
-        .size = sizeof(Vertex) * 4,  // Single quad only
+        .size = sizeof(Vertex) * 4, // Single quad only
     };
     vertexBuffer = SDL_CreateGPUBuffer(gpu->gpu, &vertexBufferInfo);
     if (!vertexBuffer) {
@@ -757,7 +697,7 @@ void GPUBatcher::createBuffers()
     // Create index buffer (for single quad - reused for all sprites)
     SDL_GPUBufferCreateInfo indexBufferInfo = {
         .usage = SDL_GPU_BUFFERUSAGE_INDEX,
-        .size = sizeof(Uint16) * 6,  // Single quad only
+        .size = sizeof(Uint16) * 6, // Single quad only
     };
     indexBuffer = SDL_CreateGPUBuffer(gpu->gpu, &indexBufferInfo);
     if (!indexBuffer) {
@@ -788,25 +728,22 @@ void GPUBatcher::uploadStaticQuadData()
 
     // Unit quad vertices (0-1 range, transformed by instance data in shader)
     Vertex quadVertices[4] = {
-        { 0.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f },  // Top-left
-        { 1.0f, 0.0f,  1.0f, 0.0f,  1.0f, 1.0f, 1.0f, 1.0f },  // Top-right
-        { 0.0f, 1.0f,  0.0f, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f },  // Bottom-left
-        { 1.0f, 1.0f,  1.0f, 1.0f,  1.0f, 1.0f, 1.0f, 1.0f }   // Bottom-right
+        {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f}, // Top-left
+        {1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f}, // Top-right
+        {0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}, // Bottom-left
+        {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}  // Bottom-right
     };
 
     // Quad indices (two triangles with counter-clockwise winding)
     // First triangle: 0→2→1 (top-left → bottom-left → top-right)
     // Second triangle: 1→2→3 (top-right → bottom-left → bottom-right)
-    Uint16 quadIndices[6] = { 0, 2, 1, 1, 2, 3 };
+    Uint16 quadIndices[6] = {0, 2, 1, 1, 2, 3};
 
     SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(gpu->gpu);
     if (!cmd) return;
 
     // Upload vertices
-    SDL_GPUTransferBufferCreateInfo transferInfo = {
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = sizeof(quadVertices)
-    };
+    SDL_GPUTransferBufferCreateInfo transferInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = sizeof(quadVertices)};
     SDL_GPUTransferBuffer* transferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &transferInfo);
     if (transferBuffer) {
         void* mapped = SDL_MapGPUTransferBuffer(gpu->gpu, transferBuffer, false);
@@ -815,8 +752,8 @@ void GPUBatcher::uploadStaticQuadData()
             SDL_UnmapGPUTransferBuffer(gpu->gpu, transferBuffer);
 
             SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
-            SDL_GPUTransferBufferLocation transferLocation = { .transfer_buffer = transferBuffer, .offset = 0 };
-            SDL_GPUBufferRegion bufferRegion = { .buffer = vertexBuffer, .offset = 0, .size = sizeof(quadVertices) };
+            SDL_GPUTransferBufferLocation transferLocation = {.transfer_buffer = transferBuffer, .offset = 0};
+            SDL_GPUBufferRegion bufferRegion = {.buffer = vertexBuffer, .offset = 0, .size = sizeof(quadVertices)};
             SDL_UploadToGPUBuffer(copyPass, &transferLocation, &bufferRegion, false);
             SDL_EndGPUCopyPass(copyPass);
         }
@@ -824,10 +761,7 @@ void GPUBatcher::uploadStaticQuadData()
     }
 
     // Upload indices
-    SDL_GPUTransferBufferCreateInfo indexTransferInfo = {
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-        .size = sizeof(quadIndices)
-    };
+    SDL_GPUTransferBufferCreateInfo indexTransferInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = sizeof(quadIndices)};
     SDL_GPUTransferBuffer* indexTransferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &indexTransferInfo);
     if (indexTransferBuffer) {
         void* mapped = SDL_MapGPUTransferBuffer(gpu->gpu, indexTransferBuffer, false);
@@ -836,8 +770,8 @@ void GPUBatcher::uploadStaticQuadData()
             SDL_UnmapGPUTransferBuffer(gpu->gpu, indexTransferBuffer);
 
             SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
-            SDL_GPUTransferBufferLocation transferLocation = { .transfer_buffer = indexTransferBuffer, .offset = 0 };
-            SDL_GPUBufferRegion bufferRegion = { .buffer = indexBuffer, .offset = 0, .size = sizeof(quadIndices) };
+            SDL_GPUTransferBufferLocation transferLocation = {.transfer_buffer = indexTransferBuffer, .offset = 0};
+            SDL_GPUBufferRegion bufferRegion = {.buffer = indexBuffer, .offset = 0, .size = sizeof(quadIndices)};
             SDL_UploadToGPUBuffer(copyPass, &transferLocation, &bufferRegion, false);
             SDL_EndGPUCopyPass(copyPass);
         }
@@ -854,14 +788,14 @@ void GPUBatcher::updateMatrices(int screenWidth, int screenHeight)
 
     this->screenWidth = screenWidth;
     this->screenHeight = screenHeight;
-    //ppl7::PrintDebugTime("GPUBatcher::updateMatrices: screen %dx%d\n", screenWidth, screenHeight);
+    // ppl7::PrintDebugTime("GPUBatcher::updateMatrices: screen %dx%d\n", screenWidth, screenHeight);
 
     // Create orthographic projection matrix for 2D rendering (Vulkan coordinate system)
     // Maps screen coordinates (0,0) top-left to (screenWidth, screenHeight) bottom-right to NDC (-1,-1) to (1,1)
     // Note: Vulkan's Y-axis points DOWN in screen space, so we flip it in the projection
     float left = 0.0f;
     float right = (float)screenWidth;
-    float top = (float)screenHeight;  // Vulkan: top > bottom for proper Y-flip
+    float top = (float)screenHeight; // Vulkan: top > bottom for proper Y-flip
     float bottom = 0.0f;
     float near = -1.0f;
     float far = 1.0f;
@@ -891,7 +825,6 @@ void GPUBatcher::updateMatrices(int screenWidth, int screenHeight)
     for (int i = 0; i < 16; i++) {
         currentUniforms.view[i] = (i % 5 == 0) ? 1.0f : 0.0f;
     }
-
 }
 
 void GPUBatcher::cleanup()
@@ -962,13 +895,9 @@ void GPUBatcher::bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* tex
     }
 
     // Bind texture and sampler for fragment shader
-    SDL_GPUTextureSamplerBinding textureSamplerBinding = {
-        .texture = texture,
-        .sampler = sampler
-    };
+    SDL_GPUTextureSamplerBinding textureSamplerBinding = {.texture = texture, .sampler = sampler};
 
     SDL_BindGPUFragmentSamplers(render_pass, 0, &textureSamplerBinding, 1);
-
 }
 
 void GPUBatcher::drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites)
@@ -976,10 +905,10 @@ void GPUBatcher::drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* rende
     if (sprites.empty() || !vertexBuffer || !indexBuffer || !storageBuffer) return;
 
     // Bind static buffers (vertex and index data already uploaded at init)
-    SDL_GPUBufferBinding vertexBinding = { .buffer = vertexBuffer, .offset = 0 };
+    SDL_GPUBufferBinding vertexBinding = {.buffer = vertexBuffer, .offset = 0};
     SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
 
-    SDL_GPUBufferBinding indexBinding = { .buffer = indexBuffer, .offset = 0 };
+    SDL_GPUBufferBinding indexBinding = {.buffer = indexBuffer, .offset = 0};
     SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
     // Bind storage buffer to Slot 0 (default)
@@ -987,5 +916,4 @@ void GPUBatcher::drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* rende
 
     // Draw all instances
     SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)sprites.size(), 0, 0, 0);
-
 }

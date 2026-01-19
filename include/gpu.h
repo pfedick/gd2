@@ -13,19 +13,19 @@ class GPUException : public ppl7::Exception
 public:
     using ppl7::Exception::Exception;
 
-    GPUException(const char* msg, ...) noexcept {
+    GPUException(const char* msg, ...) noexcept
+    {
         va_list args;
         va_start(args, msg);
         copyText(msg, args);
         va_end(args);
     }
 
-
-    const char* what() const noexcept override {
+    const char* what() const noexcept override
+    {
         return "GPUException";
     }
 };
-
 
 class GPUContext
 {
@@ -46,23 +46,27 @@ public:
     void destroyGPUTexture(SDL_GPUTexture* texture);
     void updateGPUTexture(SDL_GPUTexture* texture, const ppl7::grafix::Drawable& surface);
 
-    SDL_GPUShader* loadShader(const ppl7::String& filename, SDL_GPUShaderStage stage, int num_samplers, int num_storage_textures, int num_storage_buffers, int num_uniform_buffers);
+    SDL_GPUShader* loadShader(const ppl7::String& filename,
+                              SDL_GPUShaderStage stage,
+                              int num_samplers,
+                              int num_storage_textures,
+                              int num_storage_buffers,
+                              int num_uniform_buffers);
     void releaseShader(SDL_GPUShader* shader);
 
     SDL_GPUTexture* createRenderTarget(int width, int height);
     SDL_GPUTexture* createDepthBuffer(int width, int height);
-
 };
 
 GPUContext& getGlobalGPUContext();
 
-
 class GPUBatcher
 {
 private:
-    struct UniformData {
-        float projection[16];  // 4x4 matrix
-        float view[16];        // 4x4 matrix
+    struct UniformData
+    {
+        float projection[16]; // 4x4 matrix
+        float view[16];       // 4x4 matrix
     };
 
     float z;
@@ -82,46 +86,48 @@ private:
     SDL_GPUSampler* sampler;
     SDL_GPUBuffer* vertexBuffer;
     SDL_GPUBuffer* indexBuffer;
-    SDL_GPUBuffer* storageBuffer;   // Storage buffer for sprite instances
-    Uint32 storageBufferCapacity;   // Current capacity in bytes
+    SDL_GPUBuffer* storageBuffer; // Storage buffer for sprite instances
+    Uint32 storageBufferCapacity; // Current capacity in bytes
 
     SDL_GPUBuffer* primitiveVertexBuffer;
     Uint32 primitiveVertexCapacity;
     Uint32 primitiveTriangleVertexCount;
     Uint32 primitiveLineVertexCount;
 
-    SDL_GPUBuffer* uniformBuffer;  // Not used - push constants instead
-    UniformData currentUniforms;    // Current projection/view matrices
+    SDL_GPUBuffer* uniformBuffer; // Not used - push constants instead
+    UniformData currentUniforms;  // Current projection/view matrices
 
-    struct Vertex {
-        float x, y;        // Position
-        float u, v;        // Texcoords
-        float r, g, b, a;  // Color
+    struct Vertex
+    {
+        float x, y;       // Position
+        float u, v;       // Texcoords
+        float r, g, b, a; // Color
     };
 
-    struct PrimitiveVertex {
+    struct PrimitiveVertex
+    {
         float x, y, z;
         float r, g, b, a;
     };
 
-
-
-    struct SpriteInstance {
-        float pos_x, pos_y;           // Sprite position (NDC) center/pivot
-        float m00, m01;               // Transform Matrix Col 1
-        float m10, m11;               // Transform Matrix Col 2
-        float pos_z;                  // Z-index from addSprite
-        float pad2;                   // PADDING
-        float uv_x, uv_y, uv_w, uv_h; // UV rect (normalized 0-1)
-        float pivot_x, pivot_y;       // Pivot point (0..1)
-        float offset_x, offset_y;     // Unused
+    struct SpriteInstance
+    {
+        float pos_x, pos_y;                       // Sprite position (NDC) center/pivot
+        float m00, m01;                           // Transform Matrix Col 1
+        float m10, m11;                           // Transform Matrix Col 2
+        float pos_z;                              // Z-index from addSprite
+        float pad2;                               // PADDING
+        float uv_x, uv_y, uv_w, uv_h;             // UV rect (normalized 0-1)
+        float pivot_x, pivot_y;                   // Pivot point (0..1)
+        float offset_x, offset_y;                 // Unused
         float color_r, color_g, color_b, color_a; // Color Modulation
     };
 
     class PrimitiveCommand
     {
     public:
-        enum class Type {
+        enum class Type
+        {
             Line,
             Rect,
             FilledRect
@@ -135,20 +141,28 @@ private:
 
         PrimitiveCommand() = default;
 
-        static PrimitiveCommand Line(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness) {
+        static PrimitiveCommand Line(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness)
+        {
             PrimitiveCommand cmd;
             cmd.type = Type::Line;
-            cmd.x1 = x1; cmd.y1 = y1; cmd.x2 = x2; cmd.y2 = y2;
+            cmd.x1 = x1;
+            cmd.y1 = y1;
+            cmd.x2 = x2;
+            cmd.y2 = y2;
             cmd.color = color;
             cmd.thickness = thickness;
             return cmd;
         }
 
-        static PrimitiveCommand Rect(Type type, float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness = 0.0f) {
+        static PrimitiveCommand Rect(
+            Type type, float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness = 0.0f)
+        {
             PrimitiveCommand cmd;
             cmd.type = type;
-            cmd.x1 = x; cmd.y1 = y;
-            cmd.w = w; cmd.h = h;
+            cmd.x1 = x;
+            cmd.y1 = y;
+            cmd.w = w;
+            cmd.h = h;
             cmd.color = color;
             cmd.thickness = thickness;
             return cmd;
@@ -165,11 +179,27 @@ private:
         float angle;
         ppl7::grafix::Color color_modulation;
 
-        SpriteCommand(const SpriteTexture* sprite, int sprite_id, float x, float y, float z, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation)
-            : sprite(sprite), sprite_id(sprite_id), x(x), y(y), z(z), scale_x(scale_x), scale_y(scale_y), angle(angle), color_modulation(color_modulation) {
+        SpriteCommand(const SpriteTexture* sprite,
+                      int sprite_id,
+                      float x,
+                      float y,
+                      float z,
+                      float scale_x,
+                      float scale_y,
+                      float angle,
+                      const ppl7::grafix::Color& color_modulation)
+            : sprite(sprite),
+              sprite_id(sprite_id),
+              x(x),
+              y(y),
+              z(z),
+              scale_x(scale_x),
+              scale_y(scale_y),
+              angle(angle),
+              color_modulation(color_modulation)
+        {
         }
     };
-
 
     void loadShaders();
     void createPipeline();
@@ -185,7 +215,6 @@ private:
     std::map<uint64_t, std::list<SpriteCommand>> spriteCommands;
     std::vector<SpriteInstance> instanceData;
 
-
 public:
     GPUBatcher();
     ~GPUBatcher();
@@ -194,17 +223,20 @@ public:
 
     void clearQueues(); // temporary?
     void startRenderPass();
-    void prepareInstanceData(SDL_GPUCommandBuffer* cmd);  // Upload instance data before render pass
+    void prepareInstanceData(SDL_GPUCommandBuffer* cmd); // Upload instance data before render pass
     void endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass);
 
-
-    void addSprite(const SpriteTexture& sprite, int sprite_id, float x, float y, float scale_x = 1.0f, float scale_y = 1.0f, float angle = 0.0f, const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
+    void addSprite(const SpriteTexture& sprite,
+                   int sprite_id,
+                   float x,
+                   float y,
+                   float scale_x = 1.0f,
+                   float scale_y = 1.0f,
+                   float angle = 0.0f,
+                   const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
     void addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness = 1.0f);
     void addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness = 1.0f);
     void addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color);
-
-
 };
 
 #endif // INCLUDE_GPU_H
-

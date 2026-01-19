@@ -130,8 +130,8 @@ public:
         int textureId;
         SDL_GPUTexture* tex;
         const ppl7::grafix::Drawable* drawable;
-        SDL_Rect r;
-        SDL_FRect uv;
+        SDL_Rect r;   // definiert die Quelle des Sprites in der Kopie im RAM (drawable)
+        SDL_FRect uv; // Definiert die Quell in der GPU-Textur
         ppl7::grafix::Point Pivot;
         ppl7::grafix::Point Offset;
 
@@ -143,7 +143,9 @@ public:
             drawable = NULL;
         }
         SpriteIndexItem(const SpriteIndexItem& other)
-            :r(other.r), Pivot(other.Pivot), Offset(other.Offset)
+            : r(other.r),
+              Pivot(other.Pivot),
+              Offset(other.Offset)
         {
             id = other.id;
             textureId = other.textureId;
@@ -153,6 +155,7 @@ public:
             uv = other.uv;
         }
     };
+
 private:
     GPUContext* gpu;
     std::map<int, SDL_GPUTexture*> TextureMap;
@@ -199,10 +202,16 @@ public:
     void draw(GPUBatcher& gpu, int id, const SDL_FRect& source, const SDL_FRect& target) const;
     void drawScaled(GPUBatcher& gpu, int x, int y, int id, float scale_factor) const;
     void drawScaled(GPUBatcher& gpu, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const;
-    void drawScaledWithAngle(GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation) const;
+    void drawScaledWithAngle(GPUBatcher& gpu,
+                             int x,
+                             int y,
+                             int id,
+                             float scale_x,
+                             float scale_y,
+                             float angle,
+                             const ppl7::grafix::Color& color_modulation) const;
     void drawOutlines(GPUBatcher& gpu, int x, int y, int id, float scale_factor);
     void drawOutlinesWithAngle(GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle);
-
 
     ppl7::grafix::Size spriteSize(int id, float scale_factor) const;
     ppl7::grafix::Rect spriteBoundary(int id, float scale_factor, int x, int y) const;
@@ -222,7 +231,6 @@ public:
     const SpriteIndexItem* getSpriteIndex(int id) const;
     ppl7::grafix::Point spriteOffset(int id) const;
     ppl7::grafix::Point getPivot(int id) const;
-
 
     uint64_t getUniqueTextureId(int id) const;
 };
