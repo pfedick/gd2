@@ -167,7 +167,6 @@ private:
     std::map<int, SpriteIndexItem> SpriteList;
 
     SDL_GPUTexture* current_outline_texture;
-    uint64_t base_texture_id;
     int current_outline_sprite_id;
 
     bool bSDLBufferd;
@@ -231,8 +230,6 @@ public:
     const SpriteIndexItem* getSpriteIndex(int id) const;
     ppl7::grafix::Point spriteOffset(int id) const;
     ppl7::grafix::Point getPivot(int id) const;
-
-    uint64_t getUniqueTextureId(int id) const;
 };
 
 #endif // DECKER_SPRITE_H

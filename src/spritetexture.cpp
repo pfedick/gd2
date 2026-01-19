@@ -7,8 +7,6 @@
 
 using namespace ppl7;
 
-int64_t unique_texture_base_id_counter = 1;
-
 SpriteTexture::SpriteTexture()
 {
     bMemoryBufferd = false;
@@ -20,7 +18,6 @@ SpriteTexture::SpriteTexture()
     defaultBlendMode = SDL_BLENDMODE_BLEND;
     current_outline_texture = NULL;
     current_outline_sprite_id = -1;
-    base_texture_id = (unique_texture_base_id_counter++) << 32;
     gpu = NULL;
 }
 
@@ -780,13 +777,6 @@ SDL_GPUTexture* SpriteTexture::postGenerateOutlines(int sprite_id)
     SDL_GPUTexture* tex = gpu->createGPUTexture(target);
     // ppl7::PrintDebugTime("  ===> %0.6f s\n", ppl7::GetMicrotime() - start);
     return tex;
-}
-
-uint64_t SpriteTexture::getUniqueTextureId(int id) const
-{
-    const SpriteIndexItem* item = getSpriteIndex(id);
-    if (!item) return 0;
-    return base_texture_id | (uint64_t)(item->textureId);
 }
 
 const ppl7::grafix::Size& SpriteTexture::textureSize(int id) const

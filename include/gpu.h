@@ -212,7 +212,7 @@ private:
 
     std::list<PrimitiveCommand> primitiveCommands;
 
-    std::map<uint64_t, std::list<SpriteCommand>> spriteCommands;
+    std::map<SDL_GPUTexture*, std::list<SpriteCommand>> spriteCommands;
     std::vector<SpriteInstance> instanceData;
 
 public:

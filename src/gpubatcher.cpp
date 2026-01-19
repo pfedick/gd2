@@ -474,10 +474,13 @@ void GPUBatcher::addSprite(const SpriteTexture& sprite,
                            float angle,
                            const ppl7::grafix::Color& color_modulation)
 {
+    const SpriteTexture::SpriteIndexItem* item = sprite.getSpriteIndex(sprite_id);
+    if (!item || !item->tex) {
+        return;
+    }
     SpriteCommand cmd(&sprite, sprite_id, x, y, z, scale_x, scale_y, angle, color_modulation);
     z -= 0.0001f; // Slightly increase Z to ensure correct layering
-    uint64_t texId = sprite.getUniqueTextureId(sprite_id);
-    spriteCommands[texId].push_back(cmd);
+    spriteCommands[item->tex].push_back(cmd);
 }
 
 void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness)
