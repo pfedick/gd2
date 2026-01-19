@@ -15,7 +15,7 @@ void help()
     fflush(stdout);
 }
 
-void start(int argc, char** argv)
+void start(int argc, char **argv)
 {
 #ifdef WIN32
     ppl7::String::setGlobalEncoding("UTF-8");
@@ -34,7 +34,6 @@ void start(int argc, char** argv)
         help();
         return;
     }
-
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_GAMEPAD);
 
@@ -58,19 +57,16 @@ void start(int argc, char** argv)
         game.init_grafix();
         if (ppl7::HaveArgv(argc, argv, "-l")) {
             ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
-            //game.loadLevel(level);
+            // game.loadLevel(level);
         }
         game.run();
-
     }
-    catch (const ppl7::Exception& ex) {
+    catch (const ppl7::Exception &ex) {
         ex.print();
         throw;
     }
 
-
-
-    //game.audiosystem.shutdown();
+    // game.audiosystem.shutdown();
 }
 
 #ifdef WIN32
@@ -82,7 +78,7 @@ int WinMain()
         start(__argc, __argv);
         return 0;
     }
-    catch (const ppl7::Exception& ex) {
+    catch (const ppl7::Exception &ex) {
         ex.print();
         throw;
         return 1;
@@ -91,7 +87,7 @@ int WinMain()
 }
 #endif
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 
     start(argc, argv);

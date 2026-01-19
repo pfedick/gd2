@@ -2,7 +2,7 @@
 BasedOnStyle: Microsoft
 BreakBeforeBraces: Custom
 AllowShortIfStatementsOnASingleLine: true
-
+SortIncludes: false
 
 BraceWrapping:
     AfterFunction: true

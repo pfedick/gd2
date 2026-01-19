@@ -28,6 +28,7 @@ APPNAME = gd2
 
 OBJECTS=compile/main.o \
 	compile/game.o \
+	compile/translate.o \
 	compile/sdl.o \
 	compile/gpu.o \
 	compile/gpubatcher.o \
@@ -48,9 +49,19 @@ OBJECTS=compile/main.o \
 UI=compile/ui_menue.o \
 	compile/ui_statusbar.o
 
+WIDGETS = compile/widgets/colorwidget.o \
+	compile/widgets/controllerbuttonselector.o \
+	compile/widgets/dialog.o \
+	compile/widgets/filedialog.o \
+	compile/widgets/gamemenuarea.o \
+	compile/widgets/gamescrollbar.o \
+	compile/widgets/gradientwidget.o \
+	compile/widgets/groupbox.o \
+	compile/widgets/levelselection.o \
+	compile/widgets/levelselectionitem.o
 
-$(PROGRAM): update_version ppl7 ppl_toolkit shaders $(OBJECTS) $(UI)
-	$(CXX) -o $(PROGRAM) $(OBJECTS) $(UI) $(LIBS)
+$(PROGRAM): update_version ppl7 ppl_toolkit shaders $(OBJECTS) $(UI) $(WIDGETS)
+	$(CXX) -o $(PROGRAM) $(OBJECTS) $(UI) $(WIDGETS) $(LIBS)
 	-chmod 755 $(PROGRAM)
 
 all: update_version $(PROGRAM) texmaker
@@ -154,8 +165,12 @@ compile/gpubatcher.o: src/gpubatcher.cpp Makefile include/gpu.h
 	- @mkdir -p compile
 	$(CXX) -o compile/gpubatcher.o -c src/gpubatcher.cpp $(CFLAGS)
 
+compile/translate.o: src/translate.cpp Makefile include/translate.h
+	- @mkdir -p compile
+	$(CXX) -o compile/translate.o -c src/translate.cpp $(CFLAGS)
+
 compile/game.o: src/game/game.cpp Makefile include/game.h include/version.h \
-	include/renderpipelines.h
+	include/renderpipelines.h include/translate.h
 	- @mkdir -p compile
 	$(CXX) -o compile/game.o -c src/game/game.cpp $(CFLAGS)
 
@@ -208,7 +223,7 @@ compile/audio_audiosystem.o: src/audio/audiosystem.cpp Makefile include/audio.h
 	- @mkdir -p compile
 	$(CXX) -o compile/audio_audiosystem.o -c src/audio/audiosystem.cpp $(CFLAGS)
 
-
+### UI ##########################################################################
 compile/ui_menue.o: src/ui/menue.cpp Makefile include/game.h include/ui/menue.h
 	- @mkdir -p compile
 	$(CXX) -o compile/ui_menue.o -c src/ui/menue.cpp $(CFLAGS)
@@ -216,3 +231,47 @@ compile/ui_menue.o: src/ui/menue.cpp Makefile include/game.h include/ui/menue.h
 compile/ui_statusbar.o: src/ui/statusbar.cpp Makefile include/game.h include/ui/statusbar.h
 	- @mkdir -p compile
 	$(CXX) -o compile/ui_statusbar.o -c src/ui/statusbar.cpp $(CFLAGS)
+
+
+### WIDGETS #####################################################################
+
+
+compile/widgets/colorwidget.o: src/widgets/colorwidget.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/colorwidget.o -c src/widgets/colorwidget.cpp $(CFLAGS)
+
+compile/widgets/controllerbuttonselector.o: src/widgets/controllerbuttonselector.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/controllerbuttonselector.o -c src/widgets/controllerbuttonselector.cpp $(CFLAGS)
+
+compile/widgets/dialog.o: src/widgets/dialog.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/dialog.o -c src/widgets/dialog.cpp $(CFLAGS)
+
+compile/widgets/filedialog.o: src/widgets/filedialog.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/filedialog.o -c src/widgets/filedialog.cpp $(CFLAGS)
+
+compile/widgets/gamemenuarea.o: src/widgets/gamemenuarea.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/gamemenuarea.o -c src/widgets/gamemenuarea.cpp $(CFLAGS)
+
+compile/widgets/gamescrollbar.o: src/widgets/gamescrollbar.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/gamescrollbar.o -c src/widgets/gamescrollbar.cpp $(CFLAGS)
+
+compile/widgets/gradientwidget.o: src/widgets/gradientwidget.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/gradientwidget.o -c src/widgets/gradientwidget.cpp $(CFLAGS)
+
+compile/widgets/groupbox.o: src/widgets/groupbox.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/groupbox.o -c src/widgets/groupbox.cpp $(CFLAGS)
+
+compile/widgets/levelselection.o: src/widgets/levelselection.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/levelselection.o -c src/widgets/levelselection.cpp $(CFLAGS)
+
+compile/widgets/levelselectionitem.o: src/widgets/levelselectionitem.cpp Makefile include/widgets.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/levelselectionitem.o -c src/widgets/levelselectionitem.cpp $(CFLAGS)

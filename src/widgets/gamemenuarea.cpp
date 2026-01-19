@@ -1,39 +1,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "decker.h"
-#include "widgets.h"
 #include "translate.h"
+#include "widgets.h"
 
-namespace Decker {
-namespace ui {
-
-
-
-GameMenuArea::GameMenuArea(int x, int y, int width, int height, const ppl7::String& text)
+GameMenuArea::GameMenuArea(int x, int y, int width, int height, const ppl7::String &text)
 {
     create(x, y, width, height);
-    this->text=text;
-    selected=false;
-    border_width=10;
-    const ppltk::WidgetStyle& style=ppltk::GetWidgetStyle();
-    font=style.buttonFont;
+    this->text = text;
+    selected = false;
+    border_width = 10;
+    const ppltk::WidgetStyle &style = ppltk::GetWidgetStyle();
+    font = style.buttonFont;
     font.setName("NotoSansBlack");
     font.setBold(false);
     font.setSize(30);
     font.setOrientation(ppl7::grafix::Font::TOP);
-
 }
 
-void GameMenuArea::setText(const ppl7::String& text)
+void GameMenuArea::setText(const ppl7::String &text)
 {
-    this->text=text;
+    this->text = text;
     redrawRequired();
 }
 
 void GameMenuArea::setBorderWidth(int width)
 {
-    border_width=width;
+    border_width = width;
 }
 
 void GameMenuArea::setFontSize(int size)
@@ -41,7 +34,7 @@ void GameMenuArea::setFontSize(int size)
     font.setSize(size);
 }
 
-void GameMenuArea::paint(ppl7::grafix::Drawable& draw)
+void GameMenuArea::paint(ppl7::grafix::Drawable &draw)
 {
     ppl7::grafix::Color bg(20, 10, 0, 192);
     ppl7::grafix::Color border(128, 96, 0, 255);
@@ -52,7 +45,7 @@ void GameMenuArea::paint(ppl7::grafix::Drawable& draw)
         fg.setColor(255, 255, 255, 255);
     }
     draw.fillRect(0, 0, draw.width(), draw.height(), bg);
-    for (int i=0;i < border_width;i++) {
+    for (int i = 0; i < border_width; i++) {
         draw.drawRect(i, i, draw.width() - i, draw.height() - i, border);
     }
     font.setColor(fg);
@@ -62,7 +55,7 @@ void GameMenuArea::paint(ppl7::grafix::Drawable& draw)
 void GameMenuArea::setSelected(bool selected)
 {
     if (this->selected != selected) {
-        this->selected=selected;
+        this->selected = selected;
         needsRedraw();
     }
 }
@@ -71,6 +64,3 @@ bool GameMenuArea::isSelected() const
 {
     return selected;
 }
-
-}
-} // EOF namespace Decker::ui
