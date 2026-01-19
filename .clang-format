@@ -1,0 +1,11 @@
+---
+BasedOnStyle: Microsoft
+BreakBeforeBraces: Custom
+AllowShortIfStatementsOnASingleLine: true
+
+
+BraceWrapping:
+    AfterFunction: true
+    AfterControlStatement: Never
+    BeforeElse: false
+
