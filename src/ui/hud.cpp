@@ -1,16 +1,15 @@
-#include <SDL3/SDL.h>
-#include "decker.h"
-#include "hud.h"
-#include "player.h"
+#include <ppltk.h>
 
+#include "ui/hud.h"
+#include "sprite.h"
+#include "gpu.h"
+#include "translate.h"
+// #include "player.h"
 
-
-
-GameHUD::GameHUD(SDL& sdl)
-    : sdl(sdl)
+GameHUD::GameHUD(GPUContext& gpu)
+    : gpu(gpu)
 {
     hud_texture = NULL;
-    message_texture = NULL;
     value_health = 0.0f;
     value_lifes = 0.0f;
     value_points = 0;
@@ -22,19 +21,13 @@ GameHUD::GameHUD(SDL& sdl)
     visible = true;
     hud_size.setSize(1920, 110);
     my_viewport.setRect(0, 0, 1920, 1080);
-    try {
-        hud_texture = sdl.createStreamingTexture(hud_size.width, hud_size.height);
-        //message_texture=sdl.createStreamingTexture(screen_size.width, 200);   // for the future?
-    }
-    catch (...) {
-        // Do nothing
-    }
+    hud_texture = new GPUStreamingTexture(gpu.gpu, hud_size.width, hud_size.height);
 
     icons = new SpriteTexture();
     if (!icons) return;
     icons->enableSDLBuffer(false);
     icons->enableMemoryBuffer(true);
-    icons->load(sdl, "res/hud.tex");
+    icons->load(gpu, "res/hud.tex");
 
     redraw_needed = true;
     const ppltk::WidgetStyle& style = ppltk::GetWidgetStyle();
@@ -43,19 +36,13 @@ GameHUD::GameHUD(SDL& sdl)
     label_font.setBold(false);
     label_font.setSize(20);
     label_font.setOrientation(ppl7::grafix::Font::TOP);
-
-
 }
 
 GameHUD::~GameHUD()
 {
     if (hud_texture) {
-        sdl.destroyTexture(hud_texture);
+        delete hud_texture;
         hud_texture = NULL;
-    }
-    if (message_texture) {
-        sdl.destroyTexture(message_texture);
-        message_texture = NULL;
     }
     if (icons) delete icons;
 }
@@ -75,7 +62,6 @@ void GameHUD::setViewport(const ppl7::grafix::Rect& viewport)
 const ppl7::grafix::Rect& GameHUD::viewport() const
 {
     return my_viewport;
-
 }
 
 void GameHUD::setEditorMode(bool enable)
@@ -100,8 +86,7 @@ static float calculatePointDiff(float display, float player)
         float pdiff = (player - display) / 30;
         if (pdiff < 1) pdiff = player - display;
         return pdiff;
-    }
-    else if (display > player) {
+    } else if (display > player) {
         float pdiff = (display - player) / 30;
         if (pdiff < 1) pdiff = display - player;
         return -pdiff;
@@ -109,17 +94,16 @@ static float calculatePointDiff(float display, float player)
     return 0;
 }
 
-
-
 void GameHUD::updatePlayerStats(const Player* player)
 {
-    //invalidate();
+    /*
+    // invalidate();
     if (value_health != player->health) {
         int save = value_health;
         value_health += calculatePointDiff(value_health, player->health);
         if (save != (int)value_health) {
             redraw_needed = true;
-            //ppl7::PrintDebugTime("redraw health\n");
+            // ppl7::PrintDebugTime("redraw health\n");
         }
     }
     if (value_energy != player->energylevel) {
@@ -127,7 +111,7 @@ void GameHUD::updatePlayerStats(const Player* player)
         value_energy += calculatePointDiff(value_energy, player->energylevel);
         if (save != (int)value_energy) {
             redraw_needed = true;
-            //ppl7::PrintDebugTime("redraw energy\n");
+            // ppl7::PrintDebugTime("redraw energy\n");
         }
     }
     maxair = player->maxair;
@@ -136,29 +120,31 @@ void GameHUD::updatePlayerStats(const Player* player)
         value_oxygen += calculatePointDiff(value_oxygen, player->air);
         oxygen_cooldown = player->time + 3.0f;
         if (save != (int)value_oxygen) {
-            //ppl7::PrintDebugTime("redraw oxygen\n");
+            // ppl7::PrintDebugTime("redraw oxygen\n");
             redraw_needed = true;
         }
     }
     if (value_lifes != player->lifes) {
         value_lifes = player->lifes;
-        //ppl7::PrintDebug("redraw lifes\n");
+        // ppl7::PrintDebug("redraw lifes\n");
         redraw_needed = true;
     }
     if (number_batteries != player->powercells) {
         number_batteries = player->powercells;
         redraw_needed = true;
-        //ppl7::PrintDebug("redraw powercells\n");
+        // ppl7::PrintDebug("redraw powercells\n");
     }
     if (value_points != player->points) {
         value_points = player->points;
-        //ppl7::PrintDebug("redraw points\n");
+        // ppl7::PrintDebug("redraw points\n");
         redraw_needed = true;
     }
+        */
 }
 
 void GameHUD::resetPlayerStats(const Player* player)
 {
+    /*
     value_health = player->health;
     value_lifes = player->lifes;
     value_points = player->points;
@@ -166,6 +152,7 @@ void GameHUD::resetPlayerStats(const Player* player)
     value_oxygen = player->air;
     maxair = player->maxair;
     oxygen_cooldown = 0.0f;
+    */
 
     invalidate();
 }
@@ -179,10 +166,11 @@ bool GameHUD::isVisible() const
     return visible;
 }
 
-void GameHUD::drawProgressBar(ppl7::grafix::Drawable& draw, int x, int y, int width, int height, float value, const ppl7::grafix::Color& color)
+void GameHUD::drawProgressBar(
+    ppl7::grafix::Drawable& draw, int x, int y, int width, int height, float value, const ppl7::grafix::Color& color)
 {
     int w = width * value / 100 / 10;
-    for (int i = 0;i < w;i++) {
+    for (int i = 0; i < w; i++) {
         icons->draw(draw, x + i * 10, y + 26, 6, color);
     }
 }
@@ -209,7 +197,7 @@ void GameHUD::drawLeftPart(ppl7::grafix::Drawable& draw)
 
     bool showOxygen = false;
     bool showEnergy = false;
-    if (value_oxygen<maxair || oxygen_cooldown>time) showOxygen = true;
+    if (value_oxygen < maxair || oxygen_cooldown > time) showOxygen = true;
     if (number_batteries > 0 || value_energy < 100.0f) showEnergy = true;
 
     int count_items = 1;
@@ -221,8 +209,6 @@ void GameHUD::drawLeftPart(ppl7::grafix::Drawable& draw)
 
     if (count_items == 1) y = 40;
     if (count_items == 2) y = 20;
-
-
 
     ppl7::String labeltext = translate("Health:");
     ppl7::grafix::Size s = label_font.measure(labeltext);
@@ -256,8 +242,8 @@ void GameHUD::drawLeftPart(ppl7::grafix::Drawable& draw)
 
     drawProgressBar(draw, 60 + maxwidth, y_health, w, 20, value_health, ppl7::grafix::Color(220, 15, 0, 255));
     if (showEnergy) drawProgressBar(draw, 60 + maxwidth, y_energy, w, 20, value_energy, ppl7::grafix::Color(15, 150, 20, 255));
-    if (showOxygen) drawProgressBar(draw, 60 + maxwidth, y_oxygen, w, 20, value_oxygen * 100.0f / maxair, ppl7::grafix::Color(15, 60, 220, 255));
-
+    if (showOxygen)
+        drawProgressBar(draw, 60 + maxwidth, y_oxygen, w, 20, value_oxygen * 100.0f / maxair, ppl7::grafix::Color(15, 60, 220, 255));
 
     label_font.setColor(ppl7::grafix::Color(255, 220, 0, 255));
     int x = 70 + maxwidth + w;
@@ -275,15 +261,13 @@ void GameHUD::drawLeftPart(ppl7::grafix::Drawable& draw)
         draw.print(label_font, x, y_oxygen, value);
     }
 
-    //value.setf("%0.0f s", seconds_left);
-
+    // value.setf("%0.0f s", seconds_left);
 }
 
 void GameHUD::drawMiddlePart(ppl7::grafix::Drawable& draw)
 {
     drawRect(draw);
     int y = 10;
-
 
     label_font.setColor(ppl7::grafix::Color(210, 210, 210, 255));
     label_font.setBold(false);
@@ -292,10 +276,10 @@ void GameHUD::drawMiddlePart(ppl7::grafix::Drawable& draw)
     ppl7::String labeltext = translate("Lifes:");
     ppl7::grafix::Size s = label_font.measure(labeltext);
 
-    if (number_batteries == 0) y = (hud_size.height - s.height) / 2;
-    else y = (hud_size.height - 2 * s.height) / 2;
-
-
+    if (number_batteries == 0)
+        y = (hud_size.height - s.height) / 2;
+    else
+        y = (hud_size.height - 2 * s.height) / 2;
 
     int y_lifes = y;
     int maxwidth = s.width;
@@ -311,14 +295,13 @@ void GameHUD::drawMiddlePart(ppl7::grafix::Drawable& draw)
     }
 
     int x = 10 + 20 + maxwidth;
-    for (int i = 0;i < value_lifes;i++) {
+    for (int i = 0; i < value_lifes; i++) {
         if (x + i * 30 + 20 < draw.width()) icons->draw(draw, x + i * 30, y_lifes + 31, 3);
     }
 
-    for (int i = 0;i < number_batteries;i++) {
+    for (int i = 0; i < number_batteries; i++) {
         if (x + i * 30 + 20 < draw.width()) icons->draw(draw, x + i * 30, y_powercells + 31, 4);
     }
-
 }
 
 void GameHUD::drawPoints(ppl7::grafix::Drawable& draw)
@@ -342,22 +325,19 @@ void GameHUD::drawPoints(ppl7::grafix::Drawable& draw)
     s = label_font.measure(labeltext);
     y = (hud_size.height - s.height) / 2;
     draw.print(label_font, x, y, labeltext);
-
-
 }
 
 void GameHUD::redraw()
 {
-    //ppl7::PrintDebug("GameHUD::redraw\n");
+    // ppl7::PrintDebug("GameHUD::redraw\n");
     if (!hud_texture) {
         ppl7::PrintDebug("GameHUD::redraw => ERROR: no hud_texture!\n");
         return;
     }
     redraw_needed = false;
-    ppl7::grafix::Drawable draw = sdl.lockTexture(hud_texture);
+    ppl7::grafix::Drawable draw = hud_texture->lock();
 
     if (my_viewport != last_drawn_viewport) draw.cls();
-
 
     ppl7::grafix::Drawable fragment;
     if (my_viewport.left() > 0) {
@@ -367,8 +347,7 @@ void GameHUD::redraw()
         drawMiddlePart(fragment);
         fragment = draw.getDrawable(1450, 0, 1910, 110);
         drawPoints(fragment);
-    }
-    else {
+    } else {
         fragment = draw.getDrawable(10, 0, 800, 110);
         drawLeftPart(fragment);
         fragment = draw.getDrawable(850, 0, 1400, 110);
@@ -378,31 +357,31 @@ void GameHUD::redraw()
     }
     last_drawn_viewport = my_viewport;
 
-    sdl.unlockTexture(hud_texture);
-
+    hud_texture->unlock();
 }
 
-
-void GameHUD::draw(SDL_Renderer* renderer, SDL_Texture* render_target)
+void GameHUD::draw(GPUBatcher& batcher)
 {
     if (!visible) return;
     time = ppl7::GetMicrotime();
     if (oxygen_cooldown < time && oxygen_cooldown != 0.0f) {
-        //ppl7::PrintDebug("Oxygen Cooldown\n");
+        // ppl7::PrintDebug("Oxygen Cooldown\n");
         redraw_needed = true;
         oxygen_cooldown = 0.0f;
     }
     if (redraw_needed || last_drawn_viewport != my_viewport) redraw();
-    //ppl7::PrintDebug("GameHUD::draw\n");
+    // ppl7::PrintDebug("GameHUD::draw\n");
     SDL_FRect tr;
-    //tr.y=tr.h - hud_size.height;
+    // tr.y=tr.h - hud_size.height;
     tr.x = 0;
     tr.w = 1920;
     tr.y = my_viewport.y2 - hud_size.height - 5;
     tr.h = hud_size.height;
-    //ppl7::PrintDebug("tr.x=%d, y=%d, w=%d, h=%d, viewport: x1=%d,y1=%d, x2=%d, y2=%d\n",
-    //    tr.x, tr.y, tr.w, tr.h, my_viewport.x1, my_viewport.y1, my_viewport.x2, my_viewport.y2);
+    // ppl7::PrintDebug("tr.x=%d, y=%d, w=%d, h=%d, viewport: x1=%d,y1=%d, x2=%d, y2=%d\n",
+    //     tr.x, tr.y, tr.w, tr.h, my_viewport.x1, my_viewport.y1, my_viewport.x2, my_viewport.y2);
 
-    SDL_SetRenderTarget(renderer, render_target);
-    SDL_RenderTexture(renderer, hud_texture, NULL, &tr);
+    // TODO: Replace with GPU rendering
+
+    // SDL_SetRenderTarget(renderer, render_target);
+    // SDL_RenderTexture(renderer, hud_texture, NULL, &tr);
 }

@@ -1,11 +1,9 @@
-#ifndef INCLUDE_HUD_H_
-#define INCLUDE_HUD_H_
+#ifndef INCLUDE_UI_HUD_H_
+#define INCLUDE_UI_HUD_H_
 
-#include <SDL3/SDL.h>
 #include <ppl7.h>
 #include <ppl7-grafix.h>
-#include "decker_sdl.h"
-
+#include "gpu.h"
 
 class Player;
 class SpriteTexture;
@@ -26,10 +24,9 @@ private:
     bool visible;
     ppl7::grafix::Rect my_viewport;
     ppl7::grafix::Rect last_drawn_viewport;
-    SDL_Texture* hud_texture;
-    SDL_Texture* message_texture;
+    GPUStreamingTexture* hud_texture;
     ppl7::grafix::Size hud_size;
-    SDL& sdl;
+    GPUContext& gpu;
     SpriteTexture* icons;
     ppl7::grafix::Font label_font;
 
@@ -43,7 +40,7 @@ private:
     void drawPoints(ppl7::grafix::Drawable& draw);
 
 public:
-    GameHUD(SDL& sdl);
+    GameHUD(GPUContext& gpu);
     ~GameHUD();
     void setViewport(const ppl7::grafix::Rect& viewport);
     const ppl7::grafix::Rect& viewport() const;
@@ -58,7 +55,7 @@ public:
     void updatePlayerStats(const Player* player);
     void resetPlayerStats(const Player* player);
 
-    void draw(SDL_Renderer* renderer, SDL_Texture* render_target);
+    void draw(GPUBatcher& batcher);
 };
 
 #endif

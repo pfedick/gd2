@@ -6,6 +6,10 @@
 #include "renderpipelines.h"
 #include "background.h"
 #include "colorpalette.h"
+#include "spritesystem.h"
+#include "particle.h"
+#include "tiles.h"
+#include "tiletypes.h"
 
 class ModifiableParameter
 {
@@ -65,6 +69,41 @@ public:
 
 void getLevelList(std::list<LevelDescription>& level_list);
 
+enum class ParallaxLayerId
+{
+    Near,
+    Close,
+    Front,
+    Player,
+    Back,
+    Middle,
+    Far,
+    Horizon,
+    MaxLayerId
+};
+
+class ParallaxLayer
+{
+private:
+public:
+    float blur_factor = 0.0f;
+    float speed_factor = 1.0f;
+    float size_factor = 1.0f;
+
+    Plane tiles;
+    enum class SpritePosition
+    {
+        Background = 0,
+        Front
+    };
+    SpriteSystem front_sprites;
+    SpriteSystem background_sprites;
+    // TODO:
+    // - Lights    (falls das sinn macht)
+    // - Objects   (falls das sinn macht)
+    // - Particle  (falls das sinn macht)
+};
+
 class Level
 {
     friend class Game;
@@ -75,45 +114,22 @@ public:
     ColorPalette palette;
 
 private:
-    Plane FarPlane;
-    Plane PlayerPlane;
-    Plane FrontPlane;
-    Plane BackPlane;
-    Plane MiddlePlane;
-    Plane HorizonPlane;
-    Plane NearPlane;
+    ParallaxLayer parallax_layers[static_cast<int>(ParallaxLayerId::MaxLayerId)];
     TileTypePlane TileTypeMatrix;
-    SpriteSystem HorizonSprites[2] = {SpriteSystem(palette), SpriteSystem(palette)};
-    SpriteSystem FarSprites[2] = {SpriteSystem(palette), SpriteSystem(palette)};
-    SpriteSystem MiddleSprites[2] = {SpriteSystem(palette), SpriteSystem(palette)};
-    SpriteSystem BackSprites[2] = {SpriteSystem(palette), SpriteSystem(palette)};
-    SpriteSystem PlayerSprites[3] = {SpriteSystem(palette), SpriteSystem(palette), SpriteSystem(palette)};
-    SpriteSystem FrontSprites[2] = {SpriteSystem(palette), SpriteSystem(palette)};
-    SpriteSystem NearSprites[2] = {SpriteSystem(palette), SpriteSystem(palette)};
 
-    /*
-    LightLayer HorizonLights=LightLayer(palette);
-    LightLayer FarLights=LightLayer(palette);
-    LightLayer MiddleLights=LightLayer(palette);
-    //LightLayer BackLights=LightLayer(palette);
-    LightLayer PlayerLights=LightLayer(palette);
-    LightLayer FrontLights=LightLayer(palette);
-    LightLayer NearLights=LightLayer(palette);
-    */
-    LightSystem lights;
-
-    Decker::Objects::ObjectSystem* objects;
-    ParticleSystem* particles;
-    Waynet waynet;
+    // LightSystem lights;
+    // Decker::Objects::ObjectSystem* objects;
+    // ParticleSystem* particles;
+    // Waynet waynet;
 
     ppl7::grafix::Rect viewport;
-    SpriteTexture* tileset[MAX_TILESETS + 1];
-    SpriteTexture* spriteset[MAX_SPRITESETS + 1];
-    SDL_Texture* tex_render_target;
-    SDL_Texture* tex_render_lightmap;
-    SDL_Texture* tex_render_layer;
-    SDL_Texture* tex_blur_temp;
-    RenderState* renderstate;
+    std::vector<SpriteTexture*> tileset;
+    std::vector<SpriteTexture*> spriteset;
+    SDL_GPUTexture* tex_render_target;
+    SDL_GPUTexture* tex_render_lightmap;
+    SDL_GPUTexture* tex_render_layer;
+    SDL_GPUTexture* tex_blur_temp;
+    RenderPipelines* renderpipelines;
 
     bool editMode;
     bool showSprites;
@@ -124,46 +140,20 @@ private:
     void clear();
 
 public:
-    enum LevelChunkId
+    enum class ChunkId
     {
-        chunkPlayerPlane = 1,
-        chunkFrontPlane = 2,
-        chunkFarPlane = 3,
-        chunkBackPlane = 4,
-        chunkMiddlePlane = 5,
-        chunkNearPlane = 6,
-        chunkHorizonPlane = 7,
-        chunkPlayerSpritesLayer0 = 10,
-        chunkPlayerSpritesLayer1 = 11,
-        chunkFrontSpritesLayer0 = 12,
-        chunkFrontSpritesLayer1 = 13,
-        chunkFarSpritesLayer0 = 14,
-        chunkFarSpritesLayer1 = 15,
-        chunkBackSpritesLayer0 = 16,
-        chunkBackSpritesLayer1 = 17,
-        chunkMiddleSpritesLayer0 = 18,
-        chunkMiddleSpritesLayer1 = 19,
-        chunkTileTypes = 20,
-        chunkHorizonSpritesLayer0 = 21,
-        chunkHorizonSpritesLayer1 = 22,
-        chunkNearSpritesLayer0 = 23,
-        chunkNearSpritesLayer1 = 24,
-        chunkPlayerSpritesLayer2 = 25,
-        chunkObjects = 30,
-        chunkWayNet = 31,
-        chunkLevelParameter = 32,
-        chunkColorPalette = 33,
-        chunkLightsHorizon = 40,
-        chunkLightsFar = 41,
-        chunkLightsMiddle = 42,
-        chunkLightsBack = 43,
-        chunkLightsPlayer = 44,
-        chunkLightsFront = 45,
-        chunkLightsNear = 46,
-        chunkLights = 47,
+        Tiles = 1, // Den Layer kodieren wir da rein als Attribut
+        TileTypes = 2,
+        Sprites = 3, // Den Layer, sowie Front/Background kodieren wir da rein als Attribut
+        Objects = 4,
+        WayNet = 5,
+        LevelParameter = 6,
+        ColorPalette = 7,
+        Lights = 8,
     };
 
 private:
+    /*
     void drawNonePlayerPlane(SDL_Renderer* renderer,
                              PlaneId planeid,
                              const Plane& plane,
@@ -182,6 +172,7 @@ private:
                      Metrics& metrics);
     void prepareLayer(SDL_Renderer* renderer);
     void blurLayer(SDL_Renderer* renderer, float factor = 0.0f);
+    */
 
 public:
     Level();
@@ -197,32 +188,37 @@ public:
     void load(const ppl7::String& Filename);
     void save(const ppl7::String& Filename);
     void backup(const ppl7::String& Filename);
-    void draw(SDL_Renderer* renderer, const ppl7::grafix::Point& worldcoords, Player* player, Metrics& metrics, Glimmer* glimmer);
+    // void draw(SDL_Renderer* renderer, const ppl7::grafix::Point& worldcoords, Player* player, Metrics& metrics, Glimmer* glimmer);
     void setViewport(const ppl7::grafix::Rect& r);
+    /*
     void setRenderTargets(SDL_Texture* tex_render_target,
                           SDL_Texture* tex_render_lightmap,
                           SDL_Texture* tex_render_layer,
                           SDL_Texture* tex_blur_temp);
-    void setRenderState(RenderState* state);
-    Plane& plane(int id);
-    SpriteSystem& spritesystem(int plane, int layer);
-    // LightLayer& lightsystem(int plane);
-    void updateVisibleSpriteLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
-    void updateVisibleLightsLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
-    void updateDynamicLightsLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
-    bool findSprite(
-        const ppl7::grafix::Point& p, const ppl7::grafix::Point& worldcoords, SpriteSystem::Item& item, int& plane, int& layer) const;
-    size_t countSprites() const;
-    size_t countVisibleSprites() const;
-    size_t countLights() const;
-    size_t countVisibleLights() const;
+    */
+    void setRenderPipeline(SDL_GPUGraphicsPipeline* state);
+    ParallaxLayer& layer(int id);
+    // SpriteSystem& spritesystem(int layer, int layer);
+    //  LightLayer& lightsystem(int plane);
+    // void updateVisibleSpriteLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
+    // void updateVisibleLightsLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
+    // void updateDynamicLightsLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
+    bool findSprite(const ppl7::grafix::Point& p,
+                    const ppl7::grafix::Point& worldcoords,
+                    SpriteSystem::Item& item,
+                    int& layer,
+                    ParallaxLayer::SpritePosition& layer_position) const;
+    // size_t countSprites() const;
+    // size_t countVisibleSprites() const;
+    // size_t countLights() const;
+    // size_t countVisibleLights() const;
 
-    void getLevelStats(LevelStats& stats) const;
+    // void getLevelStats(LevelStats& stats) const;
 
     size_t tileCount() const;
     ppl7::grafix::Rect getOccupiedArea() const;
     ppl7::grafix::Rect getOccupiedAreaFromTileTypePlane() const;
-    void TakeScreenshot(Screenshot* screenshot);
+    // void TakeScreenshot(Screenshot* screenshot);
 };
 
 #endif

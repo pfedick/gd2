@@ -27,6 +27,26 @@ public:
     }
 };
 
+class GPUStreamingTexture
+{
+private:
+    SDL_GPUDevice* gpu;
+    SDL_GPUTexture* texture;
+    SDL_GPUTransferBuffer* transfer_buffer;
+    ppl7::grafix::Size size;
+    bool needs_update;
+
+public:
+    GPUStreamingTexture(SDL_GPUDevice* gpu, int width, int height);
+    ~GPUStreamingTexture();
+    ppl7::grafix::Drawable lock();
+    void unlock();
+    ppl7::grafix::Size getSize() const;
+    void resize(int width, int height);
+    void updateTexture(SDL_GPUCommandBuffer* cmdbuf);
+    SDL_GPUTexture* getTexture() const;
+};
+
 class GPUContext
 {
 public:

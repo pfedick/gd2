@@ -150,6 +150,8 @@ public:
     // EventHandler
     void quitEvent(ppltk::Event* event);
     void closeEvent(ppltk::Event* event);
+
+    void updateSpriteFromUi();
 };
 
 Game& GetGame();
