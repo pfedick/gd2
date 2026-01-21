@@ -4,3 +4,4 @@
 aclocal -I autoconf --install
 automake --add-missing
 autoconf
+chmod 755 configure
