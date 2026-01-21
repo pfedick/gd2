@@ -52,7 +52,8 @@ UI=compile/ui/menue.o \
 	compile/ui/tileselection.o \
 	compile/ui/spriteselection.o \
 	compile/ui/worldwidget.o \
-	compile/ui/hud.o
+	compile/ui/hud.o \
+	compile/ui/tilesframe.o
 
 
 WIDGETS = compile/widgets/colorwidget.o \
@@ -265,6 +266,10 @@ compile/ui/spriteselection.o: src/ui/spriteselection.cpp Makefile include/game.h
 compile/ui/tileselection.o: src/ui/tileselection.cpp Makefile include/game.h include/ui/tileselection.h
 	- @mkdir -p compile/ui
 	$(CXX) -o compile/ui/tileselection.o -c src/ui/tileselection.cpp $(CFLAGS)
+
+compile/ui/tilesframe.o: src/ui/tilesframe.cpp Makefile include/game.h include/ui/tileselection.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/tilesframe.o -c src/ui/tilesframe.cpp $(CFLAGS)
 
 compile/ui/worldwidget.o: src/ui/worldwidget.cpp Makefile include/game.h include/ui/worldwidget.h
 	- @mkdir -p compile/ui
