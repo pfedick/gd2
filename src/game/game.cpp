@@ -8,17 +8,19 @@ ppl7::grafix::Point GetViewPos()
     return ppl7::grafix::Point(0, 0);
 }
 
-static Game *game = NULL;
+static Game* game = NULL;
 
-Game &GetGame()
+Game& GetGame()
 {
     if (!game) throw ppl7::Exception("Game not initialized!");
     return *game;
 }
 
-Game::Game(GPUContext &gpu) : ppltk::Window(), gpu(gpu)
+Game::Game(GPUContext& gpu)
+    : ppltk::Window(),
+      gpu(gpu)
 {
-    wm = (ppltk::WindowManager_SDL3 *)ppltk::GetWindowManager();
+    wm = (ppltk::WindowManager_SDL3*)ppltk::GetWindowManager();
     // wm->enableGPURenderer(gpu.gpu);
     Style.setStyle(ppltk::WidgetStyle::Dark);
     wm->setWidgetStyle(Style);
@@ -56,11 +58,11 @@ void Game::init()
     wm->useGPUAPI(gpu.gpu);
     // wm->enableGPURenderer(gpu.gpu);
     createWindow();
-    gpu.initializeWindow((SDL_Window *)getSDLWindow());
+    gpu.initializeWindow((SDL_Window*)getSDLWindow());
     sdl.setGPUDevice(gpu.gpu);
     gpu_batcher.init(&gpu); // Now using Storage Buffers instead of vertex buffer instancing
 
-    renderPipelines.init(gpu.gpu, (SDL_Window *)getSDLWindow());
+    renderPipelines.init(gpu.gpu, (SDL_Window*)getSDLWindow());
     // Initialize projection/view matrices for rendering
     gpu_batcher.updateMatrices(1920, 1080);
 }
@@ -87,8 +89,8 @@ void Game::createWindow()
     setBackgroundColor(ppl7::grafix::Color(0, 0, 0, 0));
     setSize(config.ScreenResolution);
     wm->createWindow(*this);
-    sdl_window = (SDL_Window *)getSDLWindow();
-    sdl_renderer = (SDL_Renderer *)getRenderer();
+    sdl_window = (SDL_Window*)getSDLWindow();
+    sdl_renderer = (SDL_Renderer*)getRenderer();
     sdl.setRenderer(sdl_renderer);
     // setPos(0,0);
     // SDL_RenderSetLogicalSize(renderer, 1920, 1080);
@@ -114,7 +116,7 @@ void Game::init_grafix()
     ppl7::PrintDebug("Grafix initialized\n");
 }
 
-void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size &size)
+void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
 {
     if (size == render_target_size) return;
     render_target_size = size;
@@ -159,12 +161,12 @@ void Game::run()
         updateUi(mouse);
         gpu_batcher.clearQueues();
 
-        SDL_GPUCommandBuffer *cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
+        SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
         if (cmdbuf == NULL) {
             SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
             continue;
         }
-        SDL_GPUTexture *swapchainTexture;
+        SDL_GPUTexture* swapchainTexture;
         if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, sdl_window, &swapchainTexture, NULL, NULL)) {
             SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
             continue;
@@ -202,11 +204,11 @@ void Game::run()
     }
 }
 
-void Game::updateUi(const ppltk::MouseState &mouse)
+void Game::updateUi(const ppltk::MouseState& mouse)
 {
 }
 
-void Game::drawUi(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainTexture, const ppltk::MouseState &mouse)
+void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
 {
     if (!showui) return;
     statusbar->setFps(fps.getFPS());
@@ -215,7 +217,7 @@ void Game::drawUi(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainTexture
     this->drawWidgets();
     wm->updateGPUTexture(*this, cmdbuf);
 
-    SDL_GPUTexture *gpuTex = (SDL_GPUTexture *)wm->getGPUTexture(*this);
+    SDL_GPUTexture* gpuTex = (SDL_GPUTexture*)wm->getGPUTexture(*this);
 
     if (gpuTex) {
         // 2. Draw PPLTK texture as overlay in final swapchain texture
@@ -226,7 +228,7 @@ void Game::drawUi(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainTexture
         targetInfo.load_op = SDL_GPU_LOADOP_LOAD;
         targetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
-        SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+        SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
         // Viewport/Scissor to match window
         SDL_SetGPUViewport(renderPass, NULL);
         SDL_SetGPUScissor(renderPass, NULL);
@@ -254,7 +256,7 @@ struct BlurParams
     float texelSizeY;
 };
 
-void Game::drawWorld(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainTexture)
+void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
     // Start render pass (resets z-order counter)
     gpu_batcher.startRenderPass();
@@ -280,12 +282,9 @@ void Game::drawWorld(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainText
 
     gpu_batcher.addSprite(resources.Player, 27, 100, 200, 1.0f, 1.0f, 0.0f);
 
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 0.0f,
-                          ppl7::grafix::Color(255, 0, 0, 255));
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 90.0f,
-                          ppl7::grafix::Color(0, 255, 0, 255));
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 180.0f,
-                          ppl7::grafix::Color(0, 0, 255, 255));
+    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 0.0f, ppl7::grafix::Color(255, 0, 0, 255));
+    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 90.0f, ppl7::grafix::Color(0, 255, 0, 255));
+    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 180.0f, ppl7::grafix::Color(0, 0, 255, 255));
     gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 270.0f);
 
     // Example Usage
@@ -312,7 +311,7 @@ void Game::drawWorld(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainText
     depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
     depthTargetInfo.cycle = false;
 
-    SDL_GPURenderPass *renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
 
     // Set viewport and scissor
     SDL_GPUViewport viewport = {0.0f, 0.0f, 1920.0f, 1080.0f, 0.0f, 1.0f};
@@ -396,18 +395,23 @@ void Game::drawWorld(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainText
     SDL_EndGPURenderPass(renderPass);
 }
 
-void Game::drawHUD(SDL_GPUCommandBuffer *cmdbuf, SDL_GPUTexture *swapchainTexture)
+void Game::drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
 }
 
-void Game::quitEvent(ppltk::Event *event)
+void Game::quitEvent(ppltk::Event* event)
 {
     ppl7::PrintDebug("Quit event received\n");
     quitGame = true;
 }
 
-void Game::closeEvent(ppltk::Event *event)
+void Game::closeEvent(ppltk::Event* event)
 {
     ppl7::PrintDebug("Close event received\n");
     quitGame = true;
+}
+
+void Game::updateSpriteFromUi()
+{
+    // TODO
 }

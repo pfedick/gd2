@@ -40,6 +40,12 @@ OBJECTS=compile/main.o \
 	compile/renderpipelines.o \
 	compile/background.o \
 	compile/colorpalette.o \
+	compile/level.o \
+	compile/tile.o \
+	compile/tiletype.o \
+	compile/plane.o \
+	compile/spritesystem.o \
+	compile/levelparameter.o \
 	compile/audio_audioinstance.o \
 	compile/audio_audiopool.o \
 	compile/audio_audiosample.o \
@@ -185,6 +191,14 @@ compile/config.o: src/game/config.cpp Makefile include/game.h
 	- @mkdir -p compile
 	$(CXX) -o compile/config.o -c src/game/config.cpp $(CFLAGS)
 
+compile/level.o: src/game/level.cpp Makefile include/game.h include/level.h
+	- @mkdir -p compile
+	$(CXX) -o compile/level.o -c src/game/level.cpp $(CFLAGS)
+
+compile/spritesystem.o: src/game/spritesystem.cpp Makefile include/game.h include/spritesystem.h
+	- @mkdir -p compile
+	$(CXX) -o compile/spritesystem.o -c src/game/spritesystem.cpp $(CFLAGS)
+
 compile/fps.o: src/game/fps.cpp Makefile include/game.h
 	- @mkdir -p compile
 	$(CXX) -o compile/fps.o -c src/game/fps.cpp $(CFLAGS)
@@ -213,6 +227,21 @@ compile/background.o: src/game/background.cpp Makefile include/game.h
 	- @mkdir -p compile
 	$(CXX) -o compile/background.o -c src/game/background.cpp $(CFLAGS)
 
+compile/tile.o: src/game/tile.cpp Makefile include/tiles.h
+	- @mkdir -p compile
+	$(CXX) -o compile/tile.o -c src/game/tile.cpp $(CFLAGS)
+
+compile/tiletype.o: src/game/tiletype.cpp Makefile include/tiletypes.h
+	- @mkdir -p compile
+	$(CXX) -o compile/tiletype.o -c src/game/tiletype.cpp $(CFLAGS)
+
+compile/plane.o: src/game/plane.cpp Makefile include/tiles.h
+	- @mkdir -p compile
+	$(CXX) -o compile/plane.o -c src/game/plane.cpp $(CFLAGS)
+
+compile/levelparameter.o: src/game/levelparameter.cpp Makefile include/level.h
+	- @mkdir -p compile
+	$(CXX) -o compile/levelparameter.o -c src/game/levelparameter.cpp $(CFLAGS)
 
 compile/audio_audioinstance.o: src/audio/audioinstance.cpp Makefile include/audio.h
 	- @mkdir -p compile

@@ -90,7 +90,7 @@ public:
     bool isOccupied(int x, int y, int z, const BrickOccupation::Matrix& matrix);
     void clearTile(int x, int y, int z);
     const Tile* get(int x, int y) const;
-    void save(ppl7::FileObject& file, unsigned char id) const;
+    void save(ppl7::FileObject& file, int chunk_id, int layer) const;
     void load(const ppl7::ByteArrayPtr& ba);
     void setVisible(bool visible);
     bool isVisible() const;

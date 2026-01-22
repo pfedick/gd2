@@ -1,3 +1,4 @@
+#include "game.h"
 #include "level.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,13 +27,12 @@ void LevelDescription::clear()
     Author.clear();
 }
 
-void LevelDescription::loadFromAssocArray(const ppl7::AssocArray &a)
+void LevelDescription::loadFromAssocArray(const ppl7::AssocArray& a)
 {
     ppl7::String Default;
     Default = "";
     if (a.exists("partOfStory")) partOfStory = a.getString("partOfStory", Default).toBool();
-    if (a.exists("visibleInLevelSelection"))
-        visibleInLevelSelection = a.getString("visibleInLevelSelection", Default).toBool();
+    if (a.exists("visibleInLevelSelection")) visibleInLevelSelection = a.getString("visibleInLevelSelection", Default).toBool();
     if (a.exists("levelSort")) levelSort = a.getString("levelSort", Default).toInt();
     if (a.exists("level_name")) LevelName["en"] = a.getString("level_name", Default);
     if (a.exists("Author")) Author = a.getString("Author", Default);
@@ -41,7 +41,7 @@ void LevelDescription::loadFromAssocArray(const ppl7::AssocArray &a)
 
     if (a.exists("LevelName")) {
         ppl7::AssocArray::const_iterator it;
-        ppl7::AssocArray &data = a.getAssocArray("LevelName");
+        ppl7::AssocArray& data = a.getAssocArray("LevelName");
         for (it = data.begin(); it != data.end(); ++it) {
             LevelName.insert(std::pair<ppl7::String, ppl7::String>(it->first, it->second->toString()));
         }
@@ -49,21 +49,21 @@ void LevelDescription::loadFromAssocArray(const ppl7::AssocArray &a)
 
     if (a.exists("Description")) {
         ppl7::AssocArray::const_iterator it;
-        ppl7::AssocArray &data = a.getAssocArray("Description");
+        ppl7::AssocArray& data = a.getAssocArray("Description");
         for (it = data.begin(); it != data.end(); ++it) {
             Description.insert(std::pair<ppl7::String, ppl7::String>(it->first, it->second->toString()));
         }
     }
 }
 
-bool LevelDescription::loadFromFile(const ppl7::String &filename)
+bool LevelDescription::loadFromFile(const ppl7::String& filename)
 {
     ppl7::File ff;
     try {
         ff.open(filename, ppl7::File::READ);
         ppl7::ByteArray ba;
         ff.read(ba, 7);
-        const char *buffer = ba.toCharPtr();
+        const char* buffer = ba.toCharPtr();
         if (memcmp(buffer, "Decker", 7) != 0) {
             // printf("Invalid Fileformat\n");
             return false;
@@ -77,14 +77,14 @@ bool LevelDescription::loadFromFile(const ppl7::String &filename)
             // printf ("load id=%d, size=%zd\n",id,size);
             if (size <= 5) continue;
 
-            if (id == Level::LevelChunkId::chunkLevelParameter) {
+            if (id == static_cast<int>(Level::ChunkId::LevelParameter)) {
                 bytes_read = ff.read(ba, size - 5);
                 if (bytes_read != size - 5) return false;
                 // ppl7::PrintDebug("   found levelparams [%s]\n", (const char*)filename);
 
                 this->Filename = filename;
 
-                const char *buffer = ba.toCharPtr();
+                const char* buffer = ba.toCharPtr();
                 int version = ppl7::Peek8(buffer);
                 if (version != 1) {
                     printf("Can't load LevelParameter, unknown version! [%d]\n", version);
@@ -106,7 +106,7 @@ bool LevelDescription::loadFromFile(const ppl7::String &filename)
     return false;
 }
 
-static void getLevelList(std::list<LevelDescription> &level_list, const ppl7::String &path)
+static void getLevelList(std::list<LevelDescription>& level_list, const ppl7::String& path)
 {
     ppl7::Dir dir;
     try {
@@ -126,7 +126,7 @@ static void getLevelList(std::list<LevelDescription> &level_list, const ppl7::St
     }
 }
 
-void getLevelList(std::list<LevelDescription> &level_list)
+void getLevelList(std::list<LevelDescription>& level_list)
 {
     getLevelList(level_list, "level");
     ppl7::String CustomLevelPath = ppl7::Dir::documentsPath(APP_COMPANY, APP_NAME);
@@ -149,7 +149,7 @@ void ModifiableParameter::clear()
     GlobalLighting.setColor(255, 255, 255, 255);
 }
 
-bool ModifiableParameter::operator==(const ModifiableParameter &other) const
+bool ModifiableParameter::operator==(const ModifiableParameter& other) const
 {
     if (backgroundType != other.backgroundType) return false;
     if (BackgroundColor != other.BackgroundColor) return false;
@@ -182,7 +182,7 @@ void LevelParameter::clear()
     LevelDescription::clear();
 }
 
-static void storeParameters(ppl7::AssocArray &a, const LevelParameter &params)
+static void storeParameters(ppl7::AssocArray& a, const LevelParameter& params)
 {
     a.clear();
     a.setf("level_width", "%d", params.width);
@@ -218,10 +218,10 @@ static void storeParameters(ppl7::AssocArray &a, const LevelParameter &params)
         a.set("background_type", "color");
 
     a.set("BackgroundImage", params.BackgroundImage);
-    a.setf("BackgroundColor", "%d,%d,%d,%d", params.BackgroundColor.red(), params.BackgroundColor.green(),
-           params.BackgroundColor.blue(), params.BackgroundColor.alpha());
-    a.setf("GlobalLighting", "%d,%d,%d,%d", params.GlobalLighting.red(), params.GlobalLighting.green(),
-           params.GlobalLighting.blue(), params.GlobalLighting.alpha());
+    a.setf("BackgroundColor", "%d,%d,%d,%d", params.BackgroundColor.red(), params.BackgroundColor.green(), params.BackgroundColor.blue(),
+           params.BackgroundColor.alpha());
+    a.setf("GlobalLighting", "%d,%d,%d,%d", params.GlobalLighting.red(), params.GlobalLighting.green(), params.GlobalLighting.blue(),
+           params.GlobalLighting.alpha());
 
     // std::map<ppl7::String, LevelParameter::TranslatedStrings>::const_iterator it;
     for (auto it = params.LevelName.begin(); it != params.LevelName.end(); ++it) {
@@ -256,7 +256,7 @@ size_t LevelParameter::size() const
     return a.size();
 }
 
-void LevelParameter::save(ppl7::File &ff, int chunk_id) const
+void LevelParameter::save(ppl7::File& ff, int chunk_id) const
 {
     ppl7::AssocArray a;
     storeParameters(a, *this);
@@ -270,12 +270,12 @@ void LevelParameter::save(ppl7::File &ff, int chunk_id) const
     ff.write(ba.ptr(), ba.size());
 }
 
-void LevelParameter::load(const ppl7::ByteArrayPtr &ba)
+void LevelParameter::load(const ppl7::ByteArrayPtr& ba)
 {
     clear();
     ppl7::AssocArray a;
     ppl7::String Default, Tmp;
-    const char *buffer = ba.toCharPtr();
+    const char* buffer = ba.toCharPtr();
     int version = ppl7::Peek8(buffer);
     if (version != 1) {
         printf("Can't load LevelParameter, unknown version! [%d]\n", version);
@@ -311,7 +311,7 @@ void LevelParameter::load(const ppl7::ByteArrayPtr &ba)
         BackgroundColor.setAlpha(Tok[3].toInt());
     }
     if (a.exists("additional_playlist")) {
-        ppl7::AssocArray &songlist = a.getAssocArray("additional_playlist");
+        ppl7::AssocArray& songlist = a.getAssocArray("additional_playlist");
         ppl7::AssocArray::const_iterator it;
         for (it = songlist.begin(); it != songlist.end(); ++it) {
             SongPlaylist.push_back((*it).second->toString());
@@ -328,12 +328,11 @@ void LevelParameter::load(const ppl7::ByteArrayPtr &ba)
 
     Default = "false";
     if (a.exists("drainBattery")) drainBattery = a.getString("drainBattery", Default).toBool();
-    if (a.exists("flashlightOnOnLevelStart"))
-        flashlightOnOnLevelStart = a.getString("flashlightOnOnLevelStart", Default).toBool();
+    if (a.exists("flashlightOnOnLevelStart")) flashlightOnOnLevelStart = a.getString("flashlightOnOnLevelStart", Default).toBool();
     Default = "1.000";
     if (a.exists("batteryDrainRate")) batteryDrainRate = a.getString("batteryDrainRate", Default).toFloat();
     if (a.exists("InitialItems")) {
-        ppl7::AssocArray &itemlist = a.getAssocArray("InitialItems");
+        ppl7::AssocArray& itemlist = a.getAssocArray("InitialItems");
         ppl7::AssocArray::const_iterator it;
         for (it = itemlist.begin(); it != itemlist.end(); ++it) {
             InitialItems.insert((*it).second->toString().toInt());

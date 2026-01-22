@@ -37,11 +37,14 @@ private:
     SpriteTexture* tiletypes;
     TileType::Type* tilematrix;
     int width, height;
+    int tile_width;
+    int tile_height;
 
 public:
     TileTypePlane();
     ~TileTypePlane();
     void clear();
+    void setTileSizes(float tile_width, float tile_height);
     void create(int width, int height);
     void setType(int x, int y, TileType::Type type);
     TileType::Type getType(int x, int y) const;

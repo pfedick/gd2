@@ -102,6 +102,10 @@ public:
     // - Lights    (falls das sinn macht)
     // - Objects   (falls das sinn macht)
     // - Particle  (falls das sinn macht)
+    ParallaxLayer();
+    ~ParallaxLayer();
+    void init(float blur, float speed, float size);
+    void clear();
 };
 
 class Level
@@ -116,6 +120,7 @@ public:
 private:
     ParallaxLayer parallax_layers[static_cast<int>(ParallaxLayerId::MaxLayerId)];
     TileTypePlane TileTypeMatrix;
+    GPUContext* gpu;
 
     // LightSystem lights;
     // Decker::Objects::ObjectSystem* objects;
@@ -125,7 +130,7 @@ private:
     ppl7::grafix::Rect viewport;
     std::vector<SpriteTexture*> tileset;
     std::vector<SpriteTexture*> spriteset;
-    SDL_GPUTexture* tex_render_target;
+    // SDL_GPUTexture* tex_render_target;
     SDL_GPUTexture* tex_render_lightmap;
     SDL_GPUTexture* tex_render_layer;
     SDL_GPUTexture* tex_blur_temp;
@@ -188,19 +193,17 @@ public:
     void load(const ppl7::String& Filename);
     void save(const ppl7::String& Filename);
     void backup(const ppl7::String& Filename);
+    void initialize(GPUContext& gpu, RenderPipelines* renderpipelines);
+    void createRenderTargets(int width, int height);
     // void draw(SDL_Renderer* renderer, const ppl7::grafix::Point& worldcoords, Player* player, Metrics& metrics, Glimmer* glimmer);
     void setViewport(const ppl7::grafix::Rect& r);
-    /*
-    void setRenderTargets(SDL_Texture* tex_render_target,
-                          SDL_Texture* tex_render_lightmap,
-                          SDL_Texture* tex_render_layer,
-                          SDL_Texture* tex_blur_temp);
-    */
     void setRenderPipeline(SDL_GPUGraphicsPipeline* state);
-    ParallaxLayer& layer(int id);
+    ParallaxLayer& layer(ParallaxLayerId id);
+    Plane& plane(ParallaxLayerId id);
+    SpriteSystem& spritesystem(ParallaxLayerId id, ParallaxLayer::SpritePosition layer);
     // SpriteSystem& spritesystem(int layer, int layer);
     //  LightLayer& lightsystem(int plane);
-    // void updateVisibleSpriteLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
+    void updateVisibleSpriteLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
     // void updateVisibleLightsLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
     // void updateDynamicLightsLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
     bool findSprite(const ppl7::grafix::Point& p,
@@ -208,8 +211,8 @@ public:
                     SpriteSystem::Item& item,
                     int& layer,
                     ParallaxLayer::SpritePosition& layer_position) const;
-    // size_t countSprites() const;
-    // size_t countVisibleSprites() const;
+    size_t countSprites() const;
+    size_t countVisibleSprites() const;
     // size_t countLights() const;
     // size_t countVisibleLights() const;
 

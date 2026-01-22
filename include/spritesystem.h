@@ -29,7 +29,7 @@ public:
     };
 
 private:
-    const ColorPalette& palette;
+    const ColorPalette* palette;
     ppl7::Mutex mutex;
     int maxid;
     std::map<int, SpriteSystem::Item> sprite_list;
@@ -39,7 +39,7 @@ private:
     bool bSpritesVisible;
 
 public:
-    SpriteSystem(const ColorPalette& palette);
+    SpriteSystem();
     ~SpriteSystem();
     void clear();
     int addSprite(int x, int y, int z, int spriteset, int sprite_no, float sprite_scale, float sprite_rotation, uint32_t color_index);
@@ -50,9 +50,10 @@ public:
     void setVisible(bool visible);
     bool isVisible() const;
     void setSpriteset(int no, SpriteTexture* spriteset);
+    void setColorPalette(const ColorPalette& palette);
     void updateVisibleSpriteList(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
     void draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const;
-    void save(ppl7::FileObject& file, unsigned char id) const;
+    void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer, unsigned char position) const;
     void load(const ppl7::ByteArrayPtr& ba);
     bool findMatchingSprite(const ppl7::grafix::Point& p, SpriteSystem::Item& sprite) const;
 

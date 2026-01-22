@@ -18,15 +18,20 @@ SpriteSystem::Item::Item()
     color_index = 0;
 }
 
-SpriteSystem::SpriteSystem(const ColorPalette& palette)
-    : palette(palette)
+SpriteSystem::SpriteSystem()
 {
+    palette = NULL;
     bSpritesVisible = true;
     maxid = 0;
 }
 
 SpriteSystem::~SpriteSystem()
 {
+}
+
+void SpriteSystem::setColorPalette(const ColorPalette& palette)
+{
+    this->palette = &palette;
 }
 
 void SpriteSystem::setVisible(bool visible)
@@ -145,7 +150,7 @@ void SpriteSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport,
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
             batcher.addSprite(*item.texture, item.sprite_no, item.x + viewport.x1 - worldcoords.x, item.y + viewport.y1 - worldcoords.y,
-                              item.scale, item.scale, item.rotation, palette.getColor(item.color_index));
+                              item.scale, item.scale, item.rotation, palette->getColor(item.color_index));
             /*
             item.texture->drawScaledWithAngle(renderer, item.x + viewport.x1 - worldcoords.x, item.y + viewport.y1 - worldcoords.y,
                                               item.sprite_no, item.scale, item.scale, item.rotation, palette.getColor(item.color_index));
@@ -258,14 +263,17 @@ bool SpriteSystem::findMatchingSprite(const ppl7::grafix::Point& p, SpriteSystem
     return found_match;
 }
 
-void SpriteSystem::save(ppl7::FileObject& file, unsigned char id) const
+void SpriteSystem::save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer, unsigned char position) const
 {
     if (sprite_list.size() == 0) return;
-    unsigned char* buffer = (unsigned char*)malloc(sprite_list.size() * 22 + 6);
+    unsigned char* buffer = (unsigned char*)malloc(sprite_list.size() * 22 + 8);
     ppl7::Poke32(buffer + 0, 0);
-    ppl7::Poke8(buffer + 4, id);
-    ppl7::Poke8(buffer + 5, 2); // Version
-    size_t p = 6;
+    ppl7::Poke8(buffer + 4, chunkid);
+    ppl7::Poke8(buffer + 5, layer);
+    ppl7::Poke8(buffer + 6, position);
+    ppl7::Poke8(buffer + 7, 1); // Version
+
+    size_t p = 8;
     std::map<int, SpriteSystem::Item>::const_iterator it;
     for (it = sprite_list.begin(); it != sprite_list.end(); ++it) {
         const SpriteSystem::Item& item = (it->second);
@@ -288,15 +296,9 @@ void SpriteSystem::load(const ppl7::ByteArrayPtr& ba)
 {
     clear();
     const char* buffer = ba.toCharPtr();
-    int version = ppl7::Peek8(buffer);
-    size_t p = 1;
+    int version = ppl7::Peek8(buffer + 2);
+    size_t p = 3;
     if (version == 1) {
-        while (p < ba.size()) {
-            addSprite(ppl7::Peek32(buffer + p), ppl7::Peek32(buffer + p + 4), ppl7::Peek8(buffer + p + 8), ppl7::Peek16(buffer + p + 10),
-                      ppl7::Peek16(buffer + p + 12), ppl7::PeekFloat(buffer + p + 14), 0.0f, ppl7::Peek8(buffer + p + 9));
-            p += 18;
-        }
-    } else if (version == 2) {
         while (p < ba.size()) {
             addSprite(ppl7::Peek32(buffer + p), ppl7::Peek32(buffer + p + 4), ppl7::Peek8(buffer + p + 8), ppl7::Peek16(buffer + p + 10),
                       ppl7::Peek16(buffer + p + 12), ppl7::PeekFloat(buffer + p + 14), ppl7::PeekFloat(buffer + p + 18),
