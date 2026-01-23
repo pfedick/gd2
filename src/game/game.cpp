@@ -29,8 +29,6 @@ Game::Game(GPUContext& gpu)
     render_target_tmp1 = NULL;
     render_target_tmp2 = NULL;
     depthTexture = NULL;
-    mainmenue = NULL;
-    statusbar = NULL;
 }
 
 Game::~Game()
@@ -101,12 +99,7 @@ void Game::createWindow()
 
     // WidgetDrawbuffer.create(1920, 1080, ppl7::grafix::RGBFormat::A8R8G8B8);
     // this->setWidgetDrawbuffer(&WidgetDrawbuffer);
-
-    mainmenue = new MainMenue(0, 0, 1920, 30, this);
-    this->addChild(mainmenue);
-
-    statusbar = new StatusBar(0, 1080 - 30, 1920, 30);
-    this->addChild(statusbar);
+    editor.init(*this);
 }
 
 void Game::init_grafix()
@@ -145,7 +138,7 @@ void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
 void Game::run()
 {
     SDL_ShowCursor();
-    sdl.setCursor(resources.Cursor.getDrawable(1), resources.Cursor.getPivot(1));
+    sdl.setCursor(resources.Cursor.getDrawable(10), resources.Cursor.getPivot(10));
     ppl7::ppl_time_t last_second = ppl7::GetTime();
     quitGame = false;
     while (!quitGame) {
@@ -211,7 +204,7 @@ void Game::updateUi(const ppltk::MouseState& mouse)
 void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
 {
     if (!showui) return;
-    statusbar->setFps(fps.getFPS());
+    editor.statusbar->setFps(fps.getFPS());
 
     // 1. Draw widgets into PPLTK internal texture
     this->drawWidgets();

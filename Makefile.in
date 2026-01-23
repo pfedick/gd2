@@ -28,6 +28,7 @@ APPNAME = gd2
 
 OBJECTS=compile/main.o \
 	compile/game.o \
+	compile/game_editor.o \
 	compile/translate.o \
 	compile/sdl.o \
 	compile/gpu.o \
@@ -188,6 +189,12 @@ compile/game.o: src/game/game.cpp Makefile include/game.h include/version.h \
 	include/renderpipelines.h include/translate.h
 	- @mkdir -p compile
 	$(CXX) -o compile/game.o -c src/game/game.cpp $(CFLAGS)
+
+compile/game_editor.o: src/game/game_editor.cpp Makefile include/game.h include/version.h \
+	include/renderpipelines.h include/translate.h include/ui/tileselection.h \
+	include/ui/statusbar.h include/ui/menue.h
+	- @mkdir -p compile
+	$(CXX) -o compile/game_editor.o -c src/game/game_editor.cpp $(CFLAGS)
 
 compile/config.o: src/game/config.cpp Makefile include/game.h
 	- @mkdir -p compile

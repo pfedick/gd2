@@ -92,9 +92,46 @@ public:
 
 class MainMenue;
 class StatusBar;
+class TilesSelection;
+class Game;
+
+class GameEditor
+{
+    friend class Game;
+
+private:
+    class History
+    {
+    public:
+        int lastTileset;
+        int lastTile;
+        int lastTileColor;
+        int lastTileLayer;
+        History();
+        void clear();
+    };
+
+    History history;
+    Game* game;
+
+    TilesSelection* tiles_selection;
+    MainMenue* mainmenue;
+    StatusBar* statusbar;
+
+public:
+    GameEditor();
+    ~GameEditor();
+    void init(Game& game);
+    void closeAll();
+    void showTilesSelection();
+    void showTileTypeSelection();
+    void showSpriteSelection();
+};
 
 class Game : private ppltk::Window
 {
+    friend class GameEditor;
+
 private:
     SDL sdl;
     SDL_Window* sdl_window;
@@ -127,10 +164,8 @@ private:
     uint64_t frame_count = 0;
     double time_accumulator = 0.0f;
 
-    MainMenue* mainmenue;
-    StatusBar* statusbar;
-
 public:
+    GameEditor editor;
     Level level;
     RenderPipelines renderPipelines;
     Resources resources;
