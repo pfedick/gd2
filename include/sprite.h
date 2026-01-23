@@ -169,7 +169,7 @@ private:
     SDL_GPUTexture* current_outline_texture;
     int current_outline_sprite_id;
 
-    bool bSDLBufferd;
+    bool bGPUBufferd;
     bool bMemoryBufferd;
     bool bOutlinesEnabled;
     bool bCollisionDetectionEnabled;
@@ -177,7 +177,7 @@ private:
     bool bHasSpeculars;
     SDL_BlendMode defaultBlendMode;
 
-    ppl7::grafix::Image loadTexture(ppl7::PFPChunk* chunk, const ppl7::grafix::Color& tint);
+    ppl7::grafix::Image loadTexture(ppl7::PFPChunk* chunk);
     void loadIndex(ppl7::PFPChunk* chunk);
     SDL_GPUTexture* postGenerateOutlines(int sprite_id);
     SDL_GPUTexture* findTexture(int id) const;
@@ -187,8 +187,9 @@ private:
 public:
     SpriteTexture();
     ~SpriteTexture();
-    void load(GPUContext& gpu, const ppl7::String& filename, const ppl7::grafix::Color& tint = ppl7::grafix::Color());
-    void load(GPUContext& gpu, ppl7::FileObject& ff, const ppl7::grafix::Color& tint = ppl7::grafix::Color());
+    void load(GPUContext& gpu, const ppl7::String& filename);
+    void load(GPUContext& gpu, const ppl7::String& filename, bool memory_buffered, bool gpu_buffered);
+    void load(GPUContext& gpu, ppl7::FileObject& ff);
     void clear();
     void draw(ppl7::grafix::Drawable& target, int x, int y, int id) const;
     void draw(ppl7::grafix::Drawable& target, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const;
@@ -218,12 +219,11 @@ public:
     const ppl7::grafix::Drawable getDrawable(int id) const;
     void enableMemoryBuffer(bool enabled);
     void enableSDLBuffer(bool enabled);
+    void enableGPUBuffer(bool enabled);
     void enableCollisionDetection(bool enabled);
     void enableOutlines(bool enabled);
     int numTextures() const;
     int numSprites() const;
-    void setTextureBlendMode(SDL_BlendMode blendMode);
-    SDL_BlendMode getTextureBlendMode() const;
     void setPivot(int id, int x, int y);
 
     SDL_FRect getSpriteSource(int id) const;

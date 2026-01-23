@@ -132,16 +132,18 @@ ppl_toolkit:
 	cd ppltk && $(MAKE) -j
 
 clean:
-	-rm -f compile/* $(PROGRAM) *.core
+	-rm -rf compile/* $(PROGRAM) *.core
 
 cleanall:
-	-rm -f compile/* $(PROGRAM) *.core
+	-rm -rf compile/* $(PROGRAM) *.core
 	cd pplib && $(MAKE) clean
 	cd ppltk && $(MAKE) clean
 
 hud:
-	./texmaker -s lightwave/Render/hud/ -t res/hud.tex -w 512 -h 256 -px 50 -py 98 -x tmp/hud
-	./texmaker -f res/cursor/cursor.lst -t res/cursor.tex -w 128 -h 128 -px 0 -py 0 -x tmp/cursor
+	texmaker -s lightwave/Render/Hud/ -t res/ui/hud.tex -w 512 -h 256 -px 150 -py 196 -x tmp/hud
+	texmaker -f res/cursor/cursor.lst -t res/ui/cursor.tex -w 128 -h 128 -px 0 -py 0 -x tmp/cursor
+	texmaker -s lightwave/Render/Tiles/ -t res/tiles.tex -w 1024 -h 1024 -pd lower_left -x tmp/tiles
+	texmaker -s lightwave/Render/Tiles/ui/ -t res/ui/tiles.tex -w 512 -h 512 -pd fixed -px 0 -py 0
 
 sprites: hud
 
