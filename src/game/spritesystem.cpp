@@ -56,7 +56,7 @@ void SpriteSystem::setSpriteset(int no, SpriteTexture* spriteset)
     /* OLD:
     this->spriteset[no] = spriteset;
     */
-    if (no < this->spriteset.size())
+    if (no < (int)this->spriteset.size())
         this->spriteset[no] = spriteset;
     else {
         this->spriteset.resize(no + 1);
@@ -86,7 +86,7 @@ int SpriteSystem::addSprite(
         item.boundary = this->spriteset[item.sprite_set]->spriteBoundary(sprite_no, sprite_scale, sprite_scale, sprite_rotation, x, y);
     }
     */
-    if (item.sprite_set < this->spriteset.size() && this->spriteset[item.sprite_set] != NULL) {
+    if (item.sprite_set < (int)this->spriteset.size() && this->spriteset[item.sprite_set] != NULL) {
         item.texture = this->spriteset[item.sprite_set];
         item.boundary = this->spriteset[item.sprite_set]->spriteBoundary(sprite_no, sprite_scale, sprite_scale, sprite_rotation, x, y);
     }

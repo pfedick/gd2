@@ -15,7 +15,7 @@ void help()
     fflush(stdout);
 }
 
-void start(int argc, char **argv)
+void start(int argc, char** argv)
 {
 #ifdef WIN32
     ppl7::String::setGlobalEncoding("UTF-8");
@@ -57,11 +57,13 @@ void start(int argc, char **argv)
         game.init_grafix();
         if (ppl7::HaveArgv(argc, argv, "-l")) {
             ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
-            // game.loadLevel(level);
+            game.loadLevel(level);
+        } else {
+            game.startNewLevel(1024, 1024);
         }
         game.run();
     }
-    catch (const ppl7::Exception &ex) {
+    catch (const ppl7::Exception& ex) {
         ex.print();
         throw;
     }
@@ -78,7 +80,7 @@ int WinMain()
         start(__argc, __argv);
         return 0;
     }
-    catch (const ppl7::Exception &ex) {
+    catch (const ppl7::Exception& ex) {
         ex.print();
         throw;
         return 1;
@@ -87,7 +89,7 @@ int WinMain()
 }
 #endif
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 
     start(argc, argv);

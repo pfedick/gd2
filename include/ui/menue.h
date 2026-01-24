@@ -6,6 +6,7 @@
 #include <ppltk.h>
 
 class Game;
+enum class ParallaxLayerId;
 
 class MainMenue : public ppltk::Frame
 {
@@ -50,6 +51,11 @@ public:
     // void textChangedEvent(ppltk::Event* event, const ppl7::String& text) override;
     void closeEvent(ppltk::Event* event) override;
     void toggledEvent(ppltk::Event* event, bool checked) override;
+
+    void setWorldFollowsPlayer(bool enable);
+    void setCurrentLayer(ParallaxLayerId index);
+    ParallaxLayerId currentLayer() const;
+    bool worldFollowsPlayer() const;
 };
 
 #endif /* INCLUDE_UI_MENUE_H_ */

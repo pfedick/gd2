@@ -85,18 +85,21 @@ void MainMenue::setupUi()
     show_visibility_submenu_button->setEventHandler(this);
     this->addChild(show_visibility_submenu_button);
 
-    ppltk::Label* label = new ppltk::Label(908, 0, 100, s.height, "active Plane: ");
+    ppltk::Label* label = new ppltk::Label(908, 0, 100, s.height, "edit Layer:");
     this->addChild(label);
 
     active_plane_combobox = new ppltk::ComboBox(1009, 0, 150, s.height);
-    active_plane_combobox->add("PlayerPlane", "0");
-    active_plane_combobox->add("FrontPlane", "1");
-    active_plane_combobox->add("FarPlane", "2");
-    active_plane_combobox->add("BackPlane", "3");
-    active_plane_combobox->add("MiddlePlane", "4");
-    active_plane_combobox->add("HorizonPlane", "5");
-    active_plane_combobox->add("NearPlane", "6");
-
+    active_plane_combobox->add("Near", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Near)));
+    active_plane_combobox->add("Close", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Close)));
+    active_plane_combobox->add("Front", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Front)));
+    active_plane_combobox->add("Player", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Player)));
+    active_plane_combobox->add("Back", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Back)));
+    active_plane_combobox->add("Behind", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Behind)));
+    active_plane_combobox->add("Middle", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Middle)));
+    active_plane_combobox->add("Far", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Far)));
+    active_plane_combobox->add("Horizon", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Horizon)));
+    active_plane_combobox->add("Sky", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Sky)));
+    active_plane_combobox->setCurrentIdentifier(ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Player)));
     this->addChild(active_plane_combobox);
 
     show_metrics_submenu_button = new ppltk::Button(1169, 0, 70, s.height, "Metrics");
@@ -119,6 +122,28 @@ void MainMenue::setupUi()
     this->addChild(world_follows_player_checkbox);
 
     // update();
+}
+
+void MainMenue::setWorldFollowsPlayer(bool enable)
+{
+    if (world_follows_player_checkbox) world_follows_player_checkbox->setChecked(enable);
+}
+
+void MainMenue::setCurrentLayer(ParallaxLayerId index)
+{
+    if (active_plane_combobox) active_plane_combobox->setCurrentIdentifier(ppl7::ToString("%d", static_cast<int>(index)));
+}
+
+ParallaxLayerId MainMenue::currentLayer() const
+{
+    if (active_plane_combobox) return static_cast<ParallaxLayerId>(active_plane_combobox->currentIdentifier().toInt());
+    return ParallaxLayerId::Player;
+}
+
+bool MainMenue::worldFollowsPlayer() const
+{
+    if (world_follows_player_checkbox) return world_follows_player_checkbox->checked();
+    return true;
 }
 
 void MainMenue::toggledEvent(ppltk::Event* event, bool checked)

@@ -150,6 +150,7 @@ private:
     SDL_GPUTexture* depthTexture;
 
     ppl7::grafix::Size render_target_size;
+    ppl7::grafix::PointF WorldCoords;
 
     void createWindow();
     void createRenderTargetsIfRequired(const ppl7::grafix::Size& size);
@@ -157,12 +158,16 @@ private:
     bool quitGame = false;
     bool showui = true;
 
+    void clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
     void drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse);
     void drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
     void drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
 
     uint64_t frame_count = 0;
     double time_accumulator = 0.0f;
+
+    ppl7::grafix::Point WorldMoveStart;
+    bool worldIsMoving;
 
 public:
     GameEditor editor;
@@ -178,15 +183,24 @@ public:
     void init_grafix();
 
     void loadLevel(const ppl7::String& filename);
+    void startNewLevel(int width, int height);
+    void saveLevel(const ppl7::String& filename);
 
     void run();
     void updateUi(const ppltk::MouseState& mouse);
 
+    void updateSpriteFromUi();
+
+    void moveWorld(float offset_x, float offset_y);
+    void moveWorldOnMouseClick(const ppltk::MouseState& mouse);
+
     // EventHandler
     void quitEvent(ppltk::Event* event);
     void closeEvent(ppltk::Event* event);
-
-    void updateSpriteFromUi();
+    void mouseDownEvent(ppltk::MouseEvent* event);
+    void mouseWheelEvent(ppltk::MouseEvent* event);
+    void keyDownEvent(ppltk::KeyEvent* event);
+    void mouseMoveEvent(ppltk::MouseEvent* event);
 };
 
 Game& GetGame();

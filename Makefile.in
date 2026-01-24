@@ -42,6 +42,7 @@ OBJECTS=compile/main.o \
 	compile/background.o \
 	compile/colorpalette.o \
 	compile/level.o \
+	compile/parallaxlayer.o \
 	compile/tile.o \
 	compile/tiletype.o \
 	compile/plane.o \
@@ -203,6 +204,10 @@ compile/config.o: src/game/config.cpp Makefile include/game.h
 compile/level.o: src/game/level.cpp Makefile include/game.h include/level.h
 	- @mkdir -p compile
 	$(CXX) -o compile/level.o -c src/game/level.cpp $(CFLAGS)
+
+compile/parallaxlayer.o: src/game/parallaxlayer.cpp Makefile include/game.h include/level.h
+	- @mkdir -p compile
+	$(CXX) -o compile/parallaxlayer.o -c src/game/parallaxlayer.cpp $(CFLAGS)
 
 compile/spritesystem.o: src/game/spritesystem.cpp Makefile include/game.h include/spritesystem.h
 	- @mkdir -p compile

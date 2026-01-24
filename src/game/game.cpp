@@ -25,6 +25,7 @@ Game::Game(GPUContext& gpu)
     Style.setStyle(ppltk::WidgetStyle::Dark);
     wm->setWidgetStyle(Style);
     quitGame = false;
+    worldIsMoving = false;
     render_target_layer = NULL;
     render_target_tmp1 = NULL;
     render_target_tmp2 = NULL;
@@ -63,6 +64,7 @@ void Game::init()
     renderPipelines.init(gpu.gpu, (SDL_Window*)getSDLWindow());
     // Initialize projection/view matrices for rendering
     gpu_batcher.updateMatrices(1920, 1080);
+    level.initialize(gpu, renderPipelines, gpu_batcher);
 }
 
 void Game::createWindow()
@@ -135,9 +137,20 @@ void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
     depthTexture = gpu.createDepthBuffer(size.width, size.height);
 }
 
+void Game::loadLevel(const ppl7::String& filename)
+{
+    level.load(filename);
+}
+
+void Game::startNewLevel(int width, int height)
+{
+    level.create(width, height);
+}
+
 void Game::run()
 {
     SDL_ShowCursor();
+    level.setShowTileGrid(true);
     sdl.setCursor(resources.Cursor.getDrawable(10), resources.Cursor.getPivot(10));
     ppl7::ppl_time_t last_second = ppl7::GetTime();
     quitGame = false;
@@ -169,10 +182,13 @@ void Game::run()
             SDL_SubmitGPUCommandBuffer(cmdbuf);
             continue;
         }
+        clearScreen(cmdbuf, swapchainTexture);
 
         // Ensure Depth Buffer matches window size
         int w, h;
         SDL_GetWindowSizeInPixels(sdl_window, &w, &h);
+        level.resizeRenderBuffer(ppl7::grafix::Size(w, h));
+        gpu_batcher.updateMatrices(w, h);
         createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
 
         fps.update();
@@ -190,15 +206,37 @@ void Game::run()
         frame_count++;
         time_accumulator += frame_time;
         if ((frame_count % 60) == 0) {
-            ppl7::PrintDebug("Frametime: %0.3f ms\n", 1000.0 * (frame_time / frame_count));
+            // ppl7::PrintDebug("Frametime: %0.3f ms\n", 1000.0 * (frame_time / frame_count));
+            editor.statusbar->setFrameTime(1000.0 * (frame_time / frame_count));
             frame_count = 0;
             time_accumulator = 0.0f;
         }
     }
 }
 
+void Game::clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
+{
+    SDL_GPUColorTargetInfo colorTargetInfo = {0};
+    colorTargetInfo.texture = swapchainTexture;
+    colorTargetInfo.clear_color = (SDL_FColor){0.3f, 0.0f, 0.0f, 1.0f}; // Black background
+    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+    colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
+    SDL_EndGPURenderPass(renderPass);
+}
+
 void Game::updateUi(const ppltk::MouseState& mouse)
 {
+    // if (mouse.p.inside(game_viewport)) {
+    moveWorldOnMouseClick(mouse);
+    editor.statusbar->setWorldCoords(WorldCoords);
+    ParallaxLayerId current_layer = editor.mainmenue->currentLayer();
+    ppl7::PrintDebug("Current Layer: %d\n", static_cast<int>(current_layer));
+    level.setEditLayer(current_layer);
+
+    //}
 }
 
 void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
@@ -251,7 +289,12 @@ struct BlurParams
 
 void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
-    // Start render pass (resets z-order counter)
+    ppl7::grafix::Rect viewport(0, 0, 1920, 1080); // TODO
+    level.updateVisibleObjects(WorldCoords, viewport);
+    level.draw(cmdbuf, swapchainTexture, WorldCoords, viewport);
+
+#ifdef OLDCODE
+    //  Start render pass (resets z-order counter)
     gpu_batcher.startRenderPass();
 
     // Collect all sprites to batch
@@ -307,7 +350,7 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
     SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
 
     // Set viewport and scissor
-    SDL_GPUViewport viewport = {0.0f, 0.0f, 1920.0f, 1080.0f, 0.0f, 1.0f};
+    SDL_GPUViewport sviewport = {0.0f, 0.0f, 1920.0f, 1080.0f, 0.0f, 1.0f};
     SDL_Rect scissor = {0, 0, 1920, 1080};
     SDL_SetGPUViewport(renderPass, NULL);
     SDL_SetGPUScissor(renderPass, NULL);
@@ -337,7 +380,7 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
     targetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
     renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
-    SDL_SetGPUViewport(renderPass, &viewport);
+    SDL_SetGPUViewport(renderPass, &sviewport);
     SDL_SetGPUScissor(renderPass, &scissor);
 
     SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.blurHorizontalPipeline);
@@ -355,7 +398,7 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
     targetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
     renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
-    SDL_SetGPUViewport(renderPass, &viewport);
+    SDL_SetGPUViewport(renderPass, &sviewport);
     SDL_SetGPUScissor(renderPass, &scissor);
 
     SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.blurVerticalPipeline);
@@ -386,6 +429,9 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
     SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
 
     SDL_EndGPURenderPass(renderPass);
+#endif
+
+    // #endif
 }
 
 void Game::drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
@@ -407,4 +453,81 @@ void Game::closeEvent(ppltk::Event* event)
 void Game::updateSpriteFromUi()
 {
     // TODO
+}
+
+void Game::moveWorld(float offset_x, float offset_y)
+{
+    if (offset_x == 0 && offset_y == 0) return;
+    WorldCoords.x += offset_x;
+    WorldCoords.y += offset_y;
+    if (WorldCoords.x < 0) WorldCoords.x = 0;
+    if (WorldCoords.x > 62000) WorldCoords.x = 62000;
+    if (WorldCoords.y < 0) WorldCoords.y = 0;
+    if (WorldCoords.y > 62000) WorldCoords.y = 62000;
+}
+
+void Game::moveWorldOnMouseClick(const ppltk::MouseState& mouse)
+{
+    const bool* state = SDL_GetKeyboardState(NULL);
+    if (worldIsMoving) {
+        if (mouse.buttonMask == ppltk::MouseState::Middle ||
+            ((mouse.buttonMask == ppltk::MouseState::Left) && state[SDL_SCANCODE_LSHIFT])) {
+            // printf("Move\n");
+            moveWorld(WorldMoveStart.x - mouse.p.x, WorldMoveStart.y - mouse.p.y);
+            WorldMoveStart = mouse.p;
+        } else {
+            worldIsMoving = false;
+            // printf("End\n");
+        }
+    } else {
+        // printf("mouse.buttonMask=%d\n", mouse.button);
+        if (mouse.buttonMask == ppltk::MouseState::Middle ||
+            ((mouse.buttonMask == ppltk::MouseState::Left) && state[SDL_SCANCODE_LSHIFT])) {
+            // printf("Start\n");
+            if (showui) {
+                worldIsMoving = true;
+                WorldMoveStart = mouse.p;
+                editor.mainmenue->setWorldFollowsPlayer(false);
+            }
+        } else {
+            worldIsMoving = false;
+            ;
+        }
+    }
+}
+
+void Game::mouseDownEvent(ppltk::MouseEvent* event)
+{
+#ifdef EVENTTRACKING
+    ppl7::PrintDebugTime("Game::mouseDownEvent\n");
+#endif
+    /*
+    if (event->widget() == world_widget) {
+        wm->setKeyboardFocus(world_widget);
+        game_viewport.translateMouseEvent(event);
+        if (sprite_selection != NULL) {
+            mouseDownEventOnSprite(event);
+        } else if (object_selection != NULL) {
+            mouseDownEventOnObject(event);
+        } else if ((tiles_selection != NULL || tiletype_selection != NULL)) {
+            handleMouseDrawInWorld(*event);
+        } else if (waynet_edit != NULL) {
+            mouseDownEventOnWayNet(event);
+        } else if (lights_selection != NULL) {
+            mouseDownEventOnLight(event);
+        }
+    }
+    */
+}
+
+void Game::mouseWheelEvent(ppltk::MouseEvent* event)
+{
+}
+
+void Game::keyDownEvent(ppltk::KeyEvent* event)
+{
+}
+
+void Game::mouseMoveEvent(ppltk::MouseEvent* event)
+{
 }

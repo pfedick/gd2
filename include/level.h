@@ -2,7 +2,7 @@
 #define INCLUDE_LEVEL_H_
 #include <map>
 #include <ppl7.h>
-
+#include "gpu.h"
 #include "renderpipelines.h"
 #include "background.h"
 #include "colorpalette.h"
@@ -76,19 +76,46 @@ enum class ParallaxLayerId
     Front,
     Player,
     Back,
+    Behind,
     Middle,
     Far,
     Horizon,
+    Sky,
     MaxLayerId
+};
+
+class RenderState
+{
+public:
+    SDL_GPUCommandBuffer* cmdbuf;
+    SDL_GPUTexture* tex_render_lightmap;
+    SDL_GPUTexture* tex_render_layer;
+    SDL_GPUTexture* tex_render_normal;
+    SDL_GPUTexture* tex_depth_buffer;
+    SDL_GPUTexture* tex_blur_temp;
+    GPUContext* gpu;
+    RenderPipelines* renderpipelines;
+    GPUBatcher* batcher;
+
+    RenderState();
 };
 
 class ParallaxLayer
 {
 private:
+    bool hasVisibleGrafix() const;
+    void drawTileGrid(RenderState& renderstate,
+                      SDL_GPUTexture* target_texture,
+                      const ppl7::grafix::PointF& worldcoords,
+                      const ppl7::grafix::Rect& viewport);
+
 public:
     float blur_factor = 0.0f;
     float speed_factor = 1.0f;
     float size_factor = 1.0f;
+    ParallaxLayerId layerType;
+    bool isVisible;
+    bool bShowGrid;
 
     Plane tiles;
     enum class SpritePosition
@@ -104,8 +131,14 @@ public:
     // - Particle  (falls das sinn macht)
     ParallaxLayer();
     ~ParallaxLayer();
-    void init(float blur, float speed, float size);
+    void init(ParallaxLayerId layerType, float blur, float speed, float size);
     void clear();
+    void showGrid(bool enable);
+    void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport);
+    void draw(RenderState& renderstate,
+              SDL_GPUTexture* swapchainTexture,
+              const ppl7::grafix::PointF& worldcoords,
+              const ppl7::grafix::Rect& viewport);
 };
 
 class Level
@@ -120,27 +153,26 @@ public:
 private:
     ParallaxLayer parallax_layers[static_cast<int>(ParallaxLayerId::MaxLayerId)];
     TileTypePlane TileTypeMatrix;
-    GPUContext* gpu;
+    RenderState renderstate;
 
     // LightSystem lights;
     // Decker::Objects::ObjectSystem* objects;
     // ParticleSystem* particles;
     // Waynet waynet;
 
-    ppl7::grafix::Rect viewport;
     std::vector<SpriteTexture*> tileset;
     std::vector<SpriteTexture*> spriteset;
     // SDL_GPUTexture* tex_render_target;
-    SDL_GPUTexture* tex_render_lightmap;
-    SDL_GPUTexture* tex_render_layer;
-    SDL_GPUTexture* tex_blur_temp;
-    RenderPipelines* renderpipelines;
+    ppl7::grafix::Size render_target_size;
 
     bool editMode;
     bool showSprites;
     bool showObjects;
     bool showParticles;
     bool lightsEnabled;
+
+    bool bShowGrid;
+    ParallaxLayerId editlayer;
 
     void clear();
 
@@ -193,17 +225,24 @@ public:
     void load(const ppl7::String& Filename);
     void save(const ppl7::String& Filename);
     void backup(const ppl7::String& Filename);
-    void initialize(GPUContext& gpu, RenderPipelines* renderpipelines);
-    void createRenderTargets(int width, int height);
-    // void draw(SDL_Renderer* renderer, const ppl7::grafix::Point& worldcoords, Player* player, Metrics& metrics, Glimmer* glimmer);
-    void setViewport(const ppl7::grafix::Rect& r);
-    void setRenderPipeline(SDL_GPUGraphicsPipeline* state);
+    void initialize(GPUContext& gpu, RenderPipelines& renderpipelines, GPUBatcher& batcher);
+    void resizeRenderBuffer(const ppl7::grafix::Size& size);
+    void draw(SDL_GPUCommandBuffer* cmdbuf,
+              SDL_GPUTexture* swapchainTexture,
+              const ppl7::grafix::PointF& worldcoords,
+              const ppl7::grafix::Rect& viewport);
+
+    void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport);
+    void setEditLayer(ParallaxLayerId layer);
+    void setShowTileGrid(bool enable);
+
     ParallaxLayer& layer(ParallaxLayerId id);
     Plane& plane(ParallaxLayerId id);
     SpriteSystem& spritesystem(ParallaxLayerId id, ParallaxLayer::SpritePosition layer);
     // SpriteSystem& spritesystem(int layer, int layer);
-    //  LightLayer& lightsystem(int plane);
-    void updateVisibleSpriteLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
+    // LightLayer& lightsystem(int plane);
+
+    // void updateVisibleSpriteLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
     // void updateVisibleLightsLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
     // void updateDynamicLightsLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
     bool findSprite(const ppl7::grafix::Point& p,

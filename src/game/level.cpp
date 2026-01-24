@@ -5,29 +5,17 @@
 #include <ppl7-grafix.h>
 #include "level.h"
 
-ParallaxLayer::ParallaxLayer()
+RenderState::RenderState()
 {
-    blur_factor = 0.0f;
-    speed_factor = 1.0f;
-    size_factor = 1.0f;
-}
-
-ParallaxLayer::~ParallaxLayer()
-{
-}
-
-void ParallaxLayer::init(float blur, float speed, float size)
-{
-    blur_factor = blur;
-    speed_factor = speed;
-    size_factor = size;
-}
-
-void ParallaxLayer::clear()
-{
-    front_sprites.clear();
-    background_sprites.clear();
-    tiles.clear();
+    cmdbuf = NULL;
+    tex_render_lightmap = NULL;
+    tex_render_layer = NULL;
+    tex_render_normal = NULL;
+    tex_depth_buffer = NULL;
+    tex_blur_temp = NULL;
+    gpu = NULL;
+    renderpipelines = NULL;
+    batcher = NULL;
 }
 
 Level::Level()
@@ -35,23 +23,23 @@ Level::Level()
     // objects = new Decker::Objects::ObjectSystem(&waynet);
     //  particles = new ParticleSystem();
     editMode = false;
+    bShowGrid = false;
     showSprites = true;
     showObjects = true;
     showParticles = true;
     lightsEnabled = true;
-    tex_render_layer = NULL;
-    tex_render_lightmap = NULL;
-    tex_blur_temp = NULL;
-    gpu = NULL;
+    editlayer = ParallaxLayerId::Player;
     SetGlobalColorPalette(palette);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].init(1.5f, 1.5f, 2.0f);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].init(0.8f, 1.3f, 1.5f);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].init(0.0f, 1.0f, 1.0f);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].init(0.0f, 1.0f, 1.0f);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].init(0.0f, 1.0f, 1.0f);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].init(0.3f, 0.8f, 0.8f);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].init(0.8f, 0.6f, 0.6f);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].init(1.2f, 0.4f, 0.4f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].init(ParallaxLayerId::Near, 1.5f, 1.5f, 2.0f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].init(ParallaxLayerId::Close, 0.8f, 1.3f, 1.5f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].init(ParallaxLayerId::Front, 0.0f, 1.0f, 1.0f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].init(ParallaxLayerId::Player, 0.0f, 1.0f, 1.0f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].init(ParallaxLayerId::Back, 0.0f, 1.0f, 1.0f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].init(ParallaxLayerId::Behind, 0.1f, 0.9f, 0.9f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].init(ParallaxLayerId::Middle, 0.3f, 0.8f, 0.8f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].init(ParallaxLayerId::Far, 0.8f, 0.6f, 0.6f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].init(ParallaxLayerId::Horizon, 1.2f, 0.4f, 0.4f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].init(ParallaxLayerId::Sky, 0.0f, 0.3f, 0.3f);
     for (auto layer : parallax_layers) {
         layer.background_sprites.setColorPalette(palette);
         layer.front_sprites.setColorPalette(palette);
@@ -61,10 +49,12 @@ Level::Level()
 Level::~Level()
 {
     clear();
-    if (gpu) {
-        if (tex_render_layer) gpu->destroyGPUTexture(tex_render_layer);
-        if (tex_render_lightmap) gpu->destroyGPUTexture(tex_render_lightmap);
-        if (tex_blur_temp) gpu->destroyGPUTexture(tex_blur_temp);
+    if (renderstate.gpu) {
+        if (renderstate.tex_render_layer) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_layer);
+        if (renderstate.tex_render_lightmap) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_lightmap);
+        if (renderstate.tex_blur_temp) renderstate.gpu->destroyGPUTexture(renderstate.tex_blur_temp);
+        if (renderstate.tex_render_normal) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_normal);
+        if (renderstate.tex_depth_buffer) renderstate.gpu->destroyGPUTexture(renderstate.tex_depth_buffer);
     }
 }
 
@@ -108,9 +98,29 @@ void Level::setEnableLights(bool enabled)
     lightsEnabled = enabled;
 }
 
+void Level::setEditLayer(ParallaxLayerId layer)
+{
+    editlayer = layer;
+    if (bShowGrid) {
+        for (auto& pl : parallax_layers) {
+            pl.showGrid(false);
+        }
+        parallax_layers[static_cast<int>(editlayer)].showGrid(true);
+    }
+}
+
+void Level::setShowTileGrid(bool enable)
+{
+    bShowGrid = enable;
+    for (auto& layer : parallax_layers) {
+        layer.showGrid(false);
+    }
+    parallax_layers[static_cast<int>(editlayer)].showGrid(enable);
+}
+
 void Level::setTileset(int no, SpriteTexture* tileset)
 {
-    if (no >= this->tileset.size()) {
+    if (no >= (int)this->tileset.size()) {
         this->tileset.resize(no + 1, nullptr);
     }
     this->tileset[no] = tileset;
@@ -119,7 +129,7 @@ void Level::setTileset(int no, SpriteTexture* tileset)
 void Level::setSpriteset(int no, SpriteTexture* spriteset)
 {
     if (no < 0) return;
-    if (no >= this->spriteset.size()) {
+    if (no >= (int)this->spriteset.size()) {
         this->spriteset.resize(no + 1, nullptr);
     }
     this->spriteset[no] = spriteset;
@@ -141,11 +151,6 @@ void Level::create(int width, int height)
     }
 }
 
-void Level::setViewport(const ppl7::grafix::Rect& r)
-{
-    viewport = r;
-}
-
 Plane& Level::plane(ParallaxLayerId id)
 {
     return parallax_layers[static_cast<int>(id)].tiles;
@@ -165,21 +170,28 @@ SpriteSystem& Level::spritesystem(ParallaxLayerId id, ParallaxLayer::SpritePosit
     }
 }
 
-void Level::initialize(GPUContext& gpu, RenderPipelines* renderpipelines)
+void Level::initialize(GPUContext& gpu, RenderPipelines& renderpipelines, GPUBatcher& batcher)
 {
-    this->gpu = &gpu;
-    this->renderpipelines = renderpipelines;
+    renderstate.gpu = &gpu;
+    renderstate.renderpipelines = &renderpipelines;
+    renderstate.batcher = &batcher;
 }
 
-void Level::createRenderTargets(int width, int height)
+void Level::resizeRenderBuffer(const ppl7::grafix::Size& size)
 {
-    if (!gpu) return;
-    if (tex_render_layer) gpu->destroyGPUTexture(tex_render_layer);
-    tex_render_layer = gpu->createRenderTarget(width, height);
-    if (tex_render_lightmap) gpu->destroyGPUTexture(tex_render_lightmap);
-    tex_render_lightmap = gpu->createRenderTarget(width, height);
-    if (tex_blur_temp) gpu->destroyGPUTexture(tex_blur_temp);
-    tex_blur_temp = gpu->createRenderTarget(width, height);
+    if (!renderstate.gpu) return;
+    if (size != render_target_size) {
+        ppl7::PrintDebug("Resizing Level Render Targets to %dx%d\n", size.width, size.height);
+        if (renderstate.tex_render_layer) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_layer);
+        renderstate.tex_render_layer = renderstate.gpu->createRenderTarget(size.width, size.height);
+        if (renderstate.tex_render_lightmap) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_lightmap);
+        renderstate.tex_render_lightmap = renderstate.gpu->createRenderTarget(size.width, size.height);
+        if (renderstate.tex_blur_temp) renderstate.gpu->destroyGPUTexture(renderstate.tex_blur_temp);
+        renderstate.tex_blur_temp = renderstate.gpu->createRenderTarget(size.width, size.height);
+        if (renderstate.tex_depth_buffer) renderstate.gpu->destroyGPUTexture(renderstate.tex_depth_buffer);
+        renderstate.tex_depth_buffer = renderstate.gpu->createDepthBuffer(size.width, size.height);
+        render_target_size = size;
+    }
 }
 
 void Level::load(const ppl7::String& Filename)
@@ -216,7 +228,7 @@ void Level::load(const ppl7::String& Filename)
                 if (layer < static_cast<int>(ParallaxLayerId::MaxLayerId)) parallax_layers[layer].tiles.load(ba);
             } else if (id == ChunkId::Sprites) {
                 int layer = ppl7::Peek8(ba.adr());
-                int position = ppl7::Peek8(ba.adr() + 1);
+                int position = ppl7::Peek8((char*)ba.adr() + 1);
 
                 if (layer < static_cast<int>(ParallaxLayerId::MaxLayerId)) {
                     if (position == 0) {
@@ -621,11 +633,28 @@ void Level::draw(SDL_Renderer* renderer, const ppl7::grafix::Point& worldcoords,
 
 #endif
 
-void Level::updateVisibleSpriteLists(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport)
+void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
+                 SDL_GPUTexture* swapchainTexture,
+                 const ppl7::grafix::PointF& worldcoords,
+                 const ppl7::grafix::Rect& viewport)
+{
+    renderstate.cmdbuf = cmdbuf;
+    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+}
+
+void Level::updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport)
 {
     for (auto& layer : parallax_layers) {
-        layer.background_sprites.updateVisibleSpriteList(worldcoords * layer.speed_factor, viewport);
-        layer.front_sprites.updateVisibleSpriteList(worldcoords * layer.speed_factor, viewport);
+        layer.updateVisibleObjects(worldcoords, viewport);
     }
 }
 

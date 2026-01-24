@@ -137,48 +137,47 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         }
     }
 
-    if (instanceData.empty()) {
-        return;
-    }
+    if (!instanceData.empty()) {
 
-    // Upload ALL instance data at once
-    size_t instanceDataSize = sizeof(SpriteInstance) * instanceData.size();
+        // Upload ALL instance data at once
+        size_t instanceDataSize = sizeof(SpriteInstance) * instanceData.size();
 
-    // Check if we need to resize the storage buffer
-    if (instanceDataSize > storageBufferCapacity) {
-        if (storageBuffer) {
-            SDL_ReleaseGPUBuffer(gpu->gpu, storageBuffer);
+        // Check if we need to resize the storage buffer
+        if (instanceDataSize > storageBufferCapacity) {
+            if (storageBuffer) {
+                SDL_ReleaseGPUBuffer(gpu->gpu, storageBuffer);
+            }
+            // Grow by power of 2 or large chunks
+            storageBufferCapacity = (Uint32)(instanceDataSize * 1.5);
+            SDL_GPUBufferCreateInfo storageBufferInfo = {
+                .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
+                .size = storageBufferCapacity,
+            };
+            storageBuffer = SDL_CreateGPUBuffer(gpu->gpu, &storageBufferInfo);
+            if (!storageBuffer) {
+                ppl7::PrintDebugTime("ERROR: Failed to resize storage buffer to %u bytes\n", storageBufferCapacity);
+                return;
+            }
+            ppl7::PrintDebugTime("Resized Storage Buffer to %u bytes (%zu sprites)\n", storageBufferCapacity,
+                                 storageBufferCapacity / sizeof(SpriteInstance));
         }
-        // Grow by power of 2 or large chunks
-        storageBufferCapacity = (Uint32)(instanceDataSize * 1.5);
-        SDL_GPUBufferCreateInfo storageBufferInfo = {
-            .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-            .size = storageBufferCapacity,
-        };
-        storageBuffer = SDL_CreateGPUBuffer(gpu->gpu, &storageBufferInfo);
-        if (!storageBuffer) {
-            ppl7::PrintDebugTime("ERROR: Failed to resize storage buffer to %u bytes\n", storageBufferCapacity);
-            return;
-        }
-        ppl7::PrintDebugTime("Resized Storage Buffer to %u bytes (%zu sprites)\n", storageBufferCapacity,
-                             storageBufferCapacity / sizeof(SpriteInstance));
-    }
 
-    SDL_GPUTransferBufferCreateInfo transferInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)instanceDataSize};
-    SDL_GPUTransferBuffer* transferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &transferInfo);
-    if (transferBuffer) {
-        void* mapped = SDL_MapGPUTransferBuffer(gpu->gpu, transferBuffer, false);
-        if (mapped) {
-            memcpy(mapped, instanceData.data(), instanceDataSize);
-            SDL_UnmapGPUTransferBuffer(gpu->gpu, transferBuffer);
+        SDL_GPUTransferBufferCreateInfo transferInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)instanceDataSize};
+        SDL_GPUTransferBuffer* transferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &transferInfo);
+        if (transferBuffer) {
+            void* mapped = SDL_MapGPUTransferBuffer(gpu->gpu, transferBuffer, false);
+            if (mapped) {
+                memcpy(mapped, instanceData.data(), instanceDataSize);
+                SDL_UnmapGPUTransferBuffer(gpu->gpu, transferBuffer);
 
-            SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
-            SDL_GPUTransferBufferLocation transferLocation = {.transfer_buffer = transferBuffer, .offset = 0};
-            SDL_GPUBufferRegion bufferRegion = {.buffer = storageBuffer, .offset = 0, .size = (Uint32)instanceDataSize};
-            SDL_UploadToGPUBuffer(copyPass, &transferLocation, &bufferRegion, false);
-            SDL_EndGPUCopyPass(copyPass);
+                SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
+                SDL_GPUTransferBufferLocation transferLocation = {.transfer_buffer = transferBuffer, .offset = 0};
+                SDL_GPUBufferRegion bufferRegion = {.buffer = storageBuffer, .offset = 0, .size = (Uint32)instanceDataSize};
+                SDL_UploadToGPUBuffer(copyPass, &transferLocation, &bufferRegion, false);
+                SDL_EndGPUCopyPass(copyPass);
+            }
+            SDL_ReleaseGPUTransferBuffer(gpu->gpu, transferBuffer);
         }
-        SDL_ReleaseGPUTransferBuffer(gpu->gpu, transferBuffer);
     }
 
     // --- Prepare Primitives ---
@@ -391,48 +390,46 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
         totalSprites += spriteList.size();
     }
 
-    if (totalSprites == 0) {
-        spriteCommands.clear();
-        return;
-    }
+    if (totalSprites) {
 
-    // ppl7::PrintDebugTime("  endRenderPass: Drawing %zu sprites\n", totalSprites);
+        // ppl7::PrintDebugTime("  endRenderPass: Drawing %zu sprites\n", totalSprites);
 
-    // Bind sprite pipeline
-    SDL_BindGPUGraphicsPipeline(render_pass, spritePipeline);
+        // Bind sprite pipeline
+        SDL_BindGPUGraphicsPipeline(render_pass, spritePipeline);
 
-    // Bind vertex buffer only
-    SDL_GPUBufferBinding vertexBinding = {.buffer = vertexBuffer, .offset = 0};
-    SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
+        // Bind vertex buffer only
+        SDL_GPUBufferBinding vertexBinding = {.buffer = vertexBuffer, .offset = 0};
+        SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
 
-    // Bind storage buffer for sprite instance data
-    SDL_BindGPUVertexStorageBuffers(render_pass, 0, &storageBuffer, 1);
+        // Bind storage buffer for sprite instance data
+        SDL_BindGPUVertexStorageBuffers(render_pass, 0, &storageBuffer, 1);
 
-    // Draw by texture batch
-    Uint32 instanceOffset = 0;
+        // Draw by texture batch
+        Uint32 instanceOffset = 0;
 
-    // Bind index buffer once
-    SDL_GPUBufferBinding indexBinding = {.buffer = indexBuffer, .offset = 0};
-    SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+        // Bind index buffer once
+        SDL_GPUBufferBinding indexBinding = {.buffer = indexBuffer, .offset = 0};
+        SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
-    for (const auto& [textureId, spriteList] : spriteCommands) {
-        if (spriteList.empty()) continue;
+        for (const auto& [textureId, spriteList] : spriteCommands) {
+            if (spriteList.empty()) continue;
 
-        const SpriteCommand& firstSprite = spriteList.front();
-        const SpriteTexture::SpriteIndexItem* indexItem = firstSprite.sprite->getSpriteIndex(firstSprite.sprite_id);
-        if (!indexItem || !indexItem->tex) {
+            const SpriteCommand& firstSprite = spriteList.front();
+            const SpriteTexture::SpriteIndexItem* indexItem = firstSprite.sprite->getSpriteIndex(firstSprite.sprite_id);
+            if (!indexItem || !indexItem->tex) {
+                instanceOffset += (Uint32)spriteList.size();
+                continue;
+            }
+
+            // Bind texture for this batch
+            bindTexture(render_pass, indexItem->tex);
+
+            // Draw instances for this batch only
+            // first_instance = instanceOffset
+            SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)spriteList.size(), 0, 0, instanceOffset);
+
             instanceOffset += (Uint32)spriteList.size();
-            continue;
         }
-
-        // Bind texture for this batch
-        bindTexture(render_pass, indexItem->tex);
-
-        // Draw instances for this batch only
-        // first_instance = instanceOffset
-        SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)spriteList.size(), 0, 0, instanceOffset);
-
-        instanceOffset += (Uint32)spriteList.size();
     }
 
     drawPrimitives(render_pass);
