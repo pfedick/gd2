@@ -7,6 +7,7 @@
 #include "resources.h"
 #include "sdl.h"
 #include "level.h"
+#include "gamecontroller.h"
 
 #define APP_COMPANY "Patrick F.-Productions"
 #define APP_NAME "The Magican"
@@ -94,6 +95,8 @@ class MainMenue;
 class StatusBar;
 class TilesSelection;
 class Game;
+class Player;
+class WorldWidget;
 
 class GameEditor
 {
@@ -150,6 +153,7 @@ private:
     SDL_GPUTexture* depthTexture;
 
     ppl7::grafix::Size render_target_size;
+    ppl7::grafix::Rect viewport;
     ppl7::grafix::PointF WorldCoords;
 
     void createWindow();
@@ -157,6 +161,12 @@ private:
 
     bool quitGame = false;
     bool showui = true;
+
+    void initUi();
+    void initGameController();
+    void updateGameControllerMapping();
+    void deleteUi();
+    void resizeMenueAndStatusbar();
 
     void clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
     void drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse);
@@ -169,8 +179,13 @@ private:
     ppl7::grafix::Point WorldMoveStart;
     bool worldIsMoving;
 
+    WorldWidget* world_widget;
+
+    Player* player;
+
 public:
     GameEditor editor;
+    GameController controller;
     Level level;
     RenderPipelines renderPipelines;
     Resources resources;
@@ -193,6 +208,8 @@ public:
 
     void moveWorld(float offset_x, float offset_y);
     void moveWorldOnMouseClick(const ppltk::MouseState& mouse);
+
+    Player* getPlayer();
 
     // EventHandler
     void quitEvent(ppltk::Event* event);

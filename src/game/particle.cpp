@@ -2,7 +2,7 @@
 #include <ppl7-grafix.h>
 #include <math.h>
 #include "particle.h"
-// #include "player.h"
+#include "player.h"
 
 static int particle_transparent[] = {33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
                                      48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62};
@@ -24,7 +24,7 @@ Particle::ColorGradientItem::ColorGradientItem()
     age = 0.0f;
 }
 
-Particle::ColorGradientItem::ColorGradientItem(float age, const ppl7::grafix::Color &color)
+Particle::ColorGradientItem::ColorGradientItem(float age, const ppl7::grafix::Color& color)
 {
     this->age = age;
     this->color = color;
@@ -62,7 +62,7 @@ Particle::~Particle()
 {
 }
 
-void Particle::initColorGradient(const std::list<ColorGradientItem> &gradient)
+void Particle::initColorGradient(const std::list<ColorGradientItem>& gradient)
 {
     if (gradient.empty()) return;
     color_gradient = gradient;
@@ -85,7 +85,7 @@ void Particle::initColorGradient(const std::list<ColorGradientItem> &gradient)
     color_age_diff = next_color.age - current_color.age;
 }
 
-void Particle::initScaleGradient(const std::list<ScaleGradientItem> &gradient, float base_scale)
+void Particle::initScaleGradient(const std::list<ScaleGradientItem>& gradient, float base_scale)
 {
     if (gradient.empty()) return;
     this->base_scale = base_scale;
@@ -256,14 +256,15 @@ ppl7::grafix::PointF calculateVelocity(float speed, float direction)
     return velocity;
 }
 
-ppl7::grafix::PointF getBirthPosition(const ppl7::grafix::PointF &emitter, const EmitterType type,
-                                      const ppl7::grafix::Size emitter_size, float rotation)
+ppl7::grafix::PointF getBirthPosition(const ppl7::grafix::PointF& emitter,
+                                      const EmitterType type,
+                                      const ppl7::grafix::Size emitter_size,
+                                      float rotation)
 {
     if (type == EmitterType::Point) return emitter;
     ppl7::grafix::PointF p1;
     if (type == EmitterType::Rectangle) {
-        p1.setPoint(randf(0.0, emitter_size.width) - emitter_size.width / 2,
-                    randf(0.0, emitter_size.height) - emitter_size.height / 2);
+        p1.setPoint(randf(0.0, emitter_size.width) - emitter_size.width / 2, randf(0.0, emitter_size.height) - emitter_size.height / 2);
     } else {
         float d = randf(0.0, 359.99999);
         p1.setPoint((sinf(d * rad_pi) * randf(0.0f, (float)emitter_size.width / 2)),
@@ -273,16 +274,16 @@ ppl7::grafix::PointF getBirthPosition(const ppl7::grafix::PointF &emitter, const
     return p1 + emitter;
 }
 
-bool emitterInPlayerRange(const ppl7::grafix::PointF &emitter, const Player &player)
+bool emitterInPlayerRange(const ppl7::grafix::PointF& emitter, const Player& player)
 {
-    double d = ppl7::grafix::Distance(ppl7::grafix::PointF(player.WorldCoords.x + player.Viewport.width() / 2,
-                                                           player.WorldCoords.y + player.Viewport.height() / 2),
-                                      emitter);
+    double d = ppl7::grafix::Distance(
+        ppl7::grafix::PointF(player.WorldCoords.x + player.Viewport.width() / 2, player.WorldCoords.y + player.Viewport.height() / 2),
+        emitter);
     if (d > player.Viewport.width()) return false;
     return true;
 }
 
-bool emitterInPlayerRange(int plane, const ppl7::grafix::PointF &emitter, const Player &player)
+bool emitterInPlayerRange(int plane, const ppl7::grafix::PointF& emitter, const Player& player)
 {
     if (plane == static_cast<int>(PlaneId::Player)) return emitterInPlayerRange(emitter, player);
 
@@ -294,9 +295,8 @@ bool emitterInPlayerRange(int plane, const ppl7::grafix::PointF &emitter, const 
     ppl7::grafix::Point coords = player.WorldCoords * planeFactor[plane];
     ppl7::grafix::Point pp = ppl7::grafix::Point(emitter) - coords + player.WorldCoords;
     pos = pp;
-    double d = ppl7::grafix::Distance(ppl7::grafix::PointF(player.WorldCoords.x + player.Viewport.width() / 2,
-                                                           player.WorldCoords.y + player.Viewport.height() / 2),
-                                      pos);
+    double d = ppl7::grafix::Distance(
+        ppl7::grafix::PointF(player.WorldCoords.x + player.Viewport.width() / 2, player.WorldCoords.y + player.Viewport.height() / 2), pos);
     if (d > player.Viewport.width()) return false;
     return true;
 }

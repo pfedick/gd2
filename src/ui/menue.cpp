@@ -1,11 +1,14 @@
 #include "game.h"
 #include "ui/menue.h"
+#include "player.h"
 
 MainMenue::MainMenue(int x, int y, int width, int height, Game* game)
     : ppltk::Frame(x, y, width, height)
 {
     this->game = game;
     setupUi();
+    visibility = NULL;
+    debug_submenu = NULL;
 }
 
 void MainMenue::resize(int x, int y, int width, int height)
@@ -146,6 +149,12 @@ bool MainMenue::worldFollowsPlayer() const
     return true;
 }
 
+void MainMenue::setGodMode(bool enabled)
+{
+    godmode_checkbox->setChecked(enabled);
+    // game->getPlayer()->setGodMode(enabled);
+}
+
 void MainMenue::toggledEvent(ppltk::Event* event, bool checked)
 {
     if (event->widget() == godmode_checkbox) {
@@ -168,9 +177,295 @@ void MainMenue::mouseDownEvent(ppltk::MouseEvent* event)
         game->editor.showTileTypeSelection();
     } else if (event->widget() == edit_sprites_button) {
         game->editor.showSpriteSelection();
+    } else if (event->widget() == show_visibility_submenu_button) {
+        if (visibility) {
+            delete visibility;
+            visibility = NULL;
+        } else {
+            ppltk::Widget* top = show_visibility_submenu_button->getTopmostParent();
+            ppl7::grafix::Point p = show_visibility_submenu_button->absolutePosition();
+            visibility = new VisibilitySubMenu(p.x, height(), this);
+
+            visibility->setTopmost(true);
+            visibility->setEventHandler(this);
+
+            top->addChild(visibility);
+            ppltk::GetWindowManager()->setMouseFocus(visibility);
+        }
+    } else if (event->widget() == debug_button) {
+        if (debug_submenu) {
+            delete debug_submenu;
+            debug_submenu = NULL;
+        } else {
+            ppltk::Widget* top = debug_button->getTopmostParent();
+            ppl7::grafix::Point p = debug_button->absolutePosition();
+            debug_submenu = new DebugSubMenu(p.x, height(), this);
+
+            debug_submenu->setTopmost(true);
+            debug_submenu->setEventHandler(this);
+            top->addChild(debug_submenu);
+            ppltk::GetWindowManager()->setMouseFocus(debug_submenu);
+        }
     }
 }
 
 void MainMenue::closeEvent(ppltk::Event* event)
 {
+}
+
+VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
+    : ppltk::Frame(x, y, 140, 370)
+{
+    this->menue = menue;
+    int y1 = 0;
+    this->addChild(new ppltk::Label(0, y1, 100, 20, "Misc:"));
+    y1 += 20;
+
+    lighting_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Lighting", menue->visibility_lighting);
+    lighting_checkbox->setEventHandler(this);
+    this->addChild(lighting_checkbox);
+    y1 += 20;
+
+    show_grid_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Grid", menue->visibility_grid);
+    show_grid_checkbox->setEventHandler(this);
+    this->addChild(show_grid_checkbox);
+    y1 += 20;
+
+    show_tiletypes_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Tiletypes", menue->visibility_tiletypes);
+    show_tiletypes_checkbox->setEventHandler(this);
+    this->addChild(show_tiletypes_checkbox);
+    y1 += 20;
+
+    show_collision_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Collision", menue->visibility_collision);
+    show_collision_checkbox->setEventHandler(this);
+    this->addChild(show_collision_checkbox);
+    y1 += 20;
+
+    show_sprites_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Sprites", menue->visibility_sprites);
+    show_sprites_checkbox->setEventHandler(this);
+    this->addChild(show_sprites_checkbox);
+    y1 += 20;
+
+    show_objects_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Objects", menue->visibility_objects);
+    show_objects_checkbox->setEventHandler(this);
+    this->addChild(show_objects_checkbox);
+    y1 += 20;
+
+    show_particles_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Particles", menue->visibility_particles);
+    show_particles_checkbox->setEventHandler(this);
+    this->addChild(show_particles_checkbox);
+    y1 += 20;
+
+    show_hud_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "HUD", menue->visibility_hud);
+    show_hud_checkbox->setEventHandler(this);
+    this->addChild(show_hud_checkbox);
+    y1 += 20;
+
+    y1 += 20;
+    this->addChild(new ppltk::Label(0, y1, 100, 20, "visible Planes:"));
+    y1 += 20;
+
+    visible_plane_near_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Near", menue->visibility_plane_near);
+    visible_plane_near_checkbox->setEventHandler(this);
+    this->addChild(visible_plane_near_checkbox);
+    y1 += 20;
+
+    visible_plane_front_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Front", menue->visibility_plane_front);
+    visible_plane_front_checkbox->setEventHandler(this);
+    this->addChild(visible_plane_front_checkbox);
+    y1 += 20;
+
+    visible_plane_player_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Player", menue->visibility_plane_player);
+    visible_plane_player_checkbox->setEventHandler(this);
+    this->addChild(visible_plane_player_checkbox);
+    y1 += 20;
+
+    visible_plane_back_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Back", menue->visibility_plane_back);
+    visible_plane_back_checkbox->setEventHandler(this);
+    this->addChild(visible_plane_back_checkbox);
+    y1 += 20;
+
+    visible_plane_middle_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Middle", menue->visibility_plane_middle);
+    visible_plane_middle_checkbox->setEventHandler(this);
+    this->addChild(visible_plane_middle_checkbox);
+    y1 += 20;
+
+    visible_plane_far_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Far", menue->visibility_plane_far);
+    visible_plane_far_checkbox->setEventHandler(this);
+    this->addChild(visible_plane_far_checkbox);
+    y1 += 20;
+
+    visible_plane_horizon_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Horizon", menue->visibility_plane_horizon);
+    visible_plane_horizon_checkbox->setEventHandler(this);
+    this->addChild(visible_plane_horizon_checkbox);
+    y1 += 20;
+}
+
+void VisibilitySubMenu::setShowTileTypes(bool show)
+{
+    show_tiletypes_checkbox->setChecked(show);
+}
+
+void VisibilitySubMenu::toggledEvent(ppltk::Event* event, bool checked)
+{
+
+    ppltk::Widget* widget = event->widget();
+    if (widget == visible_plane_player_checkbox) {
+        menue->visibility_plane_player = checked;
+    } else if (widget == lighting_checkbox) {
+        menue->visibility_lighting = checked;
+    } else if (widget == show_hud_checkbox) {
+        menue->visibility_hud = checked;
+    } else if (widget == visible_plane_front_checkbox) {
+        menue->visibility_plane_front = checked;
+    } else if (widget == visible_plane_far_checkbox) {
+        menue->visibility_plane_far = checked;
+    } else if (widget == visible_plane_back_checkbox) {
+        menue->visibility_plane_back = checked;
+    } else if (widget == visible_plane_middle_checkbox) {
+        menue->visibility_plane_middle = checked;
+    } else if (widget == visible_plane_horizon_checkbox) {
+        menue->visibility_plane_horizon = checked;
+    } else if (widget == visible_plane_near_checkbox) {
+        menue->visibility_plane_near = checked;
+    } else if (widget == show_grid_checkbox) {
+        menue->visibility_grid = checked;
+    } else if (widget == show_tiletypes_checkbox) {
+        menue->visibility_tiletypes = checked;
+    } else if (widget == show_collision_checkbox) {
+        menue->visibility_collision = checked;
+    } else if (widget == show_sprites_checkbox) {
+        menue->visibility_sprites = checked;
+    } else if (widget == show_objects_checkbox) {
+        menue->visibility_objects = checked;
+    } else if (widget == show_particles_checkbox) {
+        menue->visibility_particles = checked;
+    };
+}
+
+void VisibilitySubMenu::lostFocusEvent(ppltk::FocusEvent* event)
+{
+    if (event->newWidget() != this && !event->newWidget()->isChildOf(this)) {
+        // ppl7::PrintDebug("VisibilitySubMenu::lostFocusEvent\n");
+        this->deleteLater();
+        ppltk::Event e(ppltk::Event::Type::Close);
+        e.setWidget(this);
+        menue->closeEvent(&e);
+    }
+}
+
+void VisibilitySubMenu::setShowHud(bool show)
+{
+    show_hud_checkbox->setChecked(show);
+}
+
+DebugSubMenu::DebugSubMenu(int x, int y, MainMenue* menue)
+    : ppltk::Frame(x, y, 140, 300)
+{
+    this->menue = menue;
+    ppltk::WindowManager* wm = ppltk::GetWindowManager();
+    ppl7::grafix::Rect client = clientRect();
+    int y1 = 0;
+    godmode_checkbox = new ppltk::CheckBox(0, y1, client.width(), 29, "god mode", GetGame().getPlayer()->godModeEnabled());
+    godmode_checkbox->setEventHandler(this);
+    this->addChild(godmode_checkbox);
+    y1 += 30;
+
+    battery_button = new ppltk::Button(0, y1, client.width(), 29, "add battery");
+    // battery_button->setIcon(wm->Toolbar.getDrawable(65));
+    battery_button->setEventHandler(this);
+    this->addChild(battery_button);
+    y1 += 30;
+
+    add_flashlight_button = new ppltk::Button(0, y1, client.width(), 29, "add flashlight");
+    // battery_button->setIcon(wm->Toolbar.getDrawable(65));
+    add_flashlight_button->setEventHandler(this);
+    this->addChild(add_flashlight_button);
+    y1 += 30;
+
+    add_hammer_button = new ppltk::Button(0, y1, client.width(), 29, "add hammer");
+    // battery_button->setIcon(wm->Toolbar.getDrawable(65));
+    add_hammer_button->setEventHandler(this);
+    this->addChild(add_hammer_button);
+    y1 += 30;
+
+    add_cheese_button = new ppltk::Button(0, y1, client.width(), 29, "add cheese");
+    // battery_button->setIcon(wm->Toolbar.getDrawable(65));
+    add_cheese_button->setEventHandler(this);
+    this->addChild(add_cheese_button);
+    y1 += 30;
+
+    add_extralife_button = new ppltk::Button(0, y1, client.width(), 29, "add life");
+    // battery_button->setIcon(wm->Toolbar.getDrawable(65));
+    add_extralife_button->setEventHandler(this);
+    this->addChild(add_extralife_button);
+    y1 += 30;
+
+    add_medikit_button = new ppltk::Button(0, y1, client.width(), 29, "add medikit");
+    // battery_button->setIcon(wm->Toolbar.getDrawable(65));
+    add_medikit_button->setEventHandler(this);
+    this->addChild(add_medikit_button);
+    y1 += 30;
+
+    add_oxygen_button = new ppltk::Button(0, y1, client.width(), 29, "add oxygen");
+    // battery_button->setIcon(wm->Toolbar.getDrawable(65));
+    add_oxygen_button->setEventHandler(this);
+    this->addChild(add_oxygen_button);
+    y1 += 30;
+
+    y1 += 10;
+    pause_button = new ppltk::Button(0, y1, client.width(), 29, "Pause");
+    pause_button->setIcon(wm->Toolbar.getDrawable(64));
+    pause_button->setEventHandler(this);
+    pause_button->setCheckable(true);
+    this->addChild(pause_button);
+    y1 += 30;
+
+    step_button = new ppltk::Button(0, y1, client.width(), 29, "Step");
+    step_button->setIcon(wm->Toolbar.getDrawable(65));
+    step_button->setEventHandler(this);
+    this->addChild(step_button);
+    y1 += 30;
+}
+
+void DebugSubMenu::mouseClickEvent(ppltk::MouseEvent* event)
+{
+    if (event->widget() == battery_button) {
+        // GetGame().getPlayer()->addPowerCell();
+    } else if (event->widget() == pause_button) {
+        // GetGame().pauseGame(pause_button->isChecked());
+    } else if (event->widget() == step_button) {
+        pause_button->setChecked(true);
+        // GetGame().stepFrame();
+    } else if (event->widget() == add_hammer_button) {
+        // GetGame().getPlayer()->addSpecialObject(Decker::Objects::Type::Hammer);
+    } else if (event->widget() == add_flashlight_button) {
+        // GetGame().getPlayer()->addSpecialObject(Decker::Objects::Type::Flashlight);
+    } else if (event->widget() == add_cheese_button) {
+        // GetGame().getPlayer()->addSpecialObject(Decker::Objects::Type::Cheese);
+    } else if (event->widget() == add_extralife_button) {
+        // GetGame().getPlayer()->addLife(1);
+    } else if (event->widget() == add_medikit_button) {
+        // GetGame().getPlayer()->addHealth(100);
+    } else if (event->widget() == add_oxygen_button) {
+        // GetGame().getPlayer()->addAir(30.0f);
+    }
+}
+
+void DebugSubMenu::toggledEvent(ppltk::Event* event, bool checked)
+{
+    if (event->widget() == godmode_checkbox) {
+        menue->setGodMode(checked);
+    }
+}
+
+void DebugSubMenu::lostFocusEvent(ppltk::FocusEvent* event)
+{
+    if (event->newWidget() != this && !event->newWidget()->isChildOf(this)) {
+        // ppl7::PrintDebug("VisibilitySubMenu::lostFocusEvent\n");
+        this->deleteLater();
+        ppltk::Event e(ppltk::Event::Type::Close);
+        e.setWidget(this);
+        menue->closeEvent(&e);
+    }
 }

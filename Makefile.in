@@ -34,6 +34,7 @@ OBJECTS=compile/main.o \
 	compile/gpu.o \
 	compile/gpubatcher.o \
 	compile/fps.o \
+	compile/animation.o \
 	compile/config.o \
 	compile/spritetexture.o \
 	compile/gamecontroller.o \
@@ -48,6 +49,11 @@ OBJECTS=compile/main.o \
 	compile/plane.o \
 	compile/spritesystem.o \
 	compile/levelparameter.o \
+	compile/physic.o \
+	compile/player.o \
+	compile/particle.o \
+	compile/particlesystem.o \
+	compile/particleupdatethread.o \
 	compile/audio_audioinstance.o \
 	compile/audio_audiopool.o \
 	compile/audio_audiosample.o \
@@ -186,6 +192,10 @@ compile/translate.o: src/translate.cpp Makefile include/translate.h
 	- @mkdir -p compile
 	$(CXX) -o compile/translate.o -c src/translate.cpp $(CFLAGS)
 
+compile/animation.o: src/game/animation.cpp Makefile include/animation.h
+	- @mkdir -p compile
+	$(CXX) -o compile/animation.o -c src/game/animation.cpp $(CFLAGS)
+
 compile/game.o: src/game/game.cpp Makefile include/game.h include/version.h \
 	include/renderpipelines.h include/translate.h
 	- @mkdir -p compile
@@ -208,6 +218,26 @@ compile/level.o: src/game/level.cpp Makefile include/game.h include/level.h
 compile/parallaxlayer.o: src/game/parallaxlayer.cpp Makefile include/game.h include/level.h
 	- @mkdir -p compile
 	$(CXX) -o compile/parallaxlayer.o -c src/game/parallaxlayer.cpp $(CFLAGS)
+
+compile/physic.o: src/game/physic.cpp Makefile include/physic.h
+	- @mkdir -p compile
+	$(CXX) -o compile/physic.o -c src/game/physic.cpp $(CFLAGS)
+
+compile/particle.o: src/game/particle.cpp Makefile include/particle.h
+	- @mkdir -p compile
+	$(CXX) -o compile/particle.o -c src/game/particle.cpp $(CFLAGS)
+
+compile/particlesystem.o: src/game/particlesystem.cpp Makefile include/particle.h
+	- @mkdir -p compile
+	$(CXX) -o compile/particlesystem.o -c src/game/particlesystem.cpp $(CFLAGS)
+
+compile/particleupdatethread.o: src/game/particleupdatethread.cpp Makefile include/particle.h
+	- @mkdir -p compile
+	$(CXX) -o compile/particleupdatethread.o -c src/game/particleupdatethread.cpp $(CFLAGS)
+
+compile/player.o: src/game/player.cpp Makefile include/physic.h include/player.h
+	- @mkdir -p compile
+	$(CXX) -o compile/player.o -c src/game/player.cpp $(CFLAGS)
 
 compile/spritesystem.o: src/game/spritesystem.cpp Makefile include/game.h include/spritesystem.h
 	- @mkdir -p compile

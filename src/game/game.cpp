@@ -1,6 +1,8 @@
 #include "game.h"
+#include "player.h"
 #include "ui/menue.h"
 #include "ui/statusbar.h"
+#include "ui/worldwidget.h"
 
 ppl7::grafix::Point GetViewPos()
 {
@@ -30,10 +32,15 @@ Game::Game(GPUContext& gpu)
     render_target_tmp1 = NULL;
     render_target_tmp2 = NULL;
     depthTexture = NULL;
+    player = new Player(this);
 }
 
 Game::~Game()
 {
+    if (player) {
+        delete player;
+        player = NULL;
+    }
     if (render_target_layer) {
         gpu.destroyGPUTexture(render_target_layer);
         render_target_layer = NULL;
@@ -50,6 +57,7 @@ Game::~Game()
         gpu.destroyGPUTexture(depthTexture);
         depthTexture = NULL;
     }
+    deleteUi();
 }
 
 void Game::init()
@@ -65,6 +73,8 @@ void Game::init()
     // Initialize projection/view matrices for rendering
     gpu_batcher.updateMatrices(1920, 1080);
     level.initialize(gpu, renderPipelines, gpu_batcher);
+    initUi();
+    initGameController();
 }
 
 void Game::createWindow()
@@ -109,6 +119,96 @@ void Game::init_grafix()
     resources.load(gpu);
 
     ppl7::PrintDebug("Grafix initialized\n");
+}
+
+void Game::initUi()
+{
+    ppl7::grafix::Grafix* gfx = ppl7::grafix::GetGrafix();
+    gfx->loadFont("res/fonts/notosans.fnt6", "NotoSans");
+    gfx->loadFont("res/fonts/notosans-black.fnt6", "NotoSansBlack");
+    Style.labelFont.setName("NotoSans");
+    Style.buttonFont.setName("NotoSans");
+    Style.buttonFont.setBold(true);
+    Style.inputFont.setName("NotoSans");
+    wm->setWidgetStyle(Style);
+
+    // const ppl7::grafix::Size& desktop=clientSize();
+    ppl7::grafix::Size desktop;
+    desktop.setSize(1920, 1080);
+    // ppltk::Label *label;
+
+    resizeMenueAndStatusbar();
+    viewport.y1 = 33;
+    viewport.y2 = desktop.height - 33;
+
+    world_widget = new WorldWidget();
+    world_widget->create(0, 32, desktop.width, desktop.height - 64);
+    world_widget->setEventHandler(this);
+    world_widget->setViewport(viewport);
+    this->addChild(world_widget);
+    wm->setKeyboardFocus(world_widget);
+}
+
+void Game::resizeMenueAndStatusbar()
+{
+    const ppl7::grafix::Size& desktop = clientSize();
+    if (!editor.statusbar) {
+        editor.statusbar = new StatusBar(0, desktop.height - 32, desktop.width, 32);
+        this->addChild(editor.statusbar);
+    } else {
+        editor.statusbar->resize(0, desktop.height - 32, desktop.width, 32);
+    }
+
+    if (!editor.mainmenue) {
+        editor.mainmenue = new MainMenue(0, 0, desktop.width, 32, this);
+        this->addChild(editor.mainmenue);
+    } else {
+        editor.mainmenue->resize(0, 0, desktop.width, 32);
+    }
+}
+
+void Game::deleteUi()
+{
+    if (world_widget) {
+        this->removeChild(world_widget);
+        delete world_widget;
+        world_widget = NULL;
+    }
+    if (editor.statusbar) {
+        this->removeChild(editor.statusbar);
+        delete editor.statusbar;
+        editor.statusbar = NULL;
+    }
+    if (editor.mainmenue) {
+        this->removeChild(editor.mainmenue);
+        delete editor.mainmenue;
+        editor.mainmenue = NULL;
+    }
+}
+
+void Game::initGameController()
+{
+    std::list<GameController::Device> device_list = GameController::enumerate();
+    if (device_list.size() > 0) {
+        controller.open(device_list.front());
+    }
+    updateGameControllerMapping();
+}
+
+void Game::updateGameControllerMapping()
+{
+    controller.setDeadzone(config.controller.deadzone);
+    controller.mapping.setMappingAxis(GameControllerMapping::Axis::Walk, config.controller.axis_walk);
+    controller.mapping.setMappingAxis(GameControllerMapping::Axis::Jump, config.controller.axis_jump);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::MenuUp, config.controller.button_up);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::MenuDown, config.controller.button_down);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::MenuLeft, config.controller.button_left);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::MenuRight, config.controller.button_right);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Menu, config.controller.button_menu);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Action, config.controller.button_action);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Jump, config.controller.button_jump);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Back, config.controller.button_back);
+    controller.mapping.updateMapping();
 }
 
 void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
@@ -277,6 +377,11 @@ void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture
     } else {
         ppl7::PrintDebug("ERROR: Could not get GPU Texture from PPLTK UI Surface!\n");
     }
+}
+
+Player* Game::getPlayer()
+{
+    return player;
 }
 
 struct BlurParams

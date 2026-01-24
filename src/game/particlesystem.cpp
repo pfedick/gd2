@@ -6,9 +6,9 @@
 
 // #define DEBUGOUT
 
-static ParticleSystem *particle_system = NULL;
+static ParticleSystem* particle_system = NULL;
 
-ParticleSystem *GetParticleSystem()
+ParticleSystem* GetParticleSystem()
 {
     return particle_system;
 }
@@ -44,7 +44,7 @@ void ParticleSystem::clear()
         visible_particle_map[0][i].clear();
         visible_particle_map[1][i].clear();
     }
-    std::map<uint64_t, Particle *>::iterator it;
+    std::map<uint64_t, Particle*>::iterator it;
     for (it = particle_map.begin(); it != particle_map.end(); ++it) {
         delete it->second;
     }
@@ -54,7 +54,7 @@ void ParticleSystem::clear()
     nextid = 1;
 }
 
-void ParticleSystem::loadSpritesets(GPUContext &gpu)
+void ParticleSystem::loadSpritesets(GPUContext& gpu)
 {
     // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
     spriteset[ParticleSpriteset::GenericParticles]->enableOutlines(false);
@@ -62,29 +62,33 @@ void ParticleSystem::loadSpritesets(GPUContext &gpu)
     spriteset[ParticleSpriteset::GenericParticles]->load(gpu, "res/particles.tex");
 }
 
-void ParticleSystem::addParticle(Particle *particle)
+void ParticleSystem::addParticle(Particle* particle)
 {
     if (!particle) return;
     if (particle->birth_time == 0.0f || particle->birth_time > particle->death_time) return;
     particle->life_time = particle->death_time - particle->birth_time;
-    new_particles.insert(std::pair<uint64_t, Particle *>(nextid, particle));
+    new_particles.insert(std::pair<uint64_t, Particle*>(nextid, particle));
     nextid++;
 }
 
 void ParticleSystem::deleteParticle(uint64_t id)
 {
-    std::map<uint64_t, Particle *>::const_iterator it;
+    std::map<uint64_t, Particle*>::const_iterator it;
     it = particle_map.find(id);
     if (it != particle_map.end()) {
-        Particle *particle = it->second;
+        Particle* particle = it->second;
         particle_map.erase(it);
         particle->sprite_set = 1234567;
         delete particle;
     }
 }
 
-void ParticleSystem::update(double time, TileTypePlane &ttplane, Player &player, const ppl7::grafix::Point &worldcoords,
-                            const ppl7::grafix::Rect &viewport, float frame_rate_compensation)
+void ParticleSystem::update(double time,
+                            TileTypePlane& ttplane,
+                            Player& player,
+                            const ppl7::grafix::Point& worldcoords,
+                            const ppl7::grafix::Rect& viewport,
+                            float frame_rate_compensation)
 {
     if (update_thread.isRunning()) {
         ppl7::PrintDebugTime("Particle Update Thread too slow!\n");
@@ -108,9 +112,8 @@ void ParticleSystem::update(double time, TileTypePlane &ttplane, Player &player,
     update_thread.setVisibleParticleMapAndContinue(visible_particle_map[active_map]);
     active_map = (active_map + 1) & 1;
 #ifdef DEBUGOUT
-    ppl7::PrintDebugTime(
-        "[%llu] ParticleSystem::update:  ended, draw on map: %d, send signal to ParticleUpdateThread\n",
-        ppl7::ThreadID(), active_map);
+    ppl7::PrintDebugTime("[%llu] ParticleSystem::update:  ended, draw on map: %d, send signal to ParticleUpdateThread\n", ppl7::ThreadID(),
+                         active_map);
 #endif
 }
 
@@ -131,8 +134,8 @@ double ParticleSystem::waitForUpdateThreadFinished()
 void ParticleSystem::cleanupParticles()
 {
 #ifdef DEBUGOUT
-    ppl7::PrintDebugTime("[%llu] ParticleSystem::cleanupParticles, particles to delete: %zd, insert: %zd\n",
-                         ppl7::ThreadID(), particles_to_delete.size(), new_particles.size());
+    ppl7::PrintDebugTime("[%llu] ParticleSystem::cleanupParticles, particles to delete: %zd, insert: %zd\n", ppl7::ThreadID(),
+                         particles_to_delete.size(), new_particles.size());
 #endif
     if (particles_to_delete.size() > 0) {
         // ppl7::PrintDebugTime("deleting %zd particles\n", particles_to_delete.size());
@@ -143,9 +146,9 @@ void ParticleSystem::cleanupParticles()
         particles_to_delete.clear();
     }
     // Insert new Particles
-    std::map<uint64_t, Particle *>::const_iterator it;
+    std::map<uint64_t, Particle*>::const_iterator it;
     for (it = new_particles.begin(); it != new_particles.end(); ++it) {
-        particle_map.insert(std::pair<uint64_t, Particle *>(it->first, it->second));
+        particle_map.insert(std::pair<uint64_t, Particle*>(it->first, it->second));
     }
     new_particles.clear();
 #ifdef DEBUGOUT
@@ -153,22 +156,24 @@ void ParticleSystem::cleanupParticles()
 #endif
 }
 
-void ParticleSystem::draw(GPUBatcher &batcher, const ppl7::grafix::Rect &viewport,
-                          const ppl7::grafix::Point &worldcoords, Particle::Layer layer) const
+void ParticleSystem::draw(GPUBatcher& batcher,
+                          const ppl7::grafix::Rect& viewport,
+                          const ppl7::grafix::Point& worldcoords,
+                          Particle::Layer layer) const
 {
 #ifdef DEBUGOUT
     ppl7::PrintDebugTime("[%llu] ParticleSystem::draw => DONE\n", ppl7::ThreadID());
 #endif
-    std::map<uint32_t, Particle *>::const_iterator it;
+    std::map<uint32_t, Particle*>::const_iterator it;
     ppl7::grafix::Point coords(viewport.x1 - worldcoords.x, viewport.y1 - worldcoords.y);
     int l = static_cast<int>(layer);
     // ppl7::PrintDebugTime("   draw with active_map=%d\n", active_map);
 
     for (it = visible_particle_map[active_map][l].begin(); it != visible_particle_map[active_map][l].end(); ++it) {
-        const Particle *particle = it->second;
+        const Particle* particle = it->second;
         if (particle->sprite_set <= 2) {
-            spriteset[particle->sprite_set]->drawScaled(renderer, particle->p.x + coords.x, particle->p.y + coords.y,
-                                                        particle->sprite_no, particle->scale, particle->color_mod);
+            spriteset[particle->sprite_set]->drawScaled(renderer, particle->p.x + coords.x, particle->p.y + coords.y, particle->sprite_no,
+                                                        particle->scale, particle->color_mod);
 
         } else {
             ppl7::PrintDebugTime("[%llu] Found invalid "
@@ -211,140 +216,3 @@ ppl7::String ParticleSystem::layerName(Particle::Layer layer)
     return "unknown";
 }
 */
-
-ParticleUpdateThread::ParticleUpdateThread()
-{
-    ps = NULL;
-    time = 0.0f;
-    ttplane = NULL;
-    player = NULL;
-    visible_particle_map = NULL;
-    frame_rate_compensation = 1.0f;
-    thread_duration = 0.0f;
-    thread_running = false;
-}
-
-double ParticleUpdateThread::getThreadDuration() const
-{
-    return thread_duration;
-}
-
-void ParticleUpdateThread::setVisibleParticleMapAndContinue(std::map<uint32_t, Particle *> *visible_particle_map)
-{
-    datamutex.lock();
-    this->visible_particle_map = visible_particle_map;
-    for (int i = 0; i < static_cast<int>(Particle::Layer::maxLayer); i++) {
-        this->visible_particle_map[i].clear();
-    }
-    thread_running = true;
-    datamutex.unlock();
-    mutex.signal();
-}
-
-bool ParticleUpdateThread::isRunning() const
-{
-    return thread_running;
-}
-
-class PlaneCoords
-{
-  public:
-    void init(const ppl7::grafix::PointF &worldcoords, const ppl7::grafix::Rect &viewport, float factor);
-    float left;
-    float top;
-    float right;
-    float bottom;
-};
-
-void PlaneCoords::init(const ppl7::grafix::PointF &worldcoords, const ppl7::grafix::Rect &viewport, float factor)
-{
-    left = worldcoords.x * factor - 128;
-    top = worldcoords.y * factor - 128;
-    right = worldcoords.x * factor + viewport.width() + 128;
-    bottom = worldcoords.y * factor + viewport.height() + 128;
-}
-
-void ParticleUpdateThread::run()
-{
-#ifdef DEBUGOUT
-    ppl7::PrintDebugTime("[%llu] ParticleUpdateThread STARTED\n", ppl7::ThreadID());
-#endif
-    float ParticlePlaneFactor[static_cast<int>(Particle::Layer::maxLayer)];
-    for (int i = 0; i < static_cast<int>(Particle::Layer::maxLayer); i++)
-        ParticlePlaneFactor[i] = planeFactor[static_cast<int>(PlaneId::Player)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::NearPlaneBack)] =
-        planeFactor[static_cast<int>(PlaneId::Near)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::NearPlaneFront)] =
-        planeFactor[static_cast<int>(PlaneId::Near)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::MiddlePlaneBack)] =
-        planeFactor[static_cast<int>(PlaneId::Middle)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::MiddlePlaneFront)] =
-        planeFactor[static_cast<int>(PlaneId::Middle)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::FarPlaneBack)] = planeFactor[static_cast<int>(PlaneId::Far)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::FarPlaneFront)] = planeFactor[static_cast<int>(PlaneId::Far)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::HorizonPlaneBack)] =
-        planeFactor[static_cast<int>(PlaneId::Horizon)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::HorizonPlaneFront)] =
-        planeFactor[static_cast<int>(PlaneId::Horizon)];
-
-    PlaneCoords planec[static_cast<int>(Particle::Layer::maxLayer)];
-    for (int i = 0; i < static_cast<int>(Particle::Layer::maxLayer); i++)
-        planec[i].init(worldcoords, viewport, ParticlePlaneFactor[i]);
-
-    thread_running = false;
-    while (!threadShouldStop()) {
-#ifdef DEBUGOUT
-        ppl7::PrintDebugTime("[%llu] ParticleUpdateThread waiting for signal\n", ppl7::ThreadID());
-#endif
-
-        mutex.wait();
-        datamutex.lock();
-        thread_running = true;
-#ifdef DEBUGOUT
-        ppl7::PrintDebugTime("[%llu] ParticleUpdateThread running\n", ppl7::ThreadID());
-#endif
-
-        double thread_start_time = ppl7::GetMicrotime();
-        if (visible_particle_map) {
-            for (int i = 0; i < static_cast<int>(Particle::Layer::maxLayer); i++)
-                planec[i].init(worldcoords, viewport, ParticlePlaneFactor[i]);
-            /*
-            float left=worldcoords.x - 128;
-            float top=worldcoords.y - 128;
-            float right=worldcoords.x + viewport.width() + 128;
-            float bottom=worldcoords.y + viewport.height() + 128;
-            */
-
-            std::map<uint64_t, Particle *>::iterator it;
-            for (it = ps->particle_map.begin(); it != ps->particle_map.end(); ++it) {
-                Particle *particle = it->second;
-                if (time <= particle->death_time) {
-                    particle->age = (time - particle->birth_time) / particle->life_time; // Rises from 0.0f to 1.0f
-                    particle->update(time, frame_rate_compensation);
-                    const PlaneCoords &pc = planec[static_cast<int>(particle->layer)];
-                    if (particle->p.x > pc.left && particle->p.y > pc.top && particle->p.x < pc.right &&
-                        particle->p.y < pc.bottom) {
-                        uint32_t id = (uint32_t)(((uint32_t)particle->p.y & 0xffff) << 16) |
-                                      (uint32_t)((uint32_t)particle->p.x & 0xffff);
-                        visible_particle_map[static_cast<int>(particle->layer)].insert(
-                            std::pair<uint32_t, Particle *>(id, particle));
-                        particle->visible = true;
-                    } else {
-                        particle->visible = false;
-                    }
-                } else {
-                    ps->particles_to_delete.push_back(it->first);
-                }
-            }
-        }
-        thread_duration = ppl7::GetMicrotime() - thread_start_time;
-        thread_running = false;
-        datamutex.unlock();
-        // ppl7::PrintDebugTime("    ParticleUpdateThread: sleep\n");
-
-        // printf("ParticleUpdateThread signaled\n");
-    }
-#ifdef DEBUGOUT
-    ppl7::PrintDebugTime("[%llu] ParticleUpdateThread ENDED\n", ppl7::ThreadID());
-#endif
-}
