@@ -9,7 +9,7 @@ class SpriteTexture;
 #include "translate.h"
 #include "audio.h"
 #include "audiopool.h"
-
+#include "level.h"
 #include <map>
 
 class TileTypePlane;
@@ -105,6 +105,8 @@ private:
     ppl7::String phonetics;
     std::list<ppl7::grafix::Point> collision_checkpoints;
 
+    ParallaxLayerId currentLayer;
+
     class FlashLightPivot
     {
     public:
@@ -160,12 +162,14 @@ public:
     float scale;
 
     // is updated every frame
-    ppl7::grafix::Point WorldCoords;
+    ppl7::grafix::PointF WorldCoords;
     ppl7::grafix::Rect Viewport;
 
     explicit Player(Game* game);
     ~Player();
     ppl7::grafix::PointF position() const;
+    void setParallaxLayer(ParallaxLayerId layer);
+    ParallaxLayerId getParallaxLayer() const;
     void stand();
     void jumpExpression();
     Keys getKeyboardMatrix(const bool* state = NULL);

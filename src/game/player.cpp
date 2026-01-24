@@ -62,6 +62,7 @@ Player::FlashLightPivot::FlashLightPivot(int x, int y, float angle)
 Player::Player(Game* game)
 {
     x = y = 0;
+    currentLayer = ParallaxLayerId::Player;
     scale = 1.0f;
     last_animation_sound_played = -1;
     sprite_resource = NULL;
@@ -331,6 +332,16 @@ void Player::setVisible(bool flag)
 ppl7::grafix::PointF Player::position() const
 {
     return ppl7::grafix::PointF(x, y);
+}
+
+ParallaxLayerId Player::getParallaxLayer() const
+{
+    return currentLayer;
+}
+
+void Player::setParallaxLayer(ParallaxLayerId layer)
+{
+    currentLayer = layer;
 }
 
 void Player::setZeroVelocity()

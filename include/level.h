@@ -144,6 +144,7 @@ public:
 class Level
 {
     friend class Game;
+    friend class ParticleUpdateThread;
 
 public:
     LevelParameter params;
@@ -261,6 +262,8 @@ public:
     ppl7::grafix::Rect getOccupiedArea() const;
     ppl7::grafix::Rect getOccupiedAreaFromTileTypePlane() const;
     // void TakeScreenshot(Screenshot* screenshot);
+    void updateObjects(double time);
+    void updateParticles(double time); // Wird vom ParticleUpdateThread aufgerufen!
 };
 
 #endif

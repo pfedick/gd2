@@ -3,6 +3,7 @@
 #include <math.h>
 #include "particle.h"
 #include "player.h"
+#include "game.h"
 
 static int particle_transparent[] = {33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
                                      48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62};
@@ -285,15 +286,16 @@ bool emitterInPlayerRange(const ppl7::grafix::PointF& emitter, const Player& pla
 
 bool emitterInPlayerRange(int plane, const ppl7::grafix::PointF& emitter, const Player& player)
 {
-    if (plane == static_cast<int>(PlaneId::Player)) return emitterInPlayerRange(emitter, player);
+    if (plane == static_cast<int>(player.getParallaxLayer())) return emitterInPlayerRange(emitter, player);
 
     // ppl7::PrintDebug("Emitter: %d:%d, World: %d:%d\n", (int)emitter.x, (int)emitter.y, player.WorldCoords.x,
     // player.WorldCoords.y);
 
     ppl7::grafix::PointF pos = emitter;
+    ParallaxLayer layer = GetGame().level.layer(static_cast<ParallaxLayerId>(plane));
 
-    ppl7::grafix::Point coords = player.WorldCoords * planeFactor[plane];
-    ppl7::grafix::Point pp = ppl7::grafix::Point(emitter) - coords + player.WorldCoords;
+    ppl7::grafix::PointF coords = player.WorldCoords * layer.speed_factor * layer.size_factor;
+    ppl7::grafix::PointF pp = emitter - coords + player.WorldCoords;
     pos = pp;
     double d = ppl7::grafix::Distance(
         ppl7::grafix::PointF(player.WorldCoords.x + player.Viewport.width() / 2, player.WorldCoords.y + player.Viewport.height() / 2), pos);

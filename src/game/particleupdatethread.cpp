@@ -1,15 +1,11 @@
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include "particle.h"
+#include "level.h"
+#include "game.h"
 
 ParticleUpdateThread::ParticleUpdateThread()
 {
-    ps = NULL;
-    time = 0.0f;
-    ttplane = NULL;
-    player = NULL;
-    visible_particle_map = NULL;
-    frame_rate_compensation = 1.0f;
     thread_duration = 0.0f;
     thread_running = false;
 }
@@ -19,22 +15,44 @@ double ParticleUpdateThread::getThreadDuration() const
     return thread_duration;
 }
 
-void ParticleUpdateThread::setVisibleParticleMapAndContinue(std::map<uint32_t, Particle*>* visible_particle_map)
-{
-    datamutex.lock();
-    this->visible_particle_map = visible_particle_map;
-    for (int i = 0; i < static_cast<int>(Particle::Layer::maxLayer); i++) {
-        this->visible_particle_map[i].clear();
-    }
-    thread_running = true;
-    datamutex.unlock();
-    mutex.signal();
-}
-
 bool ParticleUpdateThread::isRunning() const
 {
     return thread_running;
 }
+
+void ParticleUpdateThread::wakeUp()
+{
+    mutex.signal();
+}
+
+void ParticleUpdateThread::run()
+{
+    thread_running = false;
+    Level& level = GetGame().level;
+
+    while (!threadShouldStop()) {
+        mutex.wait();
+        if (threadShouldStop()) break;
+        thread_running = true;
+        double thread_start_time = ppl7::GetMicrotime();
+        // Hier sollte eigentlich nur eine Funktion im ParticleSystem aufgerufen werden,
+        // die dann die Partikel updatet.
+        level.updateParticles(thread_start_time);
+        thread_duration = ppl7::GetMicrotime() - thread_start_time;
+        thread_running = false;
+    }
+}
+
+void ParticleUpdateThread::waitForFinished() const
+{
+    while (thread_running) {
+        ppl7::MSleep(1);
+    }
+}
+
+#ifdef OLDCODE
+// Der ganze Code hier sollte in eine Update-Funktion im ParticleSystem wandern. An dieser Stelle hier
+// itteriert der Thread nur über die Parallax-Layer und ruft dort die Update-Funktion auf.
 
 class PlaneCoords
 {
@@ -59,22 +77,6 @@ void ParticleUpdateThread::run()
 #ifdef DEBUGOUT
     ppl7::PrintDebugTime("[%llu] ParticleUpdateThread STARTED\n", ppl7::ThreadID());
 #endif
-    float ParticlePlaneFactor[static_cast<int>(Particle::Layer::maxLayer)];
-    for (int i = 0; i < static_cast<int>(Particle::Layer::maxLayer); i++)
-        ParticlePlaneFactor[i] = planeFactor[static_cast<int>(PlaneId::Player)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::NearPlaneBack)] = planeFactor[static_cast<int>(PlaneId::Near)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::NearPlaneFront)] = planeFactor[static_cast<int>(PlaneId::Near)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::MiddlePlaneBack)] = planeFactor[static_cast<int>(PlaneId::Middle)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::MiddlePlaneFront)] = planeFactor[static_cast<int>(PlaneId::Middle)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::FarPlaneBack)] = planeFactor[static_cast<int>(PlaneId::Far)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::FarPlaneFront)] = planeFactor[static_cast<int>(PlaneId::Far)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::HorizonPlaneBack)] = planeFactor[static_cast<int>(PlaneId::Horizon)];
-    ParticlePlaneFactor[static_cast<int>(Particle::Layer::HorizonPlaneFront)] = planeFactor[static_cast<int>(PlaneId::Horizon)];
-
-    PlaneCoords planec[static_cast<int>(Particle::Layer::maxLayer)];
-    for (int i = 0; i < static_cast<int>(Particle::Layer::maxLayer); i++)
-        planec[i].init(worldcoords, viewport, ParticlePlaneFactor[i]);
-
     thread_running = false;
     while (!threadShouldStop()) {
 #ifdef DEBUGOUT
@@ -129,3 +131,5 @@ void ParticleUpdateThread::run()
     ppl7::PrintDebugTime("[%llu] ParticleUpdateThread ENDED\n", ppl7::ThreadID());
 #endif
 }
+
+#endif

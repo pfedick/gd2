@@ -15,7 +15,7 @@ class SpriteTexture;
 
 class ParticleSpriteset
 {
-  public:
+public:
     enum SpritesetIds
     {
         GenericParticles = 0,
@@ -49,7 +49,7 @@ class Particle
     friend class ParticleSystem;
     friend class ParticleUpdateThread;
 
-  public:
+public:
     enum class Layer
     {
         BehindBricks = 0,
@@ -92,7 +92,7 @@ class Particle
 
     class ScaleGradientItem
     {
-      public:
+    public:
         float age;
         float scale;
 
@@ -101,15 +101,15 @@ class Particle
     };
     class ColorGradientItem
     {
-      public:
+    public:
         float age;
         ppl7::grafix::Color color;
 
-        ColorGradientItem(float age, const ppl7::grafix::Color &color);
+        ColorGradientItem(float age, const ppl7::grafix::Color& color);
         ColorGradientItem();
     };
 
-  private:
+private:
     double next_animation;
     float life_time;
     float age;
@@ -137,7 +137,7 @@ class Particle
     void updateColorGradient();
     void updateScaleGradient();
 
-  public:
+public:
     double death_time;
     double birth_time;
 
@@ -157,86 +157,83 @@ class Particle
     virtual void update(double time, float frame_rate_compensation);
 
     void initAnimation(Particle::Type type);
-    void initColorGradient(const std::list<ColorGradientItem> &gradient);
-    void initScaleGradient(const std::list<ScaleGradientItem> &gradient, float base_scale);
+    void initColorGradient(const std::list<ColorGradientItem>& gradient);
+    void initScaleGradient(const std::list<ScaleGradientItem>& gradient, float base_scale);
 };
 
 class ParticleSystem;
 
+/*
 class ParticleToDraw
 {
-  public:
+public:
     ppl7::grafix::Color color_mod;
     ppl7::grafix::PointF p;
     float scale;
 };
+*/
 
 class ParticleUpdateThread : public ppl7::Thread
 {
     friend class ParticleSystem;
 
-  private:
-    ParticleSystem *ps;
-    double time;
-    TileTypePlane *ttplane;
-    Player *player;
-    ppl7::grafix::PointF worldcoords;
-    ppl7::grafix::Rect viewport;
-    float frame_rate_compensation;
+private:
     double thread_duration;
-    std::map<uint32_t, Particle *> *visible_particle_map;
     std::atomic_bool thread_running;
 
-    ppl7::Mutex datamutex;
-
-  public:
+public:
     ppl7::Mutex mutex;
 
     ParticleUpdateThread();
     void run() override;
+    void wakeUp();
     bool isRunning() const;
     double getThreadDuration() const;
-    void setVisibleParticleMapAndContinue(std::map<uint32_t, Particle *> *visible_particle_map);
+    void waitForFinished() const;
 };
 
 class ParticleSystem
 {
     friend class ParticleUpdateThread;
 
-  private:
+private:
     uint64_t nextid;
-    SpriteTexture *spriteset[ParticleSpriteset::MaxSpritesets];
-    std::map<uint64_t, Particle *> particle_map;
-    std::map<uint64_t, Particle *> new_particles;
-    std::map<uint32_t, Particle *> visible_particle_map[2][static_cast<int>(Particle::Layer::maxLayer)];
+    SpriteTexture* spriteset[ParticleSpriteset::MaxSpritesets];
+    std::map<uint64_t, Particle*> particle_map;
+    std::map<uint64_t, Particle*> new_particles;
+    std::map<uint32_t, Particle*> visible_particle_map[2];
     std::list<uint64_t> particles_to_delete;
     void deleteParticle(uint64_t id);
     void cleanupParticles();
     int active_map;
-    ParticleUpdateThread update_thread;
+    // ParticleUpdateThread update_thread;
 
-  public:
+public:
     ParticleSystem();
     ~ParticleSystem();
     void clear();
-    void loadSpritesets(GPUContext &gpu);
-    void addParticle(Particle *particle);
-    void update(double time, TileTypePlane &ttplane, Player &player, const ppl7::grafix::Point &worldcoords,
-                const ppl7::grafix::Rect &viewport, float frame_rate_compensation);
-    double waitForUpdateThreadFinished();
-    void draw(GPUBatcher &batcher, const ppl7::grafix::Rect &viewport, const ppl7::grafix::Point &worldcoords,
-              Particle::Layer layer) const;
+    void loadSpritesets(GPUContext& gpu);
+    void addParticle(Particle* particle);
+    void update(double time,
+                TileTypePlane& ttplane,
+                Player& player,
+                const ppl7::grafix::PointF& worldcoords,
+                const ppl7::grafix::Rect& viewport,
+                float frame_rate_compensation);
+    void draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const;
     size_t count() const;
     size_t countVisible() const;
     // static ppl7::String layerName(Particle::Layer layer);
 };
 
-ParticleSystem *GetParticleSystem();
+ParticleSystem* GetParticleSystem();
 float randf(float min, float max);
 ppl7::grafix::PointF calculateVelocity(float speed, float direction);
-ppl7::grafix::PointF getBirthPosition(const ppl7::grafix::PointF &emitter, const EmitterType type,
-                                      const ppl7::grafix::Size emitter_size, float rotation = 0.0f);
-bool emitterInPlayerRange(int plane, const ppl7::grafix::PointF &emitter, const Player &player);
-bool emitterInPlayerRange(const ppl7::grafix::PointF &emitter, const Player &player);
+ppl7::grafix::PointF getBirthPosition(const ppl7::grafix::PointF& emitter,
+                                      const EmitterType type,
+                                      const ppl7::grafix::Size emitter_size,
+                                      float rotation = 0.0f);
+bool emitterInPlayerRange(int plane, const ppl7::grafix::PointF& emitter, const Player& player);
+bool emitterInPlayerRange(const ppl7::grafix::PointF& emitter, const Player& player);
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef INCLUDE_PHYSIC_H_
 #define INCLUDE_PHYSIC_H_
 
+#include "tiletypes.h"
+
 class TileTypePlane;
 
 class Velocity
