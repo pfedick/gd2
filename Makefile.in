@@ -54,6 +54,8 @@ OBJECTS=compile/main.o \
 	compile/particle.o \
 	compile/particlesystem.o \
 	compile/particleupdatethread.o \
+	compile/objectsystem.o \
+	compile/objectspritesets.o \
 	compile/audio_audioinstance.o \
 	compile/audio_audiopool.o \
 	compile/audio_audiosample.o \
@@ -152,6 +154,7 @@ sprites_hud:
 	texmaker -f res/cursor/cursor.lst -t res/ui/cursor.tex -w 128 -h 128 -px 0 -py 0 -x tmp/cursor
 
 sprites_ui:
+	texmaker -s res/fonts/scp/ -t res/fonts/scp_24.tex -w 256 -h 256 -pd fixed -px 2 -py 2 -i -x tmp/scp_24
 	texmaker -s lightwave/Render/Tiles/ui/ -t res/ui/tiles.tex -w 512 -h 512 -pd fixed -px 0 -py 0
 
 sprites: sprites_hud sprites_ui
@@ -227,6 +230,14 @@ compile/physic.o: src/game/physic.cpp Makefile include/physic.h
 	- @mkdir -p compile
 	$(CXX) -o compile/physic.o -c src/game/physic.cpp $(CFLAGS)
 
+compile/objectsystem.o: src/game/objectsystem.cpp Makefile include/objectsystem.h
+	- @mkdir -p compile
+	$(CXX) -o compile/objectsystem.o -c src/game/objectsystem.cpp $(CFLAGS)
+
+compile/objectspritesets.o: src/game/objectspritesets.cpp Makefile include/objectsystem.h
+	- @mkdir -p compile
+	$(CXX) -o compile/objectspritesets.o -c src/game/objectspritesets.cpp $(CFLAGS)
+
 compile/particle.o: src/game/particle.cpp Makefile include/particle.h
 	- @mkdir -p compile
 	$(CXX) -o compile/particle.o -c src/game/particle.cpp $(CFLAGS)
@@ -267,7 +278,7 @@ compile/gamecontroller.o: src/game/gamecontroller.cpp Makefile include/game.h in
 	- @mkdir -p compile
 	$(CXX) -o compile/gamecontroller.o -c src/game/gamecontroller.cpp $(CFLAGS)
 
-compile/resources.o: src/game/resources.cpp Makefile include/game.h include/resources.h
+compile/resources.o: src/game/resources.cpp Makefile include/game.h include/resources.h include/objectsystem.h
 	- @mkdir -p compile
 	$(CXX) -o compile/resources.o -c src/game/resources.cpp $(CFLAGS)
 
@@ -395,3 +406,9 @@ compile/widgets/levelselection.o: src/widgets/levelselection.cpp Makefile includ
 compile/widgets/levelselectionitem.o: src/widgets/levelselectionitem.cpp Makefile include/widgets.h
 	- @mkdir -p compile/widgets
 	$(CXX) -o compile/widgets/levelselectionitem.o -c src/widgets/levelselectionitem.cpp $(CFLAGS)
+
+genscpfonts: tools/gentexturefonts.cpp Makefile
+	- @mkdir -p compile
+	$(CXX) -o compile/genscpfonts.o -c tools/gentexturefonts.cpp $(CFLAGS)
+	$(CXX) -o genscpfonts compile/genscpfonts.o $(CFLAGS) $(LIBS)
+	-chmod 755 genscpfonts
