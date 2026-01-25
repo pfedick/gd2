@@ -56,6 +56,8 @@ OBJECTS=compile/main.o \
 	compile/particleupdatethread.o \
 	compile/objectsystem.o \
 	compile/objectspritesets.o \
+	compile/object.o \
+	compile/collision.o \
 	compile/audio_audioinstance.o \
 	compile/audio_audiopool.o \
 	compile/audio_audiosample.o \
@@ -237,6 +239,15 @@ compile/objectsystem.o: src/game/objectsystem.cpp Makefile include/objectsystem.
 compile/objectspritesets.o: src/game/objectspritesets.cpp Makefile include/objectsystem.h
 	- @mkdir -p compile
 	$(CXX) -o compile/objectspritesets.o -c src/game/objectspritesets.cpp $(CFLAGS)
+
+compile/object.o: src/objects/object.cpp Makefile include/objectsystem.h include/objects/*.h
+	- @mkdir -p compile
+	$(CXX) -o compile/object.o -c src/objects/object.cpp $(CFLAGS)
+
+compile/collision.o: src/game/collision.cpp Makefile include/objectsystem.h
+	- @mkdir -p compile
+	$(CXX) -o compile/collision.o -c src/game/collision.cpp $(CFLAGS)
+
 
 compile/particle.o: src/game/particle.cpp Makefile include/particle.h
 	- @mkdir -p compile

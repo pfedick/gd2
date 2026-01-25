@@ -198,7 +198,7 @@ class ParticleSystem
 
 private:
     uint64_t nextid;
-    SpriteTexture* spriteset[ParticleSpriteset::MaxSpritesets];
+    SpriteTexture* spriteset;
     std::map<uint64_t, Particle*> particle_map;
     std::map<uint64_t, Particle*> new_particles;
     std::map<uint32_t, Particle*> visible_particle_map[2];
@@ -212,7 +212,7 @@ public:
     ParticleSystem();
     ~ParticleSystem();
     void clear();
-    void loadSpritesets(GPUContext& gpu);
+    void setParticleSpriteset(SpriteTexture* texture);
     void addParticle(Particle* particle);
     void update(double time,
                 TileTypePlane& ttplane,

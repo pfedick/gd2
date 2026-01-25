@@ -16,9 +16,7 @@ ParticleSystem* GetParticleSystem()
 ParticleSystem::ParticleSystem()
 {
     if (!particle_system) particle_system = this;
-    for (int i = 0; i < ParticleSpriteset::MaxSpritesets; i++) {
-        spriteset[i] = new SpriteTexture();
-    }
+    spriteset = NULL;
     nextid = 1;
     active_map = 0;
 }
@@ -26,11 +24,7 @@ ParticleSystem::ParticleSystem()
 ParticleSystem::~ParticleSystem()
 {
     clear();
-    for (int i = 0; i < ParticleSpriteset::MaxSpritesets; i++) {
-        delete spriteset[i];
-    }
-
-    if (particle_system == this) particle_system = NULL;
+    spriteset = NULL;
 }
 
 void ParticleSystem::clear()
@@ -47,12 +41,9 @@ void ParticleSystem::clear()
     nextid = 1;
 }
 
-void ParticleSystem::loadSpritesets(GPUContext& gpu)
+void ParticleSystem::setParticleSpriteset(SpriteTexture* texture)
 {
-    // SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
-    spriteset[ParticleSpriteset::GenericParticles]->enableOutlines(false);
-    spriteset[ParticleSpriteset::GenericParticles]->enableMemoryBuffer(false);
-    spriteset[ParticleSpriteset::GenericParticles]->load(gpu, "res/particles.tex");
+    spriteset = texture;
 }
 
 void ParticleSystem::addParticle(Particle* particle)
@@ -127,8 +118,8 @@ void ParticleSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewpor
     for (it = visible_particle_map[active_map].begin(); it != visible_particle_map[active_map].end(); ++it) {
         const Particle* particle = it->second;
         if (particle->sprite_set <= 2) {
-            batcher.addSprite(*spriteset[particle->sprite_set], particle->sprite_no, particle->p.x + coords.x, particle->p.y + coords.y,
-                              particle->scale, particle->scale, 0.0f, particle->color_mod);
+            batcher.addSprite(*spriteset, particle->sprite_no, particle->p.x + coords.x, particle->p.y + coords.y, particle->scale,
+                              particle->scale, 0.0f, particle->color_mod);
 
         } else {
             ppl7::PrintDebugTime("[%llu] Found invalid "

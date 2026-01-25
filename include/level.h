@@ -10,6 +10,7 @@
 #include "particle.h"
 #include "tiles.h"
 #include "tiletypes.h"
+#include "objectsystem.h"
 
 class ModifiableParameter
 {
@@ -125,10 +126,12 @@ public:
     };
     SpriteSystem front_sprites;
     SpriteSystem background_sprites;
+    ObjectSystem objects;
+    ParticleSystem particles;
+    TileTypePlane TileTypeMatrix;
     // TODO:
-    // - Lights    (falls das sinn macht)
-    // - Objects   (falls das sinn macht)
-    // - Particle  (falls das sinn macht)
+    // - Lights    (falls das sinn macht) => Ja, macht es!
+
     ParallaxLayer();
     ~ParallaxLayer();
     void init(ParallaxLayerId layerType, float blur, float speed, float size);
@@ -153,7 +156,6 @@ public:
 
 private:
     ParallaxLayer parallax_layers[static_cast<int>(ParallaxLayerId::MaxLayerId)];
-    TileTypePlane TileTypeMatrix;
     RenderState renderstate;
 
     // LightSystem lights;
@@ -259,8 +261,8 @@ public:
     // void getLevelStats(LevelStats& stats) const;
 
     size_t tileCount() const;
-    ppl7::grafix::Rect getOccupiedArea() const;
-    ppl7::grafix::Rect getOccupiedAreaFromTileTypePlane() const;
+    // ppl7::grafix::Rect getOccupiedArea() const;
+    ppl7::grafix::Rect getOccupiedAreaFromTileTypePlane(ParallaxLayerId layer) const;
     // void TakeScreenshot(Screenshot* screenshot);
     void updateObjects(double time);
     void updateParticles(double time); // Wird vom ParticleUpdateThread aufgerufen!

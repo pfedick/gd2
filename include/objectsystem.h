@@ -3,6 +3,7 @@
 
 #include <map>
 #include <list>
+#include <vector>
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include "gpu.h"
@@ -25,6 +26,8 @@ class Widget;
 
 class AudioInstance;
 class Glimmer;
+
+enum class ParallaxLayerId;
 
 namespace Objects
 {
@@ -50,46 +53,42 @@ public:
     static ppl7::String name(Type::ObjectType type);
 };
 
-class Spriteset
+enum class SpritesetId
 {
-public:
-    enum SpritesetIds
-    {
-        GenericObjects = 0,
-        ThreeSpeers,
-        Skeleton,
-        Mummy,
-        Vent,
-        Mushroom,
-        TreasureChest,
-        Doors,
-        Scarabeus,
-        Laser,
-        Wallenstein,
-        Helena,
-        Bat,
-        Scorpion,
-        Bird,
-        LevelEnd,
-        Yeti,
-        George,
-        Ostrich,
-        ScorpionMetalic,
-        Piranha,
-        BreakingWall,
-        Rat,
-        Ghost,
-        Zombie,
-        StamperV2,
-        Skull,
-        SkullMaster,
-        Switches,
-        Crates,
-        Spider,
-        MagicGround,
-        GreatElevator,
-        MaxSpritesets
-    };
+    GenericObjects = 0,
+    ThreeSpeers,
+    Skeleton,
+    Mummy,
+    Vent,
+    Mushroom,
+    TreasureChest,
+    Doors,
+    Scarabeus,
+    Laser,
+    Wallenstein,
+    Helena,
+    Bat,
+    Scorpion,
+    Bird,
+    LevelEnd,
+    Yeti,
+    George,
+    Ostrich,
+    ScorpionMetalic,
+    Piranha,
+    BreakingWall,
+    Rat,
+    Ghost,
+    Zombie,
+    StamperV2,
+    Skull,
+    SkullMaster,
+    Switches,
+    Crates,
+    Spider,
+    MagicGround,
+    GreatElevator,
+    MaxSpritesets
 };
 
 class Representation
@@ -157,8 +156,6 @@ public:
     bool objectRight(int tolerance = 1) const;
 };
 
-enum class ParallaxLayerId;
-
 class Object
 {
     friend class ObjectSystem;
@@ -185,7 +182,7 @@ public:
     ppl7::grafix::Rect boundary, initial_boundary;
     uint32_t id;
     ppl7::grafix::Color color_mod;
-    int sprite_set;
+    SpritesetId sprite_set;
     int sprite_no;
     int sprite_no_representation;
     uint8_t difficulty_matrix;
@@ -205,14 +202,14 @@ public:
     Type::ObjectType type() const;
     ppl7::String typeName() const;
     void updateBoundary();
-    void updateSpriteset(int spriteset);
+    void updateSpriteset(SpritesetId spriteset);
     virtual void update(double time, TileTypePlane& ttplane, Player& player, float frame_rate_compensation);
     virtual size_t save(unsigned char* buffer, size_t size) const;
     virtual size_t load(const unsigned char* buffer, size_t size);
     virtual size_t saveSize() const;
     virtual void handleCollision(Player* player, const Collision& collision);
-    // virtual void draw(SDL_Renderer* renderer, const ppl7::grafix::Point& coords) const;
-    // virtual void drawEditMode(SDL_Renderer* renderer, const ppl7::grafix::Point& coords) const;
+    virtual void draw(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const;
+    virtual void drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const;
     virtual void openUi();
     virtual void reset();
     virtual void toggle(bool enable, Object* source = NULL);
@@ -221,17 +218,46 @@ public:
     static Representation representation();
 };
 
+} // namespace Objects
+
+class ObjectSpritesets
+{
+    friend class ObjectSystem;
+
+private:
+    GPUContext* gpu;
+    std::vector<SpriteTexture*> spriteset_vector;
+
+    SpriteTexture* fonts;
+
+    void addSpriteset(Objects::SpritesetId id, SpriteTexture* spriteset);
+
+public:
+    ObjectSpritesets();
+    ~ObjectSpritesets();
+    void loadAll(GPUContext& gpu);
+    void setFontTexture(SpriteTexture* font_texture);
+    SpriteTexture* getSpriteset(int id) const;
+    SpriteTexture* getSpriteset(Objects::SpritesetId id) const;
+    bool exists(int id) const;
+    bool exists(Objects::SpritesetId id) const;
+    SpriteTexture* operator[](int id) const;
+};
+
+ObjectSpritesets& GetObjectSpritesets();
+
 class ObjectSystem
 {
 private:
     uint32_t nextid;
     uint32_t next_spawn_id;
     int player_start;
-    std::map<uint32_t, Object*> object_list;
-    std::map<uint64_t, Object*> visible_object_map;
-    SpriteTexture* spriteset[Spriteset::MaxSpritesets];
-    SpriteTexture* light_objects;
-    Waynet* waynet;
+    std::map<uint32_t, Objects::Object*> object_list;
+    std::map<uint64_t, Objects::Object*> visible_object_map;
+    ObjectSpritesets* spritesets;
+    // SpriteTexture* spriteset[Spriteset::MaxSpritesets];
+    // SpriteTexture* light_objects;
+    // Waynet* waynet;
 
     // void updateVisibleObjectsForPlane(PlaneId plane, const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
     // Object* findMatchingObjectOnPlane(PlaneId plane, const ppl7::grafix::Point& p) const;
@@ -239,44 +265,43 @@ private:
 public:
     ObjectSystem();
     ~ObjectSystem();
+    void setSpritesetResources(ObjectSpritesets& spritesets);
     void clear();
-    void setWaynet(Waynet* waynet);
-    void setSpritesetResources(); // TODO
+    // void setWaynet(Waynet* waynet);
     // void loadSpritesets(SDL& sdl);   // TODO: Wir brauchen globale Spritesets, die jedem ObjectSystem zur Verfügung stehen
-    void addObject(Object* object);
-    Object* getInstance(int object_type) const;
+    void addObject(Objects::Object* object);
+    Objects::Object* getInstance(int object_type) const;
     void update(double time, TileTypePlane& ttplane, Player& player, float frame_rate_compensation);
     void updateVisibleObjectList(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
-    void draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords, Object::Layer layer) const;
+    void draw(GPUBatcher& batcher,
+              const ppl7::grafix::Rect& viewport,
+              const ppl7::grafix::Point& worldcoords,
+              Objects::Object::Layer layer) const;
     void drawEditMode(GPUBatcher& batcher,
                       const ppl7::grafix::Rect& viewport,
                       const ppl7::grafix::Point& worldcoords,
-                      Object::Layer layer) const;
+                      Objects::Object::Layer layer) const;
     void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const;
     void load(const ppl7::ByteArrayPtr& ba);
-    Object* getObject(uint32_t object_id);
-    Object* findMatchingObject(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Point& p) const;
-    void detectCollision(const std::list<ppl7::grafix::Point>& checkpoints, std::list<Object*>& object_list);
-    static bool checkCollisionWithObject(const std::list<ppl7::grafix::Point>& checkpoints, const Object* object);
-    void detectObjectCollision(const Object* object, std::list<Object*>& collision_object_list);
-    void detectObjectCollision(const ppl7::grafix::Rect& boundary, std::list<Object*>& collision_object_list);
+    Objects::Object* getObject(uint32_t object_id);
+    Objects::Object* findMatchingObject(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Point& p) const;
+    void detectCollision(const std::list<ppl7::grafix::Point>& checkpoints, std::list<Objects::Object*>& object_list);
+    static bool checkCollisionWithObject(const std::list<ppl7::grafix::Point>& checkpoints, const Objects::Object* object);
+    void detectObjectCollision(const Objects::Object* object, std::list<Objects::Object*>& collision_object_list);
+    void detectObjectCollision(const ppl7::grafix::Rect& boundary, std::list<Objects::Object*>& collision_object_list);
 
     void drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords, int id);
     void drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::Point& p, int object_type);
     void deleteObject(int id);
-    bool findObjectsInRange(const ppl7::grafix::PointF& p, double range, std::list<Object*>& objects);
+    bool findObjectsInRange(const ppl7::grafix::PointF& p, double range, std::list<Objects::Object*>& objects);
     ppl7::grafix::Point findPlayerStart() const;
     ppl7::grafix::Point nextPlayerStart();
     SpriteTexture* getTexture(int sprite_set) const;
     void resetPlayerStart();
     size_t count() const;
     size_t countVisible() const;
-    Waynet& getWaynet();
+    // Waynet& getWaynet();
     void getObjectCounter(std::map<int, size_t>& object_counter) const;
 };
-
-ObjectSystem* GetObjectSystem();
-
-} // namespace Objects
 
 #endif // INCLUDE_OBJECTS_H_

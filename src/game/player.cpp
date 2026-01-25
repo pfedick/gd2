@@ -796,7 +796,7 @@ void Player::addAir(float seconds)
     if (air > maxair) air = maxair;
 }
 
-void Player::handleDiving(double time, const TileTypePlane& world, Objects::ObjectSystem* objects, float frame_rate_compensation)
+void Player::handleDiving(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation)
 {
     AudioPool& ap = getAudioPool();
     if (isDiving()) {
@@ -899,7 +899,7 @@ void Player::playSoundOnAnimationSprite()
     if (movement == ClimbDown && (sprite == 101 || sprite == 96)) play_ladder(ap);
 }
 
-void Player::update(double time, const TileTypePlane& world, Objects::ObjectSystem* objects, float frame_rate_compensation)
+void Player::update(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation)
 {
     if (particle_reason != ParticleReason::None && particle_end_time > time) emmitParticles(time);
     this->time = time;
@@ -1199,10 +1199,7 @@ void Player::update(double time, const TileTypePlane& world, Objects::ObjectSyst
     //}
 }
 
-void Player::handleKeyboardWhileJumpOrFalling(double time,
-                                              const TileTypePlane& world,
-                                              Objects::ObjectSystem* objects,
-                                              float frame_rate_compensation)
+void Player::handleKeyboardWhileJumpOrFalling(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation)
 {
     // const Uint8* state = SDL_GetKeyboardState(NULL);
     // Player::Keys keys=getKeyboardMatrix(state);
@@ -1246,10 +1243,7 @@ void Player::handleKeyboardWhileJumpOrFalling(double time,
     // ppl7::PrintDebugTime("acceleration_jump_sideways=%0.3f\n", acceleration_jump_sideways);
 }
 
-void Player::handleKeyboardWhileSwimming(double time,
-                                         const TileTypePlane& world,
-                                         Objects::ObjectSystem* objects,
-                                         float frame_rate_compensation)
+void Player::handleKeyboardWhileSwimming(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation)
 {
     // ppl7::PrintDebugTime("Player::handleKeyboardWhileSwimming: old movement: %s, ", (const char*)getState());
     // const Uint8* state = SDL_GetKeyboardState(NULL);
@@ -1403,10 +1397,7 @@ void Player::handleKeyboardWhileSwimming(double time,
     // fflush(stdout);
 }
 
-void Player::handleKeyboardWhileCrawling(double time,
-                                         const TileTypePlane& world,
-                                         Objects::ObjectSystem* objects,
-                                         float frame_rate_compensation)
+void Player::handleKeyboardWhileCrawling(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation)
 {
     if (movement == CrawlTurn) return;
 
@@ -1460,7 +1451,7 @@ void Player::checkCollisionWithWorld(const TileTypePlane& world)
     }
 }
 
-void Player::checkCollisionWithObjects(Objects::ObjectSystem* objects, float frame_rate_compensation)
+void Player::checkCollisionWithObjects(ObjectSystem* objects, float frame_rate_compensation)
 {
     // we try to find existing pixels inside the player boundary
     // to build a list with points we want to check against the
@@ -1700,7 +1691,7 @@ bool Player::hackingInProgress()
     return false;
 }
 
-void Player::checkActivationOfObjectsInRange(Objects::ObjectSystem* objectsystem)
+void Player::checkActivationOfObjectsInRange(ObjectSystem* objectsystem)
 {
     std::list<Objects::Object*> object_list;
 
@@ -1916,9 +1907,9 @@ return false;
 }
 */
 
-/*
 void Player::idleJokes(double time)
 {
+    /*
     // AudioPool& ap=getAudioPool();
     if (time > startIdle + 3600.0f) {
         if (animation.getFrame() != 304) animation.setStaticFrame(304);
@@ -1960,8 +1951,9 @@ void Player::idleJokes(double time)
         nextIdleSpeech = 0.0f;
         ;
     }
+        */
+    nextIdleSpeech = 0.0f;
 }
-    */
 
 void Player::playPhonetics()
 {

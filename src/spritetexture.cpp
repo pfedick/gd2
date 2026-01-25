@@ -21,6 +21,12 @@ SpriteTexture::SpriteTexture()
     gpu = NULL;
 }
 
+SpriteTexture::SpriteTexture(GPUContext& gpu, const ppl7::String& filename, SpriteBuffer buffer)
+    : SpriteTexture()
+{
+    load(gpu, filename, buffer);
+}
+
 SpriteTexture::~SpriteTexture()
 {
     clear();
@@ -182,6 +188,16 @@ void SpriteTexture::load(GPUContext& gpu, const String& filename)
     load(gpu, ff);
 }
 
+void SpriteTexture::load(GPUContext& gpu, const String& filename, SpriteBuffer buffer)
+{
+    bMemoryBufferd = (static_cast<int>(buffer) & static_cast<int>(SpriteBuffer::Memory)) != 0;
+    bGPUBufferd = (static_cast<int>(buffer) & static_cast<int>(SpriteBuffer::GPU)) != 0;
+    File ff;
+    ff.open(filename);
+    load(gpu, ff);
+}
+
+/*
 void SpriteTexture::load(GPUContext& gpu, const String& filename, bool memory_buffered, bool gpu_buffered)
 {
     bMemoryBufferd = memory_buffered;
@@ -190,6 +206,7 @@ void SpriteTexture::load(GPUContext& gpu, const String& filename, bool memory_bu
     ff.open(filename);
     load(gpu, ff);
 }
+*/
 
 void SpriteTexture::load(GPUContext& gpu, FileObject& ff)
 {

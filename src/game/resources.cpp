@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL3/SDL.h>
-#include "game.h"
+#include "resources.h"
+#include "objectsystem.h"
 
 static Resources* resources = NULL;
 
@@ -20,16 +20,26 @@ Resources::Resources()
     background_images.push_back(ppl7::String("res/backgrounds/IMG_20220726_125250.jpg"));
     background_images.push_back(ppl7::String("res/backgrounds/IMG_20220726_125308.jpg"));
     background_images.push_back(ppl7::String("res/backgrounds/night1.jpg"));
+    object_spritesets = new ObjectSpritesets();
+}
+
+Resources::~Resources()
+{
+    delete object_spritesets;
 }
 
 void Resources::load(GPUContext& gpu)
 {
     try {
-        Cursor.load(gpu, "res/ui/cursor.tex", true, false);
-        Hud.load(gpu, "res/ui/hud.tex", true, false);
-        Tiles.load(gpu, "res/tiles.tex", true, true);
-        TilesUi.load(gpu, "res/ui/tiles.tex", true, false);
-        Player.load(gpu, "res/player.tex", true, true);
+        Cursor.load(gpu, "res/ui/cursor.tex", SpriteBuffer::Memory);
+        Hud.load(gpu, "res/ui/hud.tex", SpriteBuffer::Memory);
+        Tiles.load(gpu, "res/tiles.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
+        TilesUi.load(gpu, "res/ui/tiles.tex", SpriteBuffer::Memory);
+        Player.load(gpu, "res/player.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
+        Particles.load(gpu, "res/particles.tex", SpriteBuffer::GPU);
+        Font24.load(gpu, "res/fonts/scp_24.tex", SpriteBuffer::GPU);
+        object_spritesets->setFontTexture(&Font24);
+        object_spritesets->loadAll(gpu);
     }
     catch (const ppl7::Exception& exp) {
         exp.print();

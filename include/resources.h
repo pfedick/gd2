@@ -23,6 +23,8 @@ public:
     }
 };
 
+class ObjectSpritesets;
+
 class Resources
 {
 private:
@@ -33,10 +35,16 @@ public:
     SpriteTexture Tiles;
     SpriteTexture TilesUi;
     SpriteTexture Trees;
+    SpriteTexture Font24;
+
+    SpriteTexture Particles;
+
+    ObjectSpritesets* object_spritesets;
 
     std::list<ppl7::String> background_images;
 
     Resources();
+    ~Resources();
     void load(GPUContext& gpu);
 };
 

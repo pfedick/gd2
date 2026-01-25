@@ -1,6 +1,5 @@
-#ifndef DECKER_SPRITE_H
-#define DECKER_SPRITE_H
-#include <SDL3/SDL.h>
+#ifndef INCLUDE_SPRITE_H
+#define INCLUDE_SPRITE_H
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include <map>
@@ -120,6 +119,31 @@ die Specular-Werte für jedes Pixel. Diese werden benötigt, wenn
 Licht- und Schatteneffekte auf die Sprites angewendet werden sollen.
  */
 
+enum class SpriteBuffer
+{
+    Memory = 1,        //!< Sprite wird im RAM gehalten
+    GPU = 2,           //!< Sprite wird in die GPU geladen
+    ALL = Memory | GPU //!< Sprite wird im RAM und in der GPU gehalten
+};
+
+// Bitweise OR Operator
+inline SpriteBuffer operator|(SpriteBuffer a, SpriteBuffer b)
+{
+    return static_cast<SpriteBuffer>(static_cast<int>(a) | static_cast<int>(b));
+}
+
+// Bitweise AND Operator (hilfreich für Abfragen)
+inline SpriteBuffer operator&(SpriteBuffer a, SpriteBuffer b)
+{
+    return static_cast<SpriteBuffer>(static_cast<int>(a) & static_cast<int>(b));
+}
+
+inline SpriteBuffer& operator|=(SpriteBuffer& a, SpriteBuffer b)
+{
+    a = a | b;
+    return a;
+}
+
 class SpriteTexture
 {
 public:
@@ -186,9 +210,10 @@ private:
 
 public:
     SpriteTexture();
+    SpriteTexture(GPUContext& gpu, const ppl7::String& filename, SpriteBuffer buffer);
     ~SpriteTexture();
     void load(GPUContext& gpu, const ppl7::String& filename);
-    void load(GPUContext& gpu, const ppl7::String& filename, bool memory_buffered, bool gpu_buffered);
+    void load(GPUContext& gpu, const ppl7::String& filename, SpriteBuffer buffer);
     void load(GPUContext& gpu, ppl7::FileObject& ff);
     void clear();
     void draw(ppl7::grafix::Drawable& target, int x, int y, int id) const;
@@ -232,4 +257,4 @@ public:
     ppl7::grafix::Point getPivot(int id) const;
 };
 
-#endif // DECKER_SPRITE_H
+#endif // INCLUDE_SPRITE_H

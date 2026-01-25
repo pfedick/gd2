@@ -63,10 +63,6 @@ void Level::clear()
     for (auto& layer : parallax_layers) {
         layer.clear();
     }
-    TileTypeMatrix.clear();
-    // TODO: objects->clear();
-    // TODO: particles->clear();
-    // lights.clear();
     // waynet.clear();
     params.clear();
     runtimeParams.clear();
@@ -142,12 +138,12 @@ void Level::setSpriteset(int no, SpriteTexture* spriteset)
 void Level::create(int width, int height)
 {
     clear();
-    TileTypeMatrix.create(width, height);
     palette.setDefaults();
     for (auto& layer : parallax_layers) {
         int layer_width = static_cast<int>(width * layer.size_factor);
         int layer_height = static_cast<int>(height * layer.size_factor);
         layer.tiles.create(layer_width, layer_height);
+        layer.TileTypeMatrix.create(layer_width, layer_height);
     }
 }
 
@@ -238,7 +234,8 @@ void Level::load(const ppl7::String& Filename)
                     }
                 }
             } else if (id == ChunkId::TileTypes) {
-                TileTypeMatrix.load(ba);
+                int layer = ppl7::Peek8(ba.adr());
+                if (layer < static_cast<int>(ParallaxLayerId::MaxLayerId)) parallax_layers[layer].TileTypeMatrix.load(ba);
             } else if (id == ChunkId::Objects) {
                 // objects->load(ba);
             } else if (id == ChunkId::WayNet) {
@@ -263,8 +260,8 @@ void Level::save(const ppl7::String& Filename)
     ff.write(buffer, 7);
     params.save(ff, static_cast<int>(ChunkId::LevelParameter));
     palette.save(ff, static_cast<int>(ChunkId::ColorPalette));
-    TileTypeMatrix.save(ff, static_cast<int>(ChunkId::ColorPalette));
     for (unsigned char layer = 0; layer < static_cast<unsigned char>(ParallaxLayerId::MaxLayerId); layer++) {
+        parallax_layers[layer].TileTypeMatrix.save(ff, static_cast<int>(ChunkId::TileTypes), layer);
         parallax_layers[layer].tiles.save(ff, static_cast<int>(ChunkId::Tiles), layer);
         parallax_layers[layer].front_sprites.save(ff, static_cast<int>(ChunkId::Sprites), layer, 0);
         parallax_layers[layer].background_sprites.save(ff, static_cast<int>(ChunkId::Sprites), layer, 1);
@@ -299,6 +296,20 @@ void Level::backup(const ppl7::String& Filename)
     catch (const ppl7::Exception& exp) {
         ppl7::PrintDebugTime("could not make backup of level file: %s => %s [%s]\n", (const char*)Filename, (const char*)path,
                              (const char*)exp.toString());
+    }
+}
+
+void Level::updateObjects(double time)
+{
+    for (auto& layer : parallax_layers) {
+        // layer.objects.update(time);
+    }
+}
+
+void Level::updateParticles(double time)
+{
+    for (auto& layer : parallax_layers) {
+        // layer.particles.update(time);
     }
 }
 
@@ -817,16 +828,18 @@ size_t Level::tileCount() const
     return count;
 }
 
+/*
 ppl7::grafix::Rect Level::getOccupiedArea() const
 {
     ppl7::grafix::Rect r;
 
     return r;
 }
+*/
 
-ppl7::grafix::Rect Level::getOccupiedAreaFromTileTypePlane() const
+ppl7::grafix::Rect Level::getOccupiedAreaFromTileTypePlane(ParallaxLayerId layer) const
 {
-    return TileTypeMatrix.getOccupiedArea();
+    return parallax_layers[static_cast<int>(layer)].TileTypeMatrix.getOccupiedArea();
 }
 
 #ifdef TODO

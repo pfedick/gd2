@@ -333,7 +333,7 @@ void Game::updateUi(const ppltk::MouseState& mouse)
     moveWorldOnMouseClick(mouse);
     editor.statusbar->setWorldCoords(WorldCoords);
     ParallaxLayerId current_layer = editor.mainmenue->currentLayer();
-    ppl7::PrintDebug("Current Layer: %d\n", static_cast<int>(current_layer));
+    // ppl7::PrintDebug("Current Layer: %d\n", static_cast<int>(current_layer));
     level.setEditLayer(current_layer);
 
     //}

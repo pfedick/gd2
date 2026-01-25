@@ -17,9 +17,9 @@ class Game;
 namespace Objects
 {
 class Object;
-class ObjectSystem;
 class Representation;
 } // namespace Objects
+class ObjectSystem;
 
 class Player : public Physic
 {
@@ -124,27 +124,18 @@ private:
     void emmitParticles(double time);
 
     void moveOutOfWater(float angel, float speed);
-    void checkCollisionWithObjects(Objects::ObjectSystem* objects, float frame_rate_compensation);
+    void checkCollisionWithObjects(ObjectSystem* objects, float frame_rate_compensation);
     void checkCollisionWithWorld(const TileTypePlane& world);
 
-    void handleDiving(double time, const TileTypePlane& world, Objects::ObjectSystem* objects, float frame_rate_compensation);
+    void handleDiving(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation);
     bool hackingInProgress();
 
-    void handleKeyboardWhileJumpOrFalling(double time,
-                                          const TileTypePlane& world,
-                                          Objects::ObjectSystem* objects,
-                                          float frame_rate_compensation);
-    void handleKeyboardWhileSwimming(double time,
-                                     const TileTypePlane& world,
-                                     Objects::ObjectSystem* objects,
-                                     float frame_rate_compensation);
-    void handleKeyboardWhileCrawling(double time,
-                                     const TileTypePlane& world,
-                                     Objects::ObjectSystem* objects,
-                                     float frame_rate_compensation);
+    void handleKeyboardWhileJumpOrFalling(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation);
+    void handleKeyboardWhileSwimming(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation);
+    void handleKeyboardWhileCrawling(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation);
 
     void playSoundOnAnimationSprite();
-    void checkActivationOfObjectsInRange(Objects::ObjectSystem* objectsystem);
+    void checkActivationOfObjectsInRange(ObjectSystem* objectsystem);
     void toggleFlashlight();
     void idleJokes(double time);
     void playPhonetics();
@@ -206,7 +197,7 @@ public:
     bool isAutoWalk() const;
     void startEmittingParticles(double endtime, ParticleReason reason);
     void startHacking(Objects::Object* object);
-    void update(double time, const TileTypePlane& world, Objects::ObjectSystem* objects, float frame_rate_compensation);
+    void update(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation);
 
     /*
     void speak(VoiceGeorge::Id id,

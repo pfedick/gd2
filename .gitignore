@@ -8,3 +8,4 @@ config.status
 .vscode/
 tmp/
 configure.ac~
+genscpfonts

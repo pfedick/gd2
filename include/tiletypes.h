@@ -52,7 +52,7 @@ public:
     int getPlayerGround(const ppl7::grafix::Point& player) const;
     void setTileTypesSprites(SpriteTexture* sprites);
     void draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const;
-    void save(ppl7::FileObject& file, unsigned char id) const;
+    void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const;
     void load(const ppl7::ByteArrayPtr& ba);
     ppl7::grafix::Rect getOccupiedArea() const;
     ppl7::grafix::Size size() const;
