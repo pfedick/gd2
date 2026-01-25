@@ -28,10 +28,12 @@ Game::Game(GPUContext& gpu)
     wm->setWidgetStyle(Style);
     quitGame = false;
     worldIsMoving = false;
+    /*
     render_target_layer = NULL;
     render_target_tmp1 = NULL;
     render_target_tmp2 = NULL;
     depthTexture = NULL;
+    */
     player = new Player(this);
 }
 
@@ -41,6 +43,7 @@ Game::~Game()
         delete player;
         player = NULL;
     }
+    /*
     if (render_target_layer) {
         gpu.destroyGPUTexture(render_target_layer);
         render_target_layer = NULL;
@@ -57,6 +60,7 @@ Game::~Game()
         gpu.destroyGPUTexture(depthTexture);
         depthTexture = NULL;
     }
+    */
     deleteUi();
 }
 
@@ -118,7 +122,11 @@ void Game::init_grafix()
 {
     resources.load(gpu);
 
-    ppl7::PrintDebug("Grafix initialized\n");
+    player->setSpriteResource(resources.Player);
+    player->setTileTypeResource(resources.TileTypes);
+
+    // ppl7::PrintDebug("Grafix initialized\n");
+    level.setTileset(1, &resources.Tiles);
 }
 
 void Game::initUi()
@@ -211,6 +219,7 @@ void Game::updateGameControllerMapping()
     controller.mapping.updateMapping();
 }
 
+/*
 void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
 {
     if (size == render_target_size) return;
@@ -236,6 +245,7 @@ void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
     }
     depthTexture = gpu.createDepthBuffer(size.width, size.height);
 }
+    */
 
 void Game::loadLevel(const ppl7::String& filename)
 {
@@ -245,6 +255,17 @@ void Game::loadLevel(const ppl7::String& filename)
 void Game::startNewLevel(int width, int height)
 {
     level.create(width, height);
+}
+
+void Game::updateWorldCoords()
+{
+    if (!player) return;
+    int mx = game_viewport.width() / 2;
+    int my = game_viewport.height() / 2 + 100; // 192
+    WorldCoords.x = player->x - mx;
+    WorldCoords.y = player->y - my;
+    if (WorldCoords.x < 0) WorldCoords.x = 0;
+    if (WorldCoords.y < 0) WorldCoords.y = 0;
 }
 
 void Game::run()
@@ -289,7 +310,7 @@ void Game::run()
         SDL_GetWindowSizeInPixels(sdl_window, &w, &h);
         level.resizeRenderBuffer(ppl7::grafix::Size(w, h));
         gpu_batcher.updateMatrices(w, h);
-        createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
+        // createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
 
         fps.update();
 

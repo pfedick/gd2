@@ -32,6 +32,7 @@ public:
     SpriteTexture Cursor;
     SpriteTexture Hud;
     SpriteTexture Player;
+    SpriteTexture TileTypes;
     SpriteTexture Tiles;
     SpriteTexture TilesUi;
     SpriteTexture Trees;

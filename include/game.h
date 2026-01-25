@@ -98,6 +98,31 @@ class Game;
 class Player;
 class WorldWidget;
 
+class GameViewport : public ppl7::grafix::Rect
+{
+private:
+    int menu_offset_x;
+    ppl7::grafix::Size real_viewport;
+    ppl7::grafix::Size render_size;
+    bool scaling_enabled;
+    bool allow_upscale;
+    SDL_FRect render_rect;
+    void update();
+
+public:
+    GameViewport();
+    void setRealViewport(const ppl7::grafix::Size& size);
+    void setRenderSize(const ppl7::grafix::Size& size);
+    void setMenuOffset(int x);
+    void setScalingEnabled(bool enable);
+    void setAllowUpscale(bool allow);
+    ppl7::grafix::Point translate(const ppl7::grafix::Point& coords) const;
+
+    void translateMouseEvent(ppltk::MouseEvent* event);
+    void getRenderRect(SDL_FRect& rect) const;
+    const SDL_FRect& getRenderRect() const;
+};
+
 class GameEditor
 {
     friend class Game;
@@ -147,17 +172,20 @@ private:
 
     ppl7::grafix::Image WidgetDrawbuffer;
 
+    /*
     SDL_GPUTexture* render_target_layer;
     SDL_GPUTexture* render_target_tmp1;
     SDL_GPUTexture* render_target_tmp2;
     SDL_GPUTexture* depthTexture;
+    */
 
     ppl7::grafix::Size render_target_size;
     ppl7::grafix::Rect viewport;
+    GameViewport game_viewport;
     ppl7::grafix::PointF WorldCoords;
 
     void createWindow();
-    void createRenderTargetsIfRequired(const ppl7::grafix::Size& size);
+    // void createRenderTargetsIfRequired(const ppl7::grafix::Size& size);
 
     bool quitGame = false;
     bool showui = true;
@@ -167,6 +195,7 @@ private:
     void updateGameControllerMapping();
     void deleteUi();
     void resizeMenueAndStatusbar();
+    void updateWorldCoords();
 
     void clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
     void drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse);

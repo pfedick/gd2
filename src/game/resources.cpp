@@ -33,6 +33,8 @@ void Resources::load(GPUContext& gpu)
     try {
         Cursor.load(gpu, "res/ui/cursor.tex", SpriteBuffer::Memory);
         Hud.load(gpu, "res/ui/hud.tex", SpriteBuffer::Memory);
+
+        // TODO TileTypes resource hinzufügen
         Tiles.load(gpu, "res/tiles.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
         TilesUi.load(gpu, "res/ui/tiles.tex", SpriteBuffer::Memory);
         Player.load(gpu, "res/player.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);

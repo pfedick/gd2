@@ -2,6 +2,7 @@
 #include "ui/tileselection.h"
 #include "ui/statusbar.h"
 #include "ui/menue.h"
+#include "ui/worldwidget.h"
 
 GameEditor::History::History()
 {
@@ -45,6 +46,8 @@ void GameEditor::closeAll()
         delete tiles_selection;
         tiles_selection = NULL;
     }
+    game->viewport.x1 = 0;
+    game->world_widget->setViewport(game->viewport);
 }
 
 void GameEditor::showTilesSelection()
@@ -61,12 +64,11 @@ void GameEditor::showTilesSelection()
     tiles_selection->setColorIndex(history.lastTileColor);
     tiles_selection->setLayer(history.lastTileLayer);
     game->addChild(tiles_selection);
-    /*
-    viewport.x1 = 300;
-    game_viewport.setMenuOffset(300);
-    world_widget->setViewport(viewport);
-    hud->setViewport(viewport);
-    */
+
+    game->viewport.x1 = 300;
+    // game_viewport.setMenuOffset(300);
+    game->world_widget->setViewport(game->viewport);
+    // hud->setViewport(viewport);
 }
 
 void GameEditor::showTileTypeSelection()
