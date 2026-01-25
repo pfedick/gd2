@@ -147,13 +147,17 @@ cleanall:
 	cd pplib && $(MAKE) clean
 	cd ppltk && $(MAKE) clean
 
-hud:
+sprites_hud:
 	texmaker -s lightwave/Render/Hud/ -t res/ui/hud.tex -w 512 -h 256 -px 150 -py 196 -x tmp/hud
 	texmaker -f res/cursor/cursor.lst -t res/ui/cursor.tex -w 128 -h 128 -px 0 -py 0 -x tmp/cursor
-	texmaker -s lightwave/Render/Tiles/ -t res/tiles.tex -w 1024 -h 1024 -pd lower_left -x tmp/tiles
+
+sprites_ui:
 	texmaker -s lightwave/Render/Tiles/ui/ -t res/ui/tiles.tex -w 512 -h 512 -pd fixed -px 0 -py 0
 
-sprites: hud
+sprites: sprites_hud sprites_ui
+	texmaker -s lightwave/Render/particles/ -t res/particles.tex -w 1024 -h 1024 -px 128 -py 128 -x tmp/particles
+	texmaker -s lightwave/Render/Tiles/ -t res/tiles.tex -w 1024 -h 1024 -pd lower_left -x tmp/tiles
+
 
 fonts:
 	- rm -rf res/*.fnt6
