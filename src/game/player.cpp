@@ -1164,7 +1164,7 @@ void Player::update(double time, const TileTypePlane& world, ObjectSystem* objec
         }
     } else if ((keys.matrix & KeyboardKeys::Crouch) && (movement != Crouch && movement != Crawling && movement != CrawlTurn)) {
         if (collision_matrix[2][5] == TileType::Blocking || collision_matrix[3][5] == TileType::Blocking ||
-            collision_matrix[2][5] == TileType::BlockFromTop || collision_matrix[3][5] == TileType::BlockFromTop) {
+            collision_matrix[2][5] == TileType::Platform || collision_matrix[3][5] == TileType::Platform) {
             movement = Crouch;
             if (orientation == Left)
                 animation.setStaticFrame(43);

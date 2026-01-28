@@ -70,21 +70,25 @@ TileType::Type TileTypePlane::getType(const ppl7::grafix::Point& player) const
     return getType(tx, ty);
 }
 
+/*
 int TileTypePlane::getPlayerGround(const ppl7::grafix::Point& player) const
 {
     int tx = player.x / tile_width;
     int ty = player.y / tile_height;
     TileType::Type type = getType(tx, ty);
     if (type != TileType::Type::NonBlocking) {
+
         if (type == TileType::Type::SteepRampLeft) {
             // int x=player.x%TILE_WIDTH;
         }
+
     }
     type = getType(tx, ty + 1);
     if (type != TileType::Type::NonBlocking) {
     }
     return 0;
 }
+*/
 
 void TileTypePlane::setTileTypesSprites(SpriteTexture* sprites)
 {

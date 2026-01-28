@@ -625,11 +625,9 @@ void Game::moveWorldOnMouseClick(const ppltk::MouseState& mouse)
 
 void Game::mouseDownEvent(ppltk::MouseEvent* event)
 {
-#ifdef EVENTTRACKING
-    ppl7::PrintDebugTime("Game::mouseDownEvent\n");
-#endif
-
+    // ppl7::PrintDebugTime("Game::mouseDownEvent\n");
     if (event->widget() == world_widget) {
+        ppl7::PrintDebugTime("Game::mouseDownEvent\n");
         wm->setKeyboardFocus(world_widget);
         game_viewport.translateMouseEvent(event);
         if (editor.sprite_selection != NULL) {
@@ -656,4 +654,8 @@ void Game::keyDownEvent(ppltk::KeyEvent* event)
 
 void Game::mouseMoveEvent(ppltk::MouseEvent* event)
 {
+    if ((editor.tiles_selection != NULL || editor.tiletype_selection != NULL) && event->widget() == world_widget) {
+        game_viewport.translateMouseEvent(event);
+        editor.handleMouseDrawInWorld(*event);
+    }
 }

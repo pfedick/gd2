@@ -131,7 +131,7 @@ bool Physic::updatePhysics(const TileTypePlane& world, float frame_rate_compensa
         if (gravity < -8.0f) gravity = -(8.0f * frame_rate_compensation);
         // ppl7::PrintDebugTime("out of air, acc=%0.3f, gravity=%0.3f\n", acceleration_airstream, gravity);
     }
-    if (collision_at_pivoty[1] == TileType::SteepRampLeft && movement != Slide) {
+    if (collision_at_pivoty[1] == TileType::RampLeft && movement != Slide) {
         // Start Slide
         acceleration_slide = 1.0f;
         velocity_move.x = -((float)TILE_WIDTH / 8.0f) * acceleration_slide * frame_rate_compensation;
@@ -141,7 +141,7 @@ bool Physic::updatePhysics(const TileTypePlane& world, float frame_rate_compensa
         movement = Slide;
         orientation = Left;
         return true;
-    } else if (collision_at_pivoty[1] == TileType::SteepRampRight && movement != Slide) {
+    } else if (collision_at_pivoty[1] == TileType::RampRight && movement != Slide) {
         // Start Slide
         acceleration_slide = 1.0f;
         velocity_move.x = ((float)TILE_WIDTH / 8.0f) * acceleration_slide * frame_rate_compensation;
@@ -274,12 +274,12 @@ Physic::PlayerMovement Physic::checkCollisionWithWorld(const TileTypePlane& worl
     if (movement == Dead) return new_movement;
     if (movement == Slide) {
         if (orientation == Left) {
-            if (collision_matrix[2][4] == TileType::Blocking || collision_matrix[2][4] == TileType::BlockFromTop) {
+            if (collision_matrix[2][4] == TileType::Blocking || collision_matrix[2][4] == TileType::Platform) {
                 new_movement = Stand;
                 // ppl7::PrintDebug("block left\n");
             }
         } else {
-            if (collision_matrix[3][4] == TileType::Blocking || collision_matrix[3][4] == TileType::BlockFromTop) {
+            if (collision_matrix[3][4] == TileType::Blocking || collision_matrix[3][4] == TileType::Platform) {
                 new_movement = Stand;
                 // ppl7::PrintDebug("block right\n");
             }
@@ -290,7 +290,7 @@ Physic::PlayerMovement Physic::checkCollisionWithWorld(const TileTypePlane& worl
         return new_movement;
     }
 
-    if (collision_at_pivoty[1] == TileType::Plate2h) {
+    if (collision_at_pivoty[1] == TileType::TwoThirdBlockLower) {
         int th = TILE_HEIGHT / 3;
         int ty = (((int)((y) / TILE_HEIGHT)) * TILE_HEIGHT) + th;
         // printf ("Plate2h 1, y=%d, ty=%d\n", (int)y, ty);
@@ -304,7 +304,7 @@ Physic::PlayerMovement Physic::checkCollisionWithWorld(const TileTypePlane& worl
         // y=ty;
         if (movement == Falling || movement == Jump || movement == ClimbDown) new_movement = Stand;
         return new_movement;
-    } else if (collision_at_pivoty[0] == TileType::Plate2h) {
+    } else if (collision_at_pivoty[0] == TileType::TwoThirdBlockLower) {
         // int th=TILE_HEIGHT/3;
         // int ty=(((int)((y)/TILE_HEIGHT))*TILE_HEIGHT)+th-(2*th);
         // printf ("Plate2h 2, y=%d, ty=%d\n", (int)y, ty);
@@ -312,7 +312,7 @@ Physic::PlayerMovement Physic::checkCollisionWithWorld(const TileTypePlane& worl
         if (movement == Falling || movement == Jump || movement == ClimbDown) new_movement = Stand;
         return new_movement;
 
-    } else if (collision_at_pivoty[1] == TileType::Plate1h) {
+    } else if (collision_at_pivoty[1] == TileType::ThirdBlockLower) {
         int th = TILE_HEIGHT / 3;
         int ty = ((int)((y - 1) / TILE_HEIGHT)) * TILE_HEIGHT + 2 * (th);
         if (y < ty) {
@@ -324,7 +324,7 @@ Physic::PlayerMovement Physic::checkCollisionWithWorld(const TileTypePlane& worl
         }
         if (movement == Falling || movement == Jump || movement == ClimbDown) new_movement = Stand;
         return new_movement;
-    } else if (collision_at_pivoty[0] == TileType::Plate1h) {
+    } else if (collision_at_pivoty[0] == TileType::ThirdBlockLower) {
         int th = TILE_HEIGHT / 3;
         int ty = ((int)((y - 1) / TILE_HEIGHT)) * TILE_HEIGHT + 2 * th;
         if (y < ty) {
@@ -416,7 +416,7 @@ Physic::PlayerMovement Physic::checkCollisionWithWorld(const TileTypePlane& worl
             y = (y / TILE_HEIGHT) * TILE_HEIGHT;
             if (movement == Falling || movement == Jump || movement == ClimbDown) new_movement = Stand;
         }
-    } else if (collision_matrix[2][5] == TileType::BlockFromTop || collision_matrix[3][5] == TileType::BlockFromTop) {
+    } else if (collision_matrix[2][5] == TileType::Platform || collision_matrix[3][5] == TileType::Platform) {
         if ((!(keys.matrix & KeyboardKeys::Down)) && (gravity > 0.0f || movement == Falling)) {
             acceleration_gravity = 0.0f;
             gravity = 0.0f;
@@ -484,10 +484,10 @@ Physic::PlayerMovement Physic::checkCollisionWithWorld(const TileTypePlane& worl
             acceleration_gravity = 0.0f;
             gravity = 0.0f;
             if (movement == ClimbDown) new_movement = Stand;
-        } else if (collision_matrix[2][4] == TileType::BlockFromTop || collision_matrix[3][4] == TileType::BlockFromTop) {
+        } else if (collision_matrix[2][4] == TileType::Platform || collision_matrix[3][4] == TileType::Platform) {
             if (!(keys.matrix & KeyboardKeys::Down)) {
-                while (world.getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y - 1)) == TileType::BlockFromTop ||
-                       world.getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y - 1)) == TileType::BlockFromTop) {
+                while (world.getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y - 1)) == TileType::Platform ||
+                       world.getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y - 1)) == TileType::Platform) {
                     y--;
                 }
                 velocity_move.x = 0;
@@ -555,7 +555,7 @@ bool Physic::isDiving() const
 bool Physic::isOnGround() const
 {
     if (collision_matrix[2][5] == TileType::Blocking || collision_matrix[3][5] == TileType::Blocking ||
-        collision_matrix[2][5] == TileType::BlockFromTop || collision_matrix[3][5] == TileType::BlockFromTop ||
+        collision_matrix[2][5] == TileType::Platform || collision_matrix[3][5] == TileType::Platform ||
         collision_matrix[2][5] == TileType::Ladder || collision_matrix[3][5] == TileType::Ladder)
         return true;
     return false;

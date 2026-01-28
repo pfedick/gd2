@@ -11,38 +11,41 @@ public:
     enum Type
     {
         NonBlocking,
-        FullBlock,
+        Blocking,
         TwoThirdBlockLower,
         ThirdBlockLower,
         TwoThirdBlockUpper,
         ThirdBlockUpper,
-        EnemyBlock,
+        EnemyBlocker,
         Platform,
         RampRight,
         RampLeft,
-        UpperRampRight,
-        UpperRampLeft,
+        CeilingRampRight,
+        CeilingRampLeft,
         ShallowRampRightUpper,
         ShallowRampRightLower,
         ShallowRampLeftLower,
         ShallowRampLeftUpper,
 
-        ShallowCeilingRightUpper,
-        ShallowCeilingRightLower,
-        ShallowCeilingLeftLower,
-        ShallowRampLeftUpper,
+        ShallowRampCeilingRightUpper,
+        ShallowRampCeilingRightLower,
+        ShallowRampCeilingLeftLower,
+        ShallowRampCeilingLeftUpper,
 
         SteepRampLeftLower,
         SteepRampLeftUpper,
         SteepRampRightUpper,
         SteepRampRightLower,
 
-        SteepCeilingLeftUpper,
-        SteepCeilingLeftLower,
-        SteepCeilingRightLower,
-        SteepCeilingRightUpper,
+        SteepRampCeilingLeftUpper,
+        SteepRampCeilingLeftLower,
+        SteepRampCeilingRightLower,
+        SteepRampCeilingRightUpper,
         Ladder,
         Water,
+        AirStream,
+        Speer,
+        Fire,
         MaxType // used for arrays
     };
 };
@@ -65,7 +68,7 @@ public:
     void setType(int x, int y, TileType::Type type);
     TileType::Type getType(int x, int y) const;
     TileType::Type getType(const ppl7::grafix::Point& player) const;
-    int getPlayerGround(const ppl7::grafix::Point& player) const;
+    // int getPlayerGround(const ppl7::grafix::Point& player) const;
     void setTileTypesSprites(SpriteTexture* sprites);
     void draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const;
     void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const;

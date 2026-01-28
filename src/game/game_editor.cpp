@@ -108,15 +108,18 @@ void GameEditor::showSpriteSelection()
 
 void GameEditor::handleMouseDrawInWorld(const ppltk::MouseState& mouse)
 {
-    const bool* state = SDL_GetKeyboardState(NULL);
-    // if (state[SDL_SCANCODE_LSHIFT]) return;
+    ppl7::PrintDebug("GameEditor::handleMouseDrawInWorld\n");
+    // const bool* state = SDL_GetKeyboardState(NULL);
+    //  if (state[SDL_SCANCODE_LSHIFT]) return;
 
     if (tiletype_selection) {
+
         ParallaxLayerId currentlayer = mainmenue->currentLayer();
         ParallaxLayer& layer = game->level.layer(currentlayer);
         ppl7::grafix::Point coords = game->WorldCoords * layer.size_factor * layer.speed_factor;
         int x = (mouse.p.x + coords.x) / TILE_WIDTH;
         int y = (mouse.p.y + coords.y) / TILE_HEIGHT;
+        ppl7::PrintDebug("TileTypeSelection Mouse Draw at %d:%d\n", x, y);
         TileType::Type type = (TileType::Type)tiletype_selection->tileType();
         if (mouse.buttonMask == ppltk::MouseState::Left) {
             layer.TileTypeMatrix.setType(x, y, type);
