@@ -94,6 +94,7 @@ public:
 class MainMenue;
 class StatusBar;
 class TilesSelection;
+class TileTypeSelection;
 class Game;
 class Player;
 class WorldWidget;
@@ -143,6 +144,12 @@ private:
     Game* game;
 
     TilesSelection* tiles_selection;
+    TileTypeSelection* tiletype_selection;
+    void* sprite_selection;
+    void* object_selection;
+    void* lights_selection;
+    void* waynet_edit;
+
     MainMenue* mainmenue;
     StatusBar* statusbar;
 
@@ -154,6 +161,8 @@ public:
     void showTilesSelection();
     void showTileTypeSelection();
     void showSpriteSelection();
+
+    void handleMouseDrawInWorld(const ppltk::MouseState& mouse);
 };
 
 class Game : private ppltk::Window

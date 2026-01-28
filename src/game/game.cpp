@@ -3,6 +3,7 @@
 #include "ui/menue.h"
 #include "ui/statusbar.h"
 #include "ui/worldwidget.h"
+#include "constants.h"
 
 ppl7::grafix::Point GetViewPos()
 {
@@ -627,23 +628,22 @@ void Game::mouseDownEvent(ppltk::MouseEvent* event)
 #ifdef EVENTTRACKING
     ppl7::PrintDebugTime("Game::mouseDownEvent\n");
 #endif
-    /*
+
     if (event->widget() == world_widget) {
         wm->setKeyboardFocus(world_widget);
         game_viewport.translateMouseEvent(event);
-        if (sprite_selection != NULL) {
-            mouseDownEventOnSprite(event);
-        } else if (object_selection != NULL) {
-            mouseDownEventOnObject(event);
-        } else if ((tiles_selection != NULL || tiletype_selection != NULL)) {
-            handleMouseDrawInWorld(*event);
-        } else if (waynet_edit != NULL) {
-            mouseDownEventOnWayNet(event);
-        } else if (lights_selection != NULL) {
-            mouseDownEventOnLight(event);
+        if (editor.sprite_selection != NULL) {
+            // mouseDownEventOnSprite(event);
+        } else if (editor.object_selection != NULL) {
+            // mouseDownEventOnObject(event);
+        } else if ((editor.tiles_selection != NULL || editor.tiletype_selection != NULL)) {
+            editor.handleMouseDrawInWorld(*event);
+        } else if (editor.waynet_edit != NULL) {
+            // mouseDownEventOnWayNet(event);
+        } else if (editor.lights_selection != NULL) {
+            // mouseDownEventOnLight(event);
         }
     }
-    */
 }
 
 void Game::mouseWheelEvent(ppltk::MouseEvent* event)

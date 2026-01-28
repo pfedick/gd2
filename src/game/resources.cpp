@@ -36,6 +36,7 @@ void Resources::load(GPUContext& gpu)
 
         // TODO TileTypes resource hinzufügen
         Tiles.load(gpu, "res/tiles.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
+        TileTypes.load(gpu, "res/tiletypes.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
         TilesUi.load(gpu, "res/ui/tiles.tex", SpriteBuffer::Memory);
         Player.load(gpu, "res/player.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
         Particles.load(gpu, "res/particles.tex", SpriteBuffer::GPU);

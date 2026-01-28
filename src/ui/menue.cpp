@@ -137,6 +137,12 @@ void MainMenue::setCurrentLayer(ParallaxLayerId index)
     if (active_plane_combobox) active_plane_combobox->setCurrentIdentifier(ppl7::ToString("%d", static_cast<int>(index)));
 }
 
+void MainMenue::setShowTileTypes(bool show)
+{
+    visibility_tiletypes = show;
+    if (visibility) visibility->setShowTileTypes(show);
+}
+
 ParallaxLayerId MainMenue::currentLayer() const
 {
     if (active_plane_combobox) return static_cast<ParallaxLayerId>(active_plane_combobox->currentIdentifier().toInt());

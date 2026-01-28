@@ -127,6 +127,7 @@ public:
     ParallaxLayerId currentLayer() const;
     bool worldFollowsPlayer() const;
     void setGodMode(bool enable);
+    void setShowTileTypes(bool show);
 };
 
 #endif /* INCLUDE_UI_MENUE_H_ */

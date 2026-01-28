@@ -72,7 +72,8 @@ UI=compile/ui/menue.o \
 	compile/ui/spriteselection.o \
 	compile/ui/worldwidget.o \
 	compile/ui/hud.o \
-	compile/ui/tilesframe.o
+	compile/ui/tilesframe.o \
+	compile/ui/tiletypeselection.o
 
 
 WIDGETS = compile/widgets/colorwidget.o \
@@ -163,6 +164,7 @@ sprites_ui:
 sprites: sprites_hud sprites_ui
 	texmaker -s lightwave/Render/particles/ -t res/particles.tex -w 1024 -h 1024 -px 128 -py 128 -x tmp/particles
 	texmaker -s lightwave/Render/Tiles/ -t res/tiles.tex -w 1024 -h 1024 -pd lower_left -x tmp/tiles
+	texmaker -s lightwave/Render/TileTypes/ -t res/tiletypes.tex -w 512 -h 512 -pd fixed -px 0 -py 0 -x tmp/tiles
 
 
 fonts:
@@ -378,6 +380,11 @@ compile/ui/tilesframe.o: src/ui/tilesframe.cpp Makefile include/game.h include/u
 compile/ui/worldwidget.o: src/ui/worldwidget.cpp Makefile include/game.h include/ui/worldwidget.h
 	- @mkdir -p compile/ui
 	$(CXX) -o compile/ui/worldwidget.o -c src/ui/worldwidget.cpp $(CFLAGS)
+
+compile/ui/tiletypeselection.o: src/ui/tiletypeselection.cpp Makefile include/game.h include/ui/tileselection.h \
+	include/ui/tiletypeselection.h include/sprite.h
+	- @mkdir -p compile/ui
+	$(CXX) -o compile/ui/tiletypeselection.o -c src/ui/tiletypeselection.cpp $(CFLAGS)
 
 
 ### WIDGETS #####################################################################

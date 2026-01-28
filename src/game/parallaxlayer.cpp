@@ -52,9 +52,10 @@ void ParallaxLayer::draw(RenderState& renderstate,
                          const ppl7::grafix::Rect& viewport)
 {
     if (!isVisible) return;
-    if (!hasVisibleGrafix()) return;
-    // renderstate.batcher->startRenderPass();
     ppl7::grafix::PointF parallax_worldcoords = worldcoords * speed_factor * size_factor;
+    if (hasVisibleGrafix()) {
+    }
+    // renderstate.batcher->startRenderPass();
 
     if (bShowGrid) {
         drawTileGrid(renderstate, swapchainTexture, parallax_worldcoords, viewport);
