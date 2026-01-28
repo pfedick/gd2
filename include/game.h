@@ -99,6 +99,31 @@ class Game;
 class Player;
 class WorldWidget;
 
+class Camera : public ppl7::grafix::PointF
+{
+private:
+    float zoom;
+    float target_zoom;
+    float zoom_speed;
+    float dead_zone_x;
+    float dead_zone_y;
+    float move_speed;
+    ppl7::grafix::PointF player_position;
+    bool follow_player;
+
+public:
+    Camera();
+    void setZoom(float zoom);
+    float getZoom() const;
+    void setTargetZoom(float zoom, float speed);
+    void update(double time, float frame_rate_compensation);
+    void setPlayerPosition(const ppl7::grafix::PointF& pos);
+    void setPosition(const ppl7::grafix::PointF& pos);
+    void setDeadZone(float x, float y);
+    void setFollowPlayer(bool enable);
+    bool isFollowingPlayer() const;
+};
+
 class GameViewport : public ppl7::grafix::Rect
 {
 private:
@@ -191,7 +216,9 @@ private:
     ppl7::grafix::Size render_target_size;
     ppl7::grafix::Rect viewport;
     GameViewport game_viewport;
-    ppl7::grafix::PointF WorldCoords;
+    Camera WorldCoords;
+    double last_frame_time;
+    float frame_rate_compensation;
 
     void createWindow();
     // void createRenderTargetsIfRequired(const ppl7::grafix::Size& size);
@@ -242,6 +269,7 @@ public:
     void run();
     void updateUi(const ppltk::MouseState& mouse);
 
+    void showUi(bool enable);
     void updateSpriteFromUi();
 
     void moveWorld(float offset_x, float offset_y);

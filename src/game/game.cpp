@@ -28,7 +28,12 @@ Game::Game(GPUContext& gpu)
     Style.setStyle(ppltk::WidgetStyle::Dark);
     wm->setWidgetStyle(Style);
     quitGame = false;
+    showui = false;
     worldIsMoving = false;
+    world_widget = NULL;
+    last_frame_time = 0.0f;
+    frame_rate_compensation = 1.0f;
+
     /*
     render_target_layer = NULL;
     render_target_tmp1 = NULL;
@@ -269,8 +274,48 @@ void Game::updateWorldCoords()
     if (WorldCoords.y < 0) WorldCoords.y = 0;
 }
 
+void Game::showUi(bool enable)
+{
+    // const ppl7::grafix::Size& desktop=clientSize();
+    showui = enable;
+    world_widget->setShowUi(showui);
+    // hud->setEditorMode(enable);
+    if (showui) {
+        viewport.y1 = 32;
+        viewport.y2 = 1080 - 32;
+        viewport.x1 = 0;
+        viewport.x2 = 1920;
+        world_widget->setViewport(viewport);
+
+        editor.mainmenue->setVisible(true);
+        // editor.mainmenue->fitMetrics(viewport);
+        editor.statusbar->setVisible(true);
+    } else {
+        editor.closeAll();
+        editor.mainmenue->setShowTileTypes(false);
+        editor.mainmenue->setWorldFollowsPlayer(true);
+        editor.mainmenue->setVisible(false);
+        // mainmenue->visibility_hud=true;
+        editor.statusbar->setVisible(false);
+        viewport.y1 = 0;
+        viewport.x1 = 0;
+        viewport.y2 = 1080;
+        viewport.x2 = 1920;
+        // editor.mainmenue->fitMetrics(viewport);
+        world_widget->setViewport(viewport);
+    }
+    // hud->setViewport(viewport);
+}
+
 void Game::run()
 {
+    resizeEvent(NULL);
+    world_widget->setVisible(true);
+    world_widget->setEnabled(true);
+    wm->setKeyboardFocus(world_widget);
+    wm->setGameControllerFocus(this);
+
+    showUi(true);
     SDL_ShowCursor();
     level.setShowTileGrid(true);
     sdl.setCursor(resources.Cursor.getDrawable(10), resources.Cursor.getPivot(10));
@@ -284,7 +329,14 @@ void Game::run()
             last_second = current_second;
             // TODO: Update Metrics
         }
+        frame_rate_compensation = 1.0f;
+        if (last_frame_time > 0.0f) {
+            float frametime = start_time - last_frame_time;
+            frame_rate_compensation = frametime / (1.0f / 60.0f);
+        }
+        last_frame_time = start_time;
         wm->handleEvents();
+        WorldCoords.update(start_time, frame_rate_compensation);
         ppltk::MouseState mouse = wm->getMouseState();
         updateUi(mouse);
         gpu_batcher.clearQueues();
@@ -650,6 +702,9 @@ void Game::mouseWheelEvent(ppltk::MouseEvent* event)
 
 void Game::keyDownEvent(ppltk::KeyEvent* event)
 {
+    if (event->key == ppltk::KeyEvent::KEY_F9) {
+        showUi(!showui);
+    }
 }
 
 void Game::mouseMoveEvent(ppltk::MouseEvent* event)

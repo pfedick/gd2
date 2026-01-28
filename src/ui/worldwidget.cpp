@@ -1,4 +1,5 @@
 #include "ui/worldwidget.h"
+#include "player.h"
 #include "translate.h"
 
 StatsFrame::StatsFrame(int x, int y, int width, int height, const ppl7::String& label)
@@ -172,7 +173,7 @@ void WorldWidget::retranslateUi()
 
 void WorldWidget::setViewport(const ppl7::grafix::Rect& viewport)
 {
-    // printf("WorldWidget::setViewport: %d x %d\n", viewport.width(), viewport.height());
+    printf("WorldWidget::setViewport: %d x %d\n", viewport.width(), viewport.height());
     this->setPos(viewport.x1, viewport.y1);
     this->setSize(viewport.width(), viewport.height());
 
@@ -228,7 +229,6 @@ static int calculatePointDiff(int display, int player)
 
 void WorldWidget::updatePlayerStats(const Player* player)
 {
-    /*
     double now = ppl7::GetMicrotime();
     if (value_health != player->health) value_health += calculatePointDiff(value_health, player->health);
     if (value_points != player->points) value_points += calculatePointDiff(value_points, player->points);
@@ -252,17 +252,14 @@ void WorldWidget::updatePlayerStats(const Player* player)
             parentMustRedraw();
         }
     }
-        */
 }
 
 void WorldWidget::resetPlayerStats(const Player* player)
 {
-    /*
     value_health = player->health;
     value_lifes = player->lifes;
     value_points = player->points;
     updatePlayerStats(player);
-    */
 }
 
 static void drawFrame(ppl7::grafix::Drawable& draw,
@@ -284,7 +281,7 @@ void WorldWidget::setShowUi(bool enable)
 
 void WorldWidget::paint(ppl7::grafix::Drawable& draw)
 {
-    // printf("WorldWidget::paint %d x %d\n", draw.width(), draw.height());
+    printf("WorldWidget::paint %d x %d\n", draw.width(), draw.height());
     // draw.cls();
     if (!showui) return;
     ppl7::grafix::Point p0(1, 1);

@@ -30,6 +30,7 @@ OBJECTS=compile/main.o \
 	compile/game.o \
 	compile/game_editor.o \
 	compile/gameviewport.o \
+	compile/camera.o \
 	compile/translate.o \
 	compile/sdl.o \
 	compile/gpu.o \
@@ -222,6 +223,10 @@ compile/game_editor.o: src/game/game_editor.cpp Makefile include/game.h include/
 compile/gameviewport.o: src/game/gameviewport.cpp Makefile include/game.h
 	- @mkdir -p compile
 	$(CXX) -o compile/gameviewport.o -c src/game/gameviewport.cpp $(CFLAGS)
+
+compile/camera.o: src/game/camera.cpp Makefile include/game.h
+	- @mkdir -p compile
+	$(CXX) -o compile/camera.o -c src/game/camera.cpp $(CFLAGS)	
 
 compile/config.o: src/game/config.cpp Makefile include/game.h
 	- @mkdir -p compile
