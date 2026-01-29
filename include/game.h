@@ -99,6 +99,32 @@ class Game;
 class Player;
 class WorldWidget;
 
+class GameViewport : public ppl7::grafix::Rect
+{
+private:
+    int menu_offset_x;
+    ppl7::grafix::Size window_size;
+    float aspect_ratio;
+    SDL_FRect render_rect;
+    float sprite_scale_factor;
+    ppl7::grafix::PointF grid_size;
+
+    void update();
+
+public:
+    GameViewport();
+    void setWindowSize(const ppl7::grafix::Size& size);
+    void setAspectRatio(float aspect_ratio);
+    void setMenuOffset(int x);
+    ppl7::grafix::PointF translate(const ppl7::grafix::PointF& coords) const;
+    void translateMouseEvent(ppltk::MouseEvent* event);
+    void getRenderRect(SDL_FRect& rect) const;
+    const SDL_FRect& getRenderRect() const;
+    const ppl7::grafix::Size& getWindowSize() const;
+    float getSpriteScaleFactor() const;
+    const ppl7::grafix::PointF& getGridSize() const;
+};
+
 class Camera : public ppl7::grafix::PointF
 {
 private:
@@ -122,31 +148,6 @@ public:
     void setDeadZone(float x, float y);
     void setFollowPlayer(bool enable);
     bool isFollowingPlayer() const;
-};
-
-class GameViewport : public ppl7::grafix::Rect
-{
-private:
-    int menu_offset_x;
-    ppl7::grafix::Size real_viewport;
-    ppl7::grafix::Size render_size;
-    bool scaling_enabled;
-    bool allow_upscale;
-    SDL_FRect render_rect;
-    void update();
-
-public:
-    GameViewport();
-    void setRealViewport(const ppl7::grafix::Size& size);
-    void setRenderSize(const ppl7::grafix::Size& size);
-    void setMenuOffset(int x);
-    void setScalingEnabled(bool enable);
-    void setAllowUpscale(bool allow);
-    ppl7::grafix::Point translate(const ppl7::grafix::Point& coords) const;
-
-    void translateMouseEvent(ppltk::MouseEvent* event);
-    void getRenderRect(SDL_FRect& rect) const;
-    const SDL_FRect& getRenderRect() const;
 };
 
 class GameEditor
@@ -274,6 +275,9 @@ public:
 
     void moveWorld(float offset_x, float offset_y);
     void moveWorldOnMouseClick(const ppltk::MouseState& mouse);
+
+    const ppl7::grafix::Rect& getViewport() const;
+    const ppl7::grafix::PointF& getWorldCoords() const;
 
     Player* getPlayer();
 

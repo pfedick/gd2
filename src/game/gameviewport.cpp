@@ -1,61 +1,63 @@
 #include <stdio.h>
 #include <ppl7.h>
 #include "game.h"
+#include "constants.h"
 
 GameViewport::GameViewport()
 {
     menu_offset_x = 0;
-    scaling_enabled = true;
-    allow_upscale = true;
-    render_size.setSize(1920, 1080);
+    aspect_ratio = (float)16 / (float)9;
     render_rect.x = 0;
     render_rect.y = 0;
     render_rect.w = 1920;
     render_rect.h = 1080;
-    setWidth(1920);
-    setHeight(1080);
+    setRect((int)render_rect.x, (int)render_rect.y, (int)render_rect.w, (int)render_rect.h);
+    sprite_scale_factor = 1.0f;
+    grid_size.x = TILE_WIDTH;
+    grid_size.y = TILE_HEIGHT;
 }
 
 void GameViewport::update()
 {
-    float aspect = (float)render_size.width / (float)render_size.height;
-    int w = real_viewport.width;
-    int h = real_viewport.height;
-    if (!allow_upscale) {
-        if (w > render_size.width) w = render_size.width;
-        if (h > render_size.height) h = render_size.height;
-    }
+    int w = window_size.width;
+    int h = window_size.height;
 
     render_rect.w = w;
-    render_rect.h = (float)w / aspect;
+    render_rect.h = (float)w / aspect_ratio;
     if (render_rect.h > h) {
         render_rect.h = h;
-        render_rect.w = (float)render_rect.h * aspect;
+        render_rect.w = (float)render_rect.h * aspect_ratio;
     }
 
-    if (render_rect.w < real_viewport.width) {
-        render_rect.x = (real_viewport.width - render_rect.w) / 2;
+    if (render_rect.w < window_size.width) {
+        render_rect.x = (window_size.width - render_rect.w) / 2;
     } else {
         render_rect.x = 0;
     }
-    if (render_rect.h < real_viewport.height) {
-        render_rect.y = (real_viewport.height - render_rect.h) / 2;
+    if (render_rect.h < window_size.height) {
+        render_rect.y = (window_size.height - render_rect.h) / 2;
     } else {
         render_rect.y = 0;
     }
+    sprite_scale_factor = (float)render_rect.w / 3840.0f;
+    grid_size.x = (float)(TILE_WIDTH * 2) * sprite_scale_factor;
+    grid_size.y = (float)(TILE_HEIGHT * 2) * sprite_scale_factor;
+
+    setRect((int)render_rect.x, (int)render_rect.y, (int)render_rect.w, (int)render_rect.h);
+
     // if (menu_offset_x) render_rect.x+=(menu_offset_x / 2);
     // ppl7::PrintDebugTime("vp width=%d, height=%d\n", render_rect.w, render_rect.h);
 }
 
-void GameViewport::setRealViewport(const ppl7::grafix::Size& size)
+void GameViewport::setWindowSize(const ppl7::grafix::Size& size)
 {
-    real_viewport = size;
+    window_size = size;
     update();
 }
 
-void GameViewport::setRenderSize(const ppl7::grafix::Size& size)
+void GameViewport::setAspectRatio(float aspect_ratio)
 {
-    render_size = size;
+    this->aspect_ratio = aspect_ratio;
     update();
 }
 
@@ -65,22 +67,25 @@ void GameViewport::setMenuOffset(int x)
     update();
 }
 
-void GameViewport::setScalingEnabled(bool enable)
+const ppl7::grafix::Size& GameViewport::getWindowSize() const
 {
-    scaling_enabled = enable;
-    update();
+    return window_size;
 }
 
-void GameViewport::setAllowUpscale(bool allow)
+float GameViewport::getSpriteScaleFactor() const
 {
-    allow_upscale = allow;
-    update();
+    return sprite_scale_factor;
+}
+
+const ppl7::grafix::PointF& GameViewport::getGridSize() const
+{
+    return grid_size;
 }
 
 void GameViewport::translateMouseEvent(ppltk::MouseEvent* event)
 {
     ppltk::MouseState mouse = ppltk::GetWindowManager()->getMouseState();
-    float factor = (float)render_size.width / (float)render_rect.w;
+    float factor = (float)window_size.width / (float)render_rect.w;
     mouse.p.x = ((float)(mouse.p.x - render_rect.x) * factor);
     mouse.p.y = ((float)(mouse.p.y - render_rect.y) * factor);
     /*
@@ -91,10 +96,10 @@ void GameViewport::translateMouseEvent(ppltk::MouseEvent* event)
     event->p = mouse.p;
 }
 
-ppl7::grafix::Point GameViewport::translate(const ppl7::grafix::Point& coords) const
+ppl7::grafix::PointF GameViewport::translate(const ppl7::grafix::PointF& coords) const
 {
-    float factor = (float)render_size.width / (float)render_rect.w;
-    ppl7::grafix::Point p;
+    float factor = (float)window_size.width / (float)render_rect.w;
+    ppl7::grafix::PointF p;
     p.x = ((float)(coords.x - render_rect.x) * factor);
     p.y = ((float)(coords.y - render_rect.y) * factor);
     /*
