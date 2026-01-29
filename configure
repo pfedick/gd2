@@ -677,6 +677,7 @@ POSTGRESQL_CFLAGS
 MYSQL_CFLAGS
 OPENSSL_INCLUDES
 report_use_address_sanitizer
+report_have_gtest
 report_have_assimp
 report_have_dav1d
 report_have_mpg123
@@ -717,6 +718,10 @@ ZLIB_LIBS
 ZLIB_CFLAGS
 BZ2_LIBS
 BZ2_CFLAGS
+HAVE_GTEST_FALSE
+HAVE_GTEST_TRUE
+GTEST_LIBS
+GTEST_CFLAGS
 ICONV_LIBS
 ICONV_CFLAGS
 LTLIBICONV
@@ -888,6 +893,7 @@ with_dav1d
 with_gnu_ld
 enable_rpath
 with_libiconv_prefix
+with_gtest
 with_bzip2
 with_zlib
 with_pcre2
@@ -922,6 +928,8 @@ TURBOJPEG_CFLAGS
 TURBOJPEG_LIBS
 ASSIMP_CFLAGS
 ASSIMP_LIBS
+GTEST_CFLAGS
+GTEST_LIBS
 PCRE2_8_CFLAGS
 PCRE2_8_LIBS
 PCRE2_WIDE16_CFLAGS
@@ -1600,6 +1608,7 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir
+  --without-gtest         disable Google Test checks
   --with-bzip2[=PATH]     Prefix where bzip2 is installed (optional)
   --with-zlib=DIR         root directory path of zlib installation [defaults to
                           /usr/local or /usr if not found in /usr/local]
@@ -1637,6 +1646,9 @@ Some influential environment variables:
   ASSIMP_CFLAGS
               C compiler flags for ASSIMP, overriding pkg-config
   ASSIMP_LIBS linker flags for ASSIMP, overriding pkg-config
+  GTEST_CFLAGS
+              C compiler flags for GTEST, overriding pkg-config
+  GTEST_LIBS  linker flags for GTEST, overriding pkg-config
   PCRE2_8_CFLAGS
               C compiler flags for PCRE2_8, overriding pkg-config
   PCRE2_8_LIBS
@@ -3518,7 +3530,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-ac_config_files="$ac_config_files Makefile pplib/Makefile ppltk/Makefile"
+ac_config_files="$ac_config_files Makefile pplib/Makefile ppltk/Makefile tests/Makefile"
 
 ac_config_headers="$ac_config_headers pplib/include/config_ppl7.h"
 
@@ -3812,6 +3824,17 @@ ac_config_headers="$ac_config_headers ppltk/include/ppltk_config.h"
 
 
 
+# ===========================================================================
+# AX_CHECK_GTEST([ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
+#
+# Checks for Google Test and defines
+#   GTEST_CFLAGS
+#   GTEST_LIBS
+#
+# It also defines HAVE_GTEST if it's found and sets the conditional HAVE_GTEST
+# ===========================================================================
+
+
 
 
 report_have_pthreads="no"
@@ -3830,6 +3853,7 @@ report_have_nasm="no"
 report_have_libvorbis="no"
 report_have_assimp="no"
 report_use_address_sanitizer="no"
+report_have_gtest="no"
 
 
 
@@ -16041,6 +16065,335 @@ then
 fi
 
 
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for Google Test" >&5
+printf %s "checking for Google Test... " >&6; }
+
+# Check whether --with-gtest was given.
+if test ${with_gtest+y}
+then :
+  withval=$with_gtest;
+else case e in #(
+  e) with_gtest=yes ;;
+esac
+fi
+
+
+  HAVE_GTEST="no"
+  if test "x$with_gtest" != "xno"
+then :
+
+    # Use pkg-config to find gtest and gtest_main
+    # gtest_main provides a main() function, which is convenient
+
+pkg_failed=no
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for gtest gtest_main" >&5
+printf %s "checking for gtest gtest_main... " >&6; }
+
+if test -n "$GTEST_CFLAGS"; then
+    pkg_cv_GTEST_CFLAGS="$GTEST_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtest gtest_main\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtest gtest_main") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTEST_CFLAGS=`$PKG_CONFIG --cflags "gtest gtest_main" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTEST_LIBS"; then
+    pkg_cv_GTEST_LIBS="$GTEST_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtest gtest_main\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtest gtest_main") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTEST_LIBS=`$PKG_CONFIG --libs "gtest gtest_main" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+                GTEST_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtest gtest_main" 2>&1`
+        else
+                GTEST_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtest gtest_main" 2>&1`
+        fi
+        # Put the nasty error message in config.log where it belongs
+        echo "$GTEST_PKG_ERRORS" >&5
+
+
+      # Fallback if gtest_main is not found (older versions)
+
+pkg_failed=no
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for gtest" >&5
+printf %s "checking for gtest... " >&6; }
+
+if test -n "$GTEST_CFLAGS"; then
+    pkg_cv_GTEST_CFLAGS="$GTEST_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtest\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtest") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTEST_CFLAGS=`$PKG_CONFIG --cflags "gtest" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTEST_LIBS"; then
+    pkg_cv_GTEST_LIBS="$GTEST_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtest\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtest") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTEST_LIBS=`$PKG_CONFIG --libs "gtest" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+                GTEST_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtest" 2>&1`
+        else
+                GTEST_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtest" 2>&1`
+        fi
+        # Put the nasty error message in config.log where it belongs
+        echo "$GTEST_PKG_ERRORS" >&5
+
+        as_fn_error $? "Package requirements (gtest) were not met:
+
+$GTEST_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables GTEST_CFLAGS
+and GTEST_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+        { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
+printf "%s\n" "$as_me: error: in '$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables GTEST_CFLAGS
+and GTEST_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See 'config.log' for more details" "$LINENO" 5; }
+else
+        GTEST_CFLAGS=$pkg_cv_GTEST_CFLAGS
+        GTEST_LIBS=$pkg_cv_GTEST_LIBS
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+
+printf "%s\n" "#define HAVE_GTEST 1" >>confdefs.h
+
+        HAVE_GTEST="yes"
+
+fi
+
+elif test $pkg_failed = untried; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+      # Fallback if gtest_main is not found (older versions)
+
+pkg_failed=no
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for gtest" >&5
+printf %s "checking for gtest... " >&6; }
+
+if test -n "$GTEST_CFLAGS"; then
+    pkg_cv_GTEST_CFLAGS="$GTEST_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtest\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtest") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTEST_CFLAGS=`$PKG_CONFIG --cflags "gtest" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTEST_LIBS"; then
+    pkg_cv_GTEST_LIBS="$GTEST_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtest\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtest") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTEST_LIBS=`$PKG_CONFIG --libs "gtest" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+                GTEST_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtest" 2>&1`
+        else
+                GTEST_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtest" 2>&1`
+        fi
+        # Put the nasty error message in config.log where it belongs
+        echo "$GTEST_PKG_ERRORS" >&5
+
+        as_fn_error $? "Package requirements (gtest) were not met:
+
+$GTEST_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables GTEST_CFLAGS
+and GTEST_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+        { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
+printf "%s\n" "$as_me: error: in '$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables GTEST_CFLAGS
+and GTEST_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See 'config.log' for more details" "$LINENO" 5; }
+else
+        GTEST_CFLAGS=$pkg_cv_GTEST_CFLAGS
+        GTEST_LIBS=$pkg_cv_GTEST_LIBS
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+
+printf "%s\n" "#define HAVE_GTEST 1" >>confdefs.h
+
+        HAVE_GTEST="yes"
+
+fi
+
+else
+        GTEST_CFLAGS=$pkg_cv_GTEST_CFLAGS
+        GTEST_LIBS=$pkg_cv_GTEST_LIBS
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+
+printf "%s\n" "#define HAVE_GTEST 1" >>confdefs.h
+
+      HAVE_GTEST="yes"
+
+fi
+
+fi
+
+  if test "x$HAVE_GTEST" = "xyes"
+then :
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+	report_have_gtest="yes"
+
+printf "%s\n" "#define HAVE_GTEST 1" >>confdefs.h
+
+
+
+	,
+
+
+else case e in #(
+  e)
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+    :
+   ;;
+esac
+fi
+
+   if test "x$HAVE_GTEST" = "xyes"; then
+  HAVE_GTEST_TRUE=
+  HAVE_GTEST_FALSE='#'
+else
+  HAVE_GTEST_TRUE='#'
+  HAVE_GTEST_FALSE=
+fi
+
+
+
+
 # Bzip2 Vorhanden?
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for compatible bzip2 library and headers" >&5
 printf %s "checking for compatible bzip2 library and headers... " >&6; }
@@ -17598,6 +17951,7 @@ esac
 
 
 
+
 ###
 JPEG_CFLAGS=""
 OPENSSL_INCLUDES=""
@@ -17819,6 +18173,10 @@ then :
   enableval=$enable_year2038;
 fi
 
+if test -z "${HAVE_GTEST_TRUE}" && test -z "${HAVE_GTEST_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_GTEST\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 
 : "${CONFIG_STATUS=./config.status}"
 ac_write_fail=0
@@ -18412,6 +18770,7 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "pplib/Makefile") CONFIG_FILES="$CONFIG_FILES pplib/Makefile" ;;
     "ppltk/Makefile") CONFIG_FILES="$CONFIG_FILES ppltk/Makefile" ;;
+    "tests/Makefile") CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
     "pplib/include/config_ppl7.h") CONFIG_HEADERS="$CONFIG_HEADERS pplib/include/config_ppl7.h" ;;
     "pplib/include/ppl7-config.h") CONFIG_HEADERS="$CONFIG_HEADERS pplib/include/ppl7-config.h" ;;
     "ppltk/include/ppltk_config.h") CONFIG_HEADERS="$CONFIG_HEADERS ppltk/include/ppltk_config.h" ;;
@@ -19169,6 +19528,7 @@ fi
 **
 ** Threads:                $report_have_pthreads
 ** Address Sanitizer:      $report_use_address_sanitizer
+** Google Test (gtest):    $report_have_gtest
 **
 ** Libs:
 **   ZLIB library:         $report_have_zlib
@@ -19204,6 +19564,7 @@ printf "%s\n" "
 **
 ** Threads:                $report_have_pthreads
 ** Address Sanitizer:      $report_use_address_sanitizer
+** Google Test (gtest):    $report_have_gtest
 **
 ** Libs:
 **   ZLIB library:         $report_have_zlib

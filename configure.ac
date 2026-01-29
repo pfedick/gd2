@@ -9,7 +9,7 @@ AC_CONFIG_SRCDIR([pplib/include/config_ppl7.h.in])
 AC_CONFIG_SRCDIR([ppltk/include/ppltk.h])
 AC_CONFIG_SRCDIR([ppltk/include/ppltk_config.h.in])
 
-AC_CONFIG_FILES([Makefile pplib/Makefile ppltk/Makefile])
+AC_CONFIG_FILES([Makefile pplib/Makefile ppltk/Makefile tests/Makefile])
 AC_CONFIG_HEADERS([pplib/include/config_ppl7.h])
 AC_CONFIG_HEADERS([pplib/include/ppl7-config.h])
 
@@ -35,6 +35,7 @@ sinclude(pplib/autoconf/mpg123.m4)
 sinclude(pplib/autoconf/vorbis.m4)
 sinclude(autoconf/dav1d.m4)
 sinclude(autoconf/assimp.m4)
+sinclude(autoconf/gtest.m4)
 
 
 report_have_pthreads="no"
@@ -53,6 +54,7 @@ report_have_nasm="no"
 report_have_libvorbis="no"
 report_have_assimp="no"
 report_use_address_sanitizer="no"
+report_have_gtest="no"
 
 
 AC_CANONICAL_TARGET
@@ -353,6 +355,14 @@ then
 	AC_SUBST(ICONV_LIBS)
 fi
 
+AX_CHECK_GTEST([
+	report_have_gtest="yes"
+	AC_DEFINE(HAVE_GTEST, 1, [ Define if you have gtest library. ])
+	AC_SUBST(GTEST_CFLAGS)
+	AC_SUBST(GTEST_LIBS)
+	,
+	])
+
 
 # Bzip2 Vorhanden?
 AM_BZIP2
@@ -487,6 +497,7 @@ AC_SUBST(report_have_pthreads)
 AC_SUBST(report_have_mpg123)
 AC_SUBST(report_have_dav1d)
 AC_SUBST(report_have_assimp)
+AC_SUBST(report_have_gtest)
 AC_SUBST(report_use_address_sanitizer)
 
 ###
@@ -580,6 +591,7 @@ AC_MSG_RESULT([
 **
 ** Threads:                $report_have_pthreads
 ** Address Sanitizer:      $report_use_address_sanitizer
+** Google Test (gtest):    $report_have_gtest
 **
 ** Libs:
 **   ZLIB library:         $report_have_zlib

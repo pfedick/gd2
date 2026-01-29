@@ -129,6 +129,9 @@ mingw: update_version
 setup: mingw
 	"C:\Program Files (x86)\Inno Setup 5\ISCC.exe" setup.iss
 
+test:
+	cd tests && make -j 16
+	cd tests && ./test_runner
 
 history:
 	@echo "Git history between Tag $(PREVIOUS_TAG) and head" >  history.tmp
