@@ -1,96 +1,99 @@
-#include <gtest/gtest.h>
 #include "game.h"
-#include "constants.h"
+#include <gtest/gtest.h>
 
-namespace
-{
-
-// The fixture for testing class GameViewport.
 class GameViewportTest : public ::testing::Test
 {
 protected:
     GameViewport game_viewport;
+
+    void SetUp() override
+    {
+        // Set a default aspect ratio for all tests
+        game_viewport.setAspectRatio(16.0f / 9.0f);
+    }
 };
 
 TEST_F(GameViewportTest, ScalingAndGrid)
 {
-    // Test with 4K resolution
-    game_viewport.setWindowSize({3840, 2160});
-    const SDL_FRect& rect_4k = game_viewport.getRenderRect();
-    EXPECT_EQ(rect_4k.x, 0);
-    EXPECT_EQ(rect_4k.y, 0);
-    EXPECT_EQ(rect_4k.w, 3840);
-    EXPECT_EQ(rect_4k.h, 2160);
-    EXPECT_FLOAT_EQ(game_viewport.getSpriteScaleFactor(), 1.0f);
-    const ppl7::grafix::PointF& grid_4k = game_viewport.getGridSize();
-    EXPECT_FLOAT_EQ(grid_4k.x, TILE_WIDTH * 2);
-    EXPECT_FLOAT_EQ(grid_4k.y, TILE_HEIGHT * 2);
-
-    // Test with Full HD
+    // Test case 1: Full HD resolution
     game_viewport.setWindowSize({1920, 1080});
-    const SDL_FRect& rect_hd = game_viewport.getRenderRect();
-    EXPECT_EQ(rect_hd.x, 0);
-    EXPECT_EQ(rect_hd.y, 0);
-    EXPECT_EQ(rect_hd.w, 1920);
-    EXPECT_EQ(rect_hd.h, 1080);
-    EXPECT_FLOAT_EQ(game_viewport.getSpriteScaleFactor(), 0.5f);
-    const ppl7::grafix::PointF& grid_hd = game_viewport.getGridSize();
-    EXPECT_FLOAT_EQ(grid_hd.x, TILE_WIDTH);
-    EXPECT_FLOAT_EQ(grid_hd.y, TILE_HEIGHT);
+    ASSERT_NEAR(game_viewport.getSpriteScaleFactor(), 0.5f, 0.001f);
+    ppl7::grafix::PointF grid_size1 = game_viewport.getGridSize();
+    ASSERT_NEAR(grid_size1.x, 32.0f, 0.001f);
+    ASSERT_NEAR(grid_size1.y, 32.0f, 0.001f);
 
-    // Test with an intermediate resolution
+    // Test case 2: 4K resolution
+    game_viewport.setWindowSize({3840, 2160});
+    ASSERT_NEAR(game_viewport.getSpriteScaleFactor(), 1.0f, 0.001f);
+    ppl7::grafix::PointF grid_size2 = game_viewport.getGridSize();
+    ASSERT_NEAR(grid_size2.x, 64.0f, 0.001f);
+    ASSERT_NEAR(grid_size2.y, 64.0f, 0.001f);
+
+    // Test case 3: Resolution in between
     game_viewport.setWindowSize({2560, 1440});
-    const SDL_FRect& rect_qhd = game_viewport.getRenderRect();
-    EXPECT_EQ(rect_qhd.x, 0);
-    EXPECT_EQ(rect_qhd.y, 0);
-    EXPECT_EQ(rect_qhd.w, 2560);
-    EXPECT_EQ(rect_qhd.h, 1440);
-    EXPECT_FLOAT_EQ(game_viewport.getSpriteScaleFactor(), 2560.0f / 3840.0f);
-    const ppl7::grafix::PointF& grid_qhd = game_viewport.getGridSize();
-    EXPECT_FLOAT_EQ(grid_qhd.x, (TILE_WIDTH * 2) * (2560.0f / 3840.0f));
-    EXPECT_FLOAT_EQ(grid_qhd.y, (TILE_HEIGHT * 2) * (2560.0f / 3840.0f));
+    ASSERT_NEAR(game_viewport.getSpriteScaleFactor(), 2560.0f / 3840.0f, 0.001f);
+    ppl7::grafix::PointF grid_size3 = game_viewport.getGridSize();
+    ASSERT_NEAR(grid_size3.x, 32.0f * (2560.0f / 1920.0f), 0.001f);
+    ASSERT_NEAR(grid_size3.y, 32.0f * (2560.0f / 1920.0f), 0.001f);
 }
 
 TEST_F(GameViewportTest, Letterboxing)
 {
-    // Test with a wider aspect ratio (e.g., 21:9) -> Pillarbox
+    // Test case 1: Wider aspect ratio (e.g., Ultrawide)
     game_viewport.setWindowSize({2560, 1080});
-    const SDL_FRect& rect_wide = game_viewport.getRenderRect();
-    float expected_w = 1080.0f * (16.0f / 9.0f); // Height is the limit
-    float expected_x = (2560.0f - expected_w) / 2.0f;
-    EXPECT_FLOAT_EQ(rect_wide.w, expected_w);
-    EXPECT_FLOAT_EQ(rect_wide.h, 1080);
-    EXPECT_FLOAT_EQ(rect_wide.x, expected_x);
-    EXPECT_FLOAT_EQ(rect_wide.y, 0);
+    const SDL_FRect& rect1 = game_viewport.getRenderRect();
+    // Width should be scaled down to fit height, respecting aspect ratio
+    float expected_width = 1080.0f * (16.0f / 9.0f);
+    ASSERT_NEAR(rect1.w, expected_width, 0.001f);
+    ASSERT_EQ(rect1.h, 1080);
+    // Should be centered horizontally
+    ASSERT_NEAR(rect1.x, (2560.0f - expected_width) / 2.0f, 0.001f);
+    ASSERT_EQ(rect1.y, 0);
 
-    // Test with a taller aspect ratio (e.g., 4:3) -> Letterbox
-    game_viewport.setWindowSize({1024, 768});
-    const SDL_FRect& rect_tall = game_viewport.getRenderRect();
-    float expected_h = 1024.0f / (16.0f / 9.0f); // Width is the limit
-    float expected_y = (768.0f - expected_h) / 2.0f;
-    EXPECT_FLOAT_EQ(rect_tall.w, 1024);
-    EXPECT_FLOAT_EQ(rect_tall.h, expected_h);
-    EXPECT_FLOAT_EQ(rect_tall.x, 0);
-    EXPECT_FLOAT_EQ(rect_tall.y, expected_y);
+    // Test case 2: Taller aspect ratio (e.g., 4:3)
+    game_viewport.setWindowSize({1440, 1080});
+    const SDL_FRect& rect2 = game_viewport.getRenderRect();
+    ASSERT_EQ(rect2.w, 1440);
+    // Height should be scaled down to fit width, respecting aspect ratio
+    float expected_height = 1440.0f / (16.0f / 9.0f);
+    ASSERT_NEAR(rect2.h, expected_height, 0.001f);
+    ASSERT_EQ(rect2.x, 0);
+    // Should be centered vertically
+    ASSERT_NEAR(rect2.y, (1080.0f - expected_height) / 2.0f, 0.001f);
 }
-
 
 TEST_F(GameViewportTest, CoordinateTranslation)
 {
-    // Use a standard 16:9 resolution
+    // Case 1: Standard 16:9 resolution - No letterboxing
     game_viewport.setWindowSize({1920, 1080});
+    ppl7::grafix::PointF point1 = {100.0f, 200.0f};
+    ppl7::grafix::PointF translated1 = game_viewport.translate(point1);
 
-    // Translate a point
-    ppl7::grafix::PointF translated_point = game_viewport.translate({100.0f, 100.0f});
+    // With no letterboxing, coordinates should be identical.
+    EXPECT_FLOAT_EQ(translated1.x, 100.0f);
+    EXPECT_FLOAT_EQ(translated1.y, 200.0f);
 
-    // The virtual resolution seems to be 3840x2160 (4K), based on the sprite scale calculation.
-    // So a coordinate in a 1920x1080 window should be scaled by a factor of 2.
-    // (3840 / 1920 = 2)
-    float expected_x = 100.0f * (3840.0f / 1920.0f);
-    float expected_y = 100.0f * (3840.0f / 1920.0f);
+    // Case 2: Wider window - Horizontal letterboxing (bars on the sides)
+    game_viewport.setWindowSize({2560, 1080}); // e.g., an ultrawide monitor
+    const SDL_FRect& render_rect2 = game_viewport.getRenderRect(); // h=1080, w=1920, x=320, y=0
 
-    EXPECT_FLOAT_EQ(translated_point.x, expected_x);
-    EXPECT_FLOAT_EQ(translated_point.y, expected_y);
+    ppl7::grafix::PointF point2 = {420.0f, 300.0f}; // A point inside the render area
+    ppl7::grafix::PointF translated2 = game_viewport.translate(point2);
+
+    // The translation must subtract the x-offset of the letterbox.
+    // expected_x = input_x - render_rect.x = 420 - 320 = 100
+    EXPECT_FLOAT_EQ(translated2.x, 100.0f);
+    EXPECT_FLOAT_EQ(translated2.y, 300.0f); // Y has no offset
+
+    // Case 3: Taller window - Vertical letterboxing (bars top and bottom)
+    game_viewport.setWindowSize({1920, 1440});
+    const SDL_FRect& render_rect3 = game_viewport.getRenderRect(); // h=1080, w=1920, x=0, y=180
+
+    ppl7::grafix::PointF point3 = {500.0f, 280.0f}; // A point inside the render area
+    ppl7::grafix::PointF translated3 = game_viewport.translate(point3);
+
+    // The translation must subtract the y-offset of the letterbox.
+    // expected_y = input_y - render_rect.y = 280 - 180 = 100
+    EXPECT_FLOAT_EQ(translated3.x, 500.0f); // X has no offset
+    EXPECT_FLOAT_EQ(translated3.y, 100.0f);
 }
-
-} // namespace

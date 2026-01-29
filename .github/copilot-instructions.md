@@ -1,18 +1,56 @@
 # AI Coding Guide for gd2 / PPL7 / PPLTK
 
-## Current Focus: User Interface Implementation (SDL3 + PPLTK)
-(Context: Jan 14 2026 - User works on UI logic using SDL 3.4+ Hybrid Renderer)
+## Current Focus: Implement a basic editor to create a simple level
+In this first step, an editor is implemented, which will be used to:
+- place information about the outlines and obstacles of a level into a grid. This grid is used internaly by the game mechanics, to simplyfy calculations of physic and collision detection, but is invisible to the player.
+- place actual graphic tiles into the grid, which are visible to the player
+- place additional sprites at any position, which can be outside the level grid
 
-**Strategy: Hybrid GPU/Renderer**
-- **SDL 3.4+** allows creating an `SDL_Renderer` that uses an existing `SDL_GPUDevice`.
-- Use `SDL_CreateRendererWithProperties` with `SDL_PROP_RENDERER_CREATE_GPU_DEVICE_POINTER`.
-- This enables `ppltk` (which likely uses `SDL_Renderer` logic) to draw directly into the same swapchain/window as our manual GPU rendering.
-- **Workflow**:
-  1. Render Game World (Manual GPU API) -> Swapchain/Intermediate.
-  2. Render UI (SDL_Renderer via ppltk) -> Swapchain on top.
-  3. Present.
+The game will use multiple parallax layers, which can be individually selected in the
+editor.
 
-## Previous Focus: 2D Deferred Lighting Roadmap
+A level can be saved and loaded with the editor.
+
+Besides the editor, the actual drawing methods for the level will also be implemented.
+
+
+## Next Focus: Player mechanics and camera handling
+A player character will be added, which can be controlled by keyboard or gamepad.
+
+The basic mechanics of walking, running, jumping and falling will be implemented in this step, also camera handling.
+
+Player mechanics:
+- left/right movement with acceleration and deceleration
+- walking and running speed
+- gravity and falling
+- jumping with jump arc
+- jump height and jump distance
+- climbing ladders
+- sliding on slopes
+- collision detection with the level grid
+
+Advanced jumping mechanics:
+- Coyote time: after leaving a platform, the player can still jump for a short time (e.g. 0.2 seconds)
+- Variable jump height: the longer the jump button is pressed, the higher the jump (up to a maximum)
+- Wall jump: when touching a wall, the player can jump off the wall
+- Double jump: the player can jump a second time while in the air
+- Jump buffering: if the player presses the jump button shortly before landing, the jump will be executed immediately after landing
+
+
+Camera handling:
+- camera follows the player
+- camera has a certain speed, it does not snap directly to the player position
+- dead zone: a rectangle around the player, where the camera does not move when the player moves inside this rectangle
+- camera boundaries: the camera does not move outside the level boundaries
+- when running, the camera should look ahead in the movement direction, to give the player more visibility
+- smooth camera movement: avoid sudden jumps, start slowly, accelerate, decelerate, stop smoothly
+- parallax layers: the camera movement affects the parallax layers differently, creating a depth effect
+- optional: camera shake effect for certain events (e.g. landing, explosions)
+- optional: zoom in/out effect for certain events (e.g. sprinting, aiming)
+- optional: cinematic camera movement for cutscenes or special events
+
+
+## Future Focus: 2D Deferred Lighting Roadmap
 (Context from session: Jan 13 2026 - User wants Global/Spot/Point lights + Shadows + Normal Maps)
 
 **Phase 1: G-Buffer Setup (MRT)**
@@ -76,7 +114,7 @@
 
 ## Project Overview
 **gd2** is a **2D Jump'n'Run game** using **SDL3 GPU API** for advanced rendering (normal maps, parallax scrolling, per-layer blur). It targets **Windows (mingw64/msys), Linux, and FreeBSD** using C++23.
-The engine separates Game Logic (SDL3 GPU) and UI (PPLTK/`SDL_Renderer`).
+The engine separates Game Logic (SDL3 GPU) and UI (PPLTK, using SDL3 GPU).
 
 ## Architecture & Key Files
 
@@ -215,22 +253,19 @@ SDL_PresentGPUWindow(window);
 
 ## Screen Resolution & Scaling
 
-**Avoid fixed-resolution upscaling blur**: Fixed 1920×1080 → screen resolution causes blur on upscaling and pixelation on downscaling. Instead:
-
-**Recommended: Render at actual screen resolution**
-- Render game viewport directly at window size; adjust camera/viewport per resolution.
-- Use viewport clipping and scissor rects (available in GPU API) to letterbox/pillarbox if you need fixed aspect ratio.
-- Performance varies with resolution, but modern GPUs handle this well.
-
-**Alternative: Integer scaling with fixed internal resolution**
-- Render at fixed 1920×1080 (or smaller), then upscale by integer multiples (2×, 3×, etc.) using nearest-neighbor sampling (no filtering).
-- Only works cleanly on screen sizes that are exact multiples of your internal res.
-- Gives crisp pixel-perfect output for retro/sprite-based games.
-- Use a simple fullscreen blit with `SDL_SAMPLERCLAMPTO_EDGE` and no filtering; or write a trivial upscaling quad shader.
-
-**For this project**: Recommend rendering at screen resolution (let viewport/projection matrix handle scaling). Use `SDL_GetWindowSizeInPixels()` to get actual rendering size, build projection matrix accordingly, and update on window resize events. Parallax layers naturally adapt since they're offset in world space.
-
-**Avoid**: 4K → lower res downscaling is overkill; introduces overhead and diminishing returns unless targeting specific high-DPI displays.
+**Strategy: Fixed 4K Internal Rendering (KISS Principle)**
+ 
+To simplify coordinate systems, movement, and asset scaling, the game will render its world to a fixed internal 4K resolution (3840x2160). This provides a single, consistent coordinate space for all game logic.
+ 
+- **Workflow**:
+  1. All game world rendering (sprites, tiles, effects) is done into a dedicated 4K render target. All positions, sizes, and speeds are based on this 4K coordinate system.
+  2. This 4K texture is then scaled down (or up, if the monitor is >4K) to fit the player's actual window size, maintaining a 16:9 aspect ratio.
+  3. Letterboxing or pillarboxing will be used to handle window aspect ratios that are not 16:9. The `GameViewport` class is responsible for calculating the final render rectangle on the screen.
+ 
+- **Rationale**: This "Keep It Simple, Stupid" approach avoids the complexities of resolution-independent rendering logic at the cost of some performance and memory overhead on lower-resolution displays. This is a deliberate trade-off to speed up development. Optimization can be addressed later if it becomes a bottleneck.
+ 
+- **UI Rendering**: The UI (managed by PPLTK) is rendered separately and should use the full native window resolution, on top of the scaled game world.
+ 
 
 ## Asset Resolution Strategy
 

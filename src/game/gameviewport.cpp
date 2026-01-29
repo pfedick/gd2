@@ -85,9 +85,8 @@ const ppl7::grafix::PointF& GameViewport::getGridSize() const
 void GameViewport::translateMouseEvent(ppltk::MouseEvent* event)
 {
     ppltk::MouseState mouse = ppltk::GetWindowManager()->getMouseState();
-    float factor = (float)window_size.width / (float)render_rect.w;
-    mouse.p.x = ((float)(mouse.p.x - render_rect.x) * factor);
-    mouse.p.y = ((float)(mouse.p.y - render_rect.y) * factor);
+    mouse.p.x = mouse.p.x - render_rect.x;
+    mouse.p.y = mouse.p.y - render_rect.y;
     /*
     ppl7::PrintDebugTime("translateMouseEvent, renderrect: %d:%d, %d:%d, mouse: %d:%d\n",
         render_rect.x, render_rect.y, render_rect.w, render_rect.h,
@@ -98,10 +97,9 @@ void GameViewport::translateMouseEvent(ppltk::MouseEvent* event)
 
 ppl7::grafix::PointF GameViewport::translate(const ppl7::grafix::PointF& coords) const
 {
-    float factor = (float)window_size.width / (float)render_rect.w;
     ppl7::grafix::PointF p;
-    p.x = ((float)(coords.x - render_rect.x) * factor);
-    p.y = ((float)(coords.y - render_rect.y) * factor);
+    p.x = coords.x - render_rect.x;
+    p.y = coords.y - render_rect.y;
     /*
     ppl7::PrintDebugTime("translate, renderrect: %d:%d, %d:%d, mouse: %d:%d\n",
         render_rect.x, render_rect.y, render_rect.w, render_rect.h,

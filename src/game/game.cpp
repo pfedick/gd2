@@ -361,6 +361,7 @@ void Game::run()
         // Ensure Depth Buffer matches window size
         int w, h;
         SDL_GetWindowSizeInPixels(sdl_window, &w, &h);
+        game_viewport.setWindowSize(ppl7::grafix::Size(w, h));
         level.resizeRenderBuffer(ppl7::grafix::Size(w, h));
         gpu_batcher.updateMatrices(w, h);
         // createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
