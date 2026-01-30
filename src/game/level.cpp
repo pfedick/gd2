@@ -8,11 +8,12 @@
 RenderState::RenderState()
 {
     cmdbuf = NULL;
-    tex_render_lightmap = NULL;
-    tex_render_layer = NULL;
-    tex_render_normal = NULL;
-    tex_depth_buffer = NULL;
-    tex_blur_temp = NULL;
+    render_target = NULL;
+    render_lightmap = NULL;
+    render_layer = NULL;
+    render_normal = NULL;
+    depth_buffer = NULL;
+    blur_temp = NULL;
     gpu = NULL;
     renderpipelines = NULL;
     batcher = NULL;
@@ -50,11 +51,12 @@ Level::~Level()
 {
     clear();
     if (renderstate.gpu) {
-        if (renderstate.tex_render_layer) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_layer);
-        if (renderstate.tex_render_lightmap) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_lightmap);
-        if (renderstate.tex_blur_temp) renderstate.gpu->destroyGPUTexture(renderstate.tex_blur_temp);
-        if (renderstate.tex_render_normal) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_normal);
-        if (renderstate.tex_depth_buffer) renderstate.gpu->destroyGPUTexture(renderstate.tex_depth_buffer);
+        if (renderstate.render_target) renderstate.gpu->destroyGPUTexture(renderstate.render_target);
+        if (renderstate.render_layer) renderstate.gpu->destroyGPUTexture(renderstate.render_layer);
+        if (renderstate.render_lightmap) renderstate.gpu->destroyGPUTexture(renderstate.render_lightmap);
+        if (renderstate.blur_temp) renderstate.gpu->destroyGPUTexture(renderstate.blur_temp);
+        if (renderstate.render_normal) renderstate.gpu->destroyGPUTexture(renderstate.render_normal);
+        if (renderstate.depth_buffer) renderstate.gpu->destroyGPUTexture(renderstate.depth_buffer);
     }
 }
 
@@ -178,14 +180,16 @@ void Level::resizeRenderBuffer(const ppl7::grafix::Size& size)
     if (!renderstate.gpu) return;
     if (size != render_target_size) {
         ppl7::PrintDebug("Resizing Level Render Targets to %dx%d\n", size.width, size.height);
-        if (renderstate.tex_render_layer) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_layer);
-        renderstate.tex_render_layer = renderstate.gpu->createRenderTarget(size.width, size.height);
-        if (renderstate.tex_render_lightmap) renderstate.gpu->destroyGPUTexture(renderstate.tex_render_lightmap);
-        renderstate.tex_render_lightmap = renderstate.gpu->createRenderTarget(size.width, size.height);
-        if (renderstate.tex_blur_temp) renderstate.gpu->destroyGPUTexture(renderstate.tex_blur_temp);
-        renderstate.tex_blur_temp = renderstate.gpu->createRenderTarget(size.width, size.height);
-        if (renderstate.tex_depth_buffer) renderstate.gpu->destroyGPUTexture(renderstate.tex_depth_buffer);
-        renderstate.tex_depth_buffer = renderstate.gpu->createDepthBuffer(size.width, size.height);
+        if (renderstate.render_target) renderstate.gpu->destroyGPUTexture(renderstate.render_target);
+        renderstate.render_target = renderstate.gpu->createRenderTarget(size.width, size.height);
+        if (renderstate.render_layer) renderstate.gpu->destroyGPUTexture(renderstate.render_layer);
+        renderstate.render_layer = renderstate.gpu->createRenderTarget(size.width, size.height);
+        if (renderstate.render_lightmap) renderstate.gpu->destroyGPUTexture(renderstate.render_lightmap);
+        renderstate.render_lightmap = renderstate.gpu->createRenderTarget(size.width, size.height);
+        if (renderstate.blur_temp) renderstate.gpu->destroyGPUTexture(renderstate.blur_temp);
+        renderstate.blur_temp = renderstate.gpu->createRenderTarget(size.width, size.height);
+        if (renderstate.depth_buffer) renderstate.gpu->destroyGPUTexture(renderstate.depth_buffer);
+        renderstate.depth_buffer = renderstate.gpu->createDepthBuffer(size.width, size.height);
         render_target_size = size;
     }
 }
@@ -647,19 +651,22 @@ void Level::draw(SDL_Renderer* renderer, const ppl7::grafix::Point& worldcoords,
 void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
                  SDL_GPUTexture* swapchainTexture,
                  const ppl7::grafix::PointF& worldcoords,
-                 const ppl7::grafix::Rect& viewport)
+                 const GameViewport& viewport)
 {
     renderstate.cmdbuf = cmdbuf;
-    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].draw(renderstate, swapchainTexture, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].draw(renderstate, swapchainTexture, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].draw(renderstate, swapchainTexture, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].draw(renderstate, swapchainTexture, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].draw(renderstate, swapchainTexture, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].draw(renderstate, swapchainTexture, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].draw(renderstate, swapchainTexture, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].draw(renderstate, swapchainTexture, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(renderstate, swapchainTexture, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(renderstate, swapchainTexture, worldcoords, viewport);
+
+    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+
+    // Finally blit the complete render target to the swapchain texture
 }
 
 void Level::updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport)

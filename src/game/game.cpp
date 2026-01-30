@@ -33,13 +33,8 @@ Game::Game(GPUContext& gpu)
     world_widget = NULL;
     last_frame_time = 0.0f;
     frame_rate_compensation = 1.0f;
-
-    /*
-    render_target_layer = NULL;
-    render_target_tmp1 = NULL;
-    render_target_tmp2 = NULL;
-    depthTexture = NULL;
-    */
+    game_viewport.setRenderSize(ppl7::grafix::Size(3840, 2160));
+    game_viewport.setAspectRatio(16.0f / 9.0f);
     player = new Player(this);
 }
 
@@ -49,24 +44,6 @@ Game::~Game()
         delete player;
         player = NULL;
     }
-    /*
-    if (render_target_layer) {
-        gpu.destroyGPUTexture(render_target_layer);
-        render_target_layer = NULL;
-    }
-    if (render_target_tmp1) {
-        gpu.destroyGPUTexture(render_target_tmp1);
-        render_target_tmp1 = NULL;
-    }
-    if (render_target_tmp2) {
-        gpu.destroyGPUTexture(render_target_tmp2);
-        render_target_tmp2 = NULL;
-    }
-    if (depthTexture) {
-        gpu.destroyGPUTexture(depthTexture);
-        depthTexture = NULL;
-    }
-    */
     deleteUi();
 }
 
@@ -362,8 +339,8 @@ void Game::run()
         int w, h;
         SDL_GetWindowSizeInPixels(sdl_window, &w, &h);
         game_viewport.setWindowSize(ppl7::grafix::Size(w, h));
-        level.resizeRenderBuffer(ppl7::grafix::Size(w, h));
-        gpu_batcher.updateMatrices(w, h);
+        level.resizeRenderBuffer(game_viewport.getRenderSize());
+        gpu_batcher.updateMatrices(game_viewport.getRenderSize());
         // createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
 
         fps.update();

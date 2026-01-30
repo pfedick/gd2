@@ -11,6 +11,7 @@
 #include "tiles.h"
 #include "tiletypes.h"
 #include "objectsystem.h"
+#include "gameviewport.h"
 
 class ModifiableParameter
 {
@@ -89,11 +90,12 @@ class RenderState
 {
 public:
     SDL_GPUCommandBuffer* cmdbuf;
-    SDL_GPUTexture* tex_render_lightmap;
-    SDL_GPUTexture* tex_render_layer;
-    SDL_GPUTexture* tex_render_normal;
-    SDL_GPUTexture* tex_depth_buffer;
-    SDL_GPUTexture* tex_blur_temp;
+    SDL_GPUTexture* render_target;
+    SDL_GPUTexture* render_lightmap;
+    SDL_GPUTexture* render_layer;
+    SDL_GPUTexture* render_normal;
+    SDL_GPUTexture* depth_buffer;
+    SDL_GPUTexture* blur_temp;
     GPUContext* gpu;
     RenderPipelines* renderpipelines;
     GPUBatcher* batcher;
@@ -108,7 +110,7 @@ private:
     void drawTileGrid(RenderState& renderstate,
                       SDL_GPUTexture* target_texture,
                       const ppl7::grafix::PointF& worldcoords,
-                      const ppl7::grafix::Rect& viewport);
+                      const GameViewport& viewport);
 
 public:
     float blur_factor = 0.0f;
@@ -141,7 +143,7 @@ public:
     void draw(RenderState& renderstate,
               SDL_GPUTexture* swapchainTexture,
               const ppl7::grafix::PointF& worldcoords,
-              const ppl7::grafix::Rect& viewport);
+              const GameViewport& viewport);
 };
 
 class Level
@@ -233,7 +235,7 @@ public:
     void draw(SDL_GPUCommandBuffer* cmdbuf,
               SDL_GPUTexture* swapchainTexture,
               const ppl7::grafix::PointF& worldcoords,
-              const ppl7::grafix::Rect& viewport);
+              const GameViewport& viewport);
 
     void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport);
     void setEditLayer(ParallaxLayerId layer);

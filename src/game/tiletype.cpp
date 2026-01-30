@@ -2,25 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "gameviewport.h"
+#include "constants.h"
 
 TileTypePlane::TileTypePlane()
 {
     tiletypes = NULL;
     tilematrix = NULL;
     width = height = 0;
-    tile_width = 32.0f;
-    tile_height = 32.0f;
 }
 
 TileTypePlane::~TileTypePlane()
 {
     clear();
-}
-
-void TileTypePlane::setTileSizes(float tile_width, float tile_height)
-{
-    this->tile_width = tile_width;
-    this->tile_height = tile_height;
 }
 
 ppl7::grafix::Size TileTypePlane::size() const
@@ -65,8 +59,8 @@ TileType::Type TileTypePlane::getType(const ppl7::grafix::Point& player) const
 {
     // TODO: Wie wird das aussehen, wenn die Tile-Größe nicht 32x32 ist,
     // weil der Screen-Scale anders ist?
-    int tx = player.x / tile_width;
-    int ty = player.y / tile_height;
+    int tx = player.x / (float)TILE_WIDTH;
+    int ty = player.y / (float)TILE_HEIGHT;
     return getType(tx, ty);
 }
 
@@ -95,90 +89,43 @@ void TileTypePlane::setTileTypesSprites(SpriteTexture* sprites)
     this->tiletypes = sprites;
 }
 
-void TileTypePlane::draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const
+/*!\brief Draws the tile type plane using the provided GPUBatcher and GameViewport.
+ *
+ * This function calculates which tiles are visible within the current viewport
+ * based on the world coordinates and draws only those tiles using the GPUBatcher.
+ *
+ * \param batcher The GPUBatcher used for rendering the tiles.
+ * \param viewport The GameViewport that defines the visible area.
+ * \param worldcoords The world coordinates representing the top-left corner of the viewport.
+ */
+void TileTypePlane::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords) const
 {
     if (!tiletypes) return;
+    const ppl7::grafix::Size& render_target_size = viewport.getRenderSize();
 
-    const float TILE_WORLD_SIZE = 32.0f;  // Basisgröße eines Tiles in Welt-Koordinaten
-    const float SPRITE_BASE_SIZE = 64.0f; // Basisgröße der Sprite-Grafik
+    int tiles_num_x = render_target_size.width / TILE_WIDTH + 2;
+    int tiles_num_y = render_target_size.height / TILE_HEIGHT + 2;
 
-    // Effektive Kamera-Position und Skalierung für DIESE Ebene berechnen
-    // speed_factor ist in diesem Fall immer 1.0f
-    float effective_cam_x = worldcoords.x;
-    float effective_cam_y = worldcoords.y;
+    // Start-Index in der Matrix berechnen
+    int start_x = static_cast<int>(worldcoords.x / TILE_WIDTH);
+    int start_y = static_cast<int>(worldcoords.y / TILE_HEIGHT);
 
-    float base_scale = viewport.width() / 1920.0f;
-    float effective_scale = base_scale;
+    // Den Pixel-Versatz berechnen (Modulo für Floats)
+    float offset_x = worldcoords.x - (start_x * TILE_WIDTH);
+    float offset_y = worldcoords.y - (start_y * TILE_HEIGHT);
 
-    // B. Culling: Sichtbare Tile-Indizes berechnen
-    // ============================================
+    float x1 = viewport.x1 - offset_x;
+    float y1 = viewport.y1 - offset_y;
 
-    // Wie viele Welt-Einheiten sind auf dem aktuellen Viewport sichtbar?
-    float visible_world_width = viewport.width() / effective_scale;
-    float visible_world_height = viewport.height() / effective_scale;
-
-    // Start- und End-Indizes für die Schleifen
-    int start_tile_x = static_cast<int>(floor(effective_cam_x / TILE_WORLD_SIZE));
-    int end_tile_x = static_cast<int>(ceil((effective_cam_x + visible_world_width) / TILE_WORLD_SIZE));
-
-    int start_tile_y = static_cast<int>(floor(effective_cam_y / TILE_WORLD_SIZE));
-    int end_tile_y = static_cast<int>(ceil((effective_cam_y + visible_world_height) / TILE_WORLD_SIZE));
-
-    // C. Rendern: Schleife über die sichtbaren Tiles
-    // =============================================
-
-    for (int y = start_tile_y; y < end_tile_y; y++) {
-        for (int x = start_tile_x; x < end_tile_x; x++) {
-
-            // Falls die Map "kachelt" (unendlich scrollt), hier den Modulo anwenden:
-            // int wrapped_x = (x % map_width_in_tiles + map_width_in_tiles) % map_width_in_tiles;
-            // int wrapped_y = (y % map_height_in_tiles + map_height_in_tiles) % map_height_in_tiles;
-            // Tile& tile = layer.tiles.get(wrapped_x, wrapped_y);
-            TileType::Type type = getType(x, y);
-            if (type == 0) continue;
-            //
-
-            // --- Berechne finale Position und Skalierung für den GPUBatcher ---
-
-            // Welt-Position des aktuellen Tiles
-            float tile_world_x = x * TILE_WORLD_SIZE;
-            float tile_world_y = y * TILE_WORLD_SIZE;
-
-            // Bildschirm-Position (linke obere Ecke des Tiles)
-            float screen_x = (tile_world_x - effective_cam_x) * effective_scale;
-            float screen_y = (tile_world_y - effective_cam_y) * effective_scale;
-
-            // Skalierungsfaktor für den Sprite. Wir wollen von 64px auf die finale Größe auf dem Schirm.
-            float final_tile_size_on_screen = TILE_WORLD_SIZE * effective_scale;
-            float sprite_scale_for_batcher = final_tile_size_on_screen / SPRITE_BASE_SIZE; // z.B. 32/64 = 0.5
-
-            batcher.addSprite(*tiletypes, type, screen_x, screen_y, sprite_scale_for_batcher, sprite_scale_for_batcher);
-        }
-    }
-}
-/*
-void TileTypePlane::draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const
-{
-    if (!tiletypes) return;
-    int tiles_width = viewport.width() / tile_width + 2;
-    int tiles_height = viewport.height() / tile_height + 2;
-    int offset_x = worldcoords.x % tile_width;
-    int offset_y = worldcoords.y % tile_height;
-    int start_x = worldcoords.x / tile_width;
-    int start_y = worldcoords.y / tile_height;
-    int x1 = viewport.x1 - offset_x;
-    int y1 = viewport.y1 - offset_y;
-
-    for (int y = 0; y < tiles_height; y++) {
-        for (int x = 0; x < tiles_width; x++) {
+    for (int y = 0; y < tiles_num_y; y++) {
+        for (int x = 0; x < tiles_num_x; x++) {
             TileType::Type type = getType(x + start_x, y + start_y);
             if (type > 0) {
-                batcher.addSprite(*tiletypes, type, x1 + x * tile_width, y1 + y * tile_height);
+                batcher.addSprite(*tiletypes, type, x1 + x * TILE_WIDTH, y1 + y * TILE_HEIGHT);
             }
         }
     }
 }
-    */
 
 void TileTypePlane::save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const
 {

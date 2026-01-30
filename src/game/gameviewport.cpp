@@ -3,6 +3,39 @@
 #include "game.h"
 #include "constants.h"
 
+/*!\class GameViewport
+ * \brief Spiel-Viewport Verwaltung
+ *\header \#include "game.h"
+ *\desc
+ * Die Klasse GameViewport verwaltet den Viewport des Spiels, also den Bereich des
+ * Fensters, in dem das Spiel gerendert wird. Dabei werden Größenanpassungen
+ * und das Seitenverhältnis berücksichtigt.
+ *
+ * Ferner ermöglicht die Klasse die Übersetzung von Koordinaten zwischen
+ * Fenster- und Spielwelt-Koordinatensystemen.
+ *
+ * Die Klasse erbt von ppl7::grafix::Rect und erweitert diese um spezifische
+ * Funktionen für die Spielansicht. ppl7::grafix::Rect gibt die Größe der Offscreen-Renderfläche
+ * an (z.B. 0,0,3840,2160)
+ *
+ * Die Default-Konstruktor initialisiert den Viewport mit einer Standardgröße
+ * von 1920x1080 Pixeln und einem Seitenverhältnis von 16:9.
+ *
+ * Beispiel:
+ * \code{.cpp}
+ * GameViewport viewport;
+ * viewport.setWindowSize(ppl7::grafix::Size(1920, 1080));
+ * viewport.setAspectRatio(16.0f / 9.0f);
+ * SDL_FRect renderRect;
+ * viewport.getRenderRect(renderRect);
+ * \endcode
+ */
+
+/*!\brief Konstruktor der Klasse
+ *
+ * \desc
+ * Der Konstruktor der Klasse initialisiert den Viewport mit Standardwerten.
+ */
 GameViewport::GameViewport()
 {
     menu_offset_x = 0;
@@ -11,12 +44,19 @@ GameViewport::GameViewport()
     render_rect.y = 0;
     render_rect.w = 1920;
     render_rect.h = 1080;
-    setRect((int)render_rect.x, (int)render_rect.y, (int)render_rect.w, (int)render_rect.h);
+    setRect(0, 0, 1920, 1080);
     sprite_scale_factor = 1.0f;
     grid_size.x = TILE_WIDTH;
     grid_size.y = TILE_HEIGHT;
+    render_size = ppl7::grafix::Size(1920, 1080);
 }
 
+/*!\brief Viewport aktualisieren
+ *
+ * \desc
+ * Diese private Methode aktualisiert die internen Parameter des Viewports
+ * basierend auf der aktuellen Fenstergröße, Rendergröße und dem Seitenverhältnis.
+ */
 void GameViewport::update()
 {
     int w = window_size.width;
@@ -39,22 +79,53 @@ void GameViewport::update()
     } else {
         render_rect.y = 0;
     }
-    sprite_scale_factor = (float)render_rect.w / 3840.0f;
-    grid_size.x = (float)(TILE_WIDTH * 2) * sprite_scale_factor;
-    grid_size.y = (float)(TILE_HEIGHT * 2) * sprite_scale_factor;
-
     setRect((int)render_rect.x, (int)render_rect.y, (int)render_rect.w, (int)render_rect.h);
 
     // if (menu_offset_x) render_rect.x+=(menu_offset_x / 2);
     // ppl7::PrintDebugTime("vp width=%d, height=%d\n", render_rect.w, render_rect.h);
 }
 
+/*!\brief Fenstergröße setzen
+ *
+ * \param size Neue Fenstergröße
+ *
+ * \desc
+ * Diese Methode setzt die Größe des Fensters und aktualisiert den Viewport entsprechend.
+ */
 void GameViewport::setWindowSize(const ppl7::grafix::Size& size)
 {
     window_size = size;
     update();
 }
 
+/*!\brief Rendergröße setzen
+ *
+ * \param size Neue Rendergröße
+ *
+ * \desc
+ * Diese Methode setzt die Größe des Renderziels und aktualisiert den Viewport entsprechend.
+ */
+void GameViewport::setRenderSize(const ppl7::grafix::Size& size)
+{
+    render_size = size;
+    setRect(0, 0, size.width, size.height);
+    sprite_scale_factor = (float)render_size.width / 3840.0f;
+    grid_size.x = (float)(TILE_WIDTH * 2) * sprite_scale_factor;
+    grid_size.y = (float)(TILE_HEIGHT * 2) * sprite_scale_factor;
+}
+
+const ppl7::grafix::Size& GameViewport::getRenderSize() const
+{
+    return render_size;
+}
+
+/*!\brief Seitenverhältnis setzen
+ *
+ * \param aspect_ratio Neues Seitenverhältnis (Breite/Höhe)
+ *
+ * \desc
+ * Diese Methode setzt das Seitenverhältnis des Viewports und aktualisiert die internen Parameter.
+ */
 void GameViewport::setAspectRatio(float aspect_ratio)
 {
     this->aspect_ratio = aspect_ratio;
@@ -65,6 +136,11 @@ void GameViewport::setMenuOffset(int x)
 {
     menu_offset_x = x;
     update();
+}
+
+int GameViewport::getMenuOffset() const
+{
+    return menu_offset_x;
 }
 
 const ppl7::grafix::Size& GameViewport::getWindowSize() const

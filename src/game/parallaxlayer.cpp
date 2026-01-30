@@ -49,7 +49,7 @@ void ParallaxLayer::showGrid(bool enable)
 void ParallaxLayer::draw(RenderState& renderstate,
                          SDL_GPUTexture* swapchainTexture,
                          const ppl7::grafix::PointF& worldcoords,
-                         const ppl7::grafix::Rect& viewport)
+                         const GameViewport& viewport)
 {
     if (!isVisible) return;
     ppl7::grafix::PointF parallax_worldcoords = worldcoords * speed_factor * size_factor;
@@ -73,7 +73,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
 
     SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
-    depthTargetInfo.texture = renderstate.tex_depth_buffer;
+    depthTargetInfo.texture = renderstate.depth_buffer;
     depthTargetInfo.clear_depth = 1.0f;
     depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
@@ -93,7 +93,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
 void ParallaxLayer::drawTileGrid(RenderState& renderstate,
                                  SDL_GPUTexture* target_texture,
                                  const ppl7::grafix::PointF& worldcoords,
-                                 const ppl7::grafix::Rect& viewport)
+                                 const GameViewport& viewport)
 {
     ppl7::grafix::Color grid_color(255, 255, 255, 64);
     float tile_width = 32 * size_factor;

@@ -240,6 +240,7 @@ public:
     ~GPUBatcher();
     void init(GPUContext* gpu);
     void updateMatrices(int screenWidth, int screenHeight);
+    void updateMatrices(const ppl7::grafix::Size& size);
 
     void clearQueues(); // temporary?
     void startRenderPass();

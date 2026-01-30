@@ -782,6 +782,11 @@ void GPUBatcher::uploadStaticQuadData()
     SDL_WaitForGPUIdle(gpu->gpu);
 }
 
+void GPUBatcher::updateMatrices(const ppl7::grafix::Size& size)
+{
+    updateMatrices(size.width, size.height);
+}
+
 void GPUBatcher::updateMatrices(int screenWidth, int screenHeight)
 {
     if (!gpu || !gpu->gpu) return;

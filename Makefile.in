@@ -213,17 +213,17 @@ compile/animation.o: src/game/animation.cpp Makefile include/animation.h
 	$(CXX) -o compile/animation.o -c src/game/animation.cpp $(CFLAGS)
 
 compile/game.o: src/game/game.cpp Makefile include/game.h include/version.h \
-	include/renderpipelines.h include/translate.h
+	include/renderpipelines.h include/translate.h include/gameviewport.h
 	- @mkdir -p compile
 	$(CXX) -o compile/game.o -c src/game/game.cpp $(CFLAGS)
 
 compile/game_editor.o: src/game/game_editor.cpp Makefile include/game.h include/version.h \
 	include/renderpipelines.h include/translate.h include/ui/tileselection.h \
-	include/ui/statusbar.h include/ui/menue.h
+	include/ui/statusbar.h include/ui/menue.h include/gameviewport.h
 	- @mkdir -p compile
 	$(CXX) -o compile/game_editor.o -c src/game/game_editor.cpp $(CFLAGS)
 
-compile/gameviewport.o: src/game/gameviewport.cpp Makefile include/game.h
+compile/gameviewport.o: src/game/gameviewport.cpp Makefile include/gameviewport.h
 	- @mkdir -p compile
 	$(CXX) -o compile/gameviewport.o -c src/game/gameviewport.cpp $(CFLAGS)
 
@@ -235,11 +235,13 @@ compile/config.o: src/game/config.cpp Makefile include/game.h
 	- @mkdir -p compile
 	$(CXX) -o compile/config.o -c src/game/config.cpp $(CFLAGS)
 
-compile/level.o: src/game/level.cpp Makefile include/game.h include/level.h
+compile/level.o: src/game/level.cpp Makefile include/game.h include/level.h \
+	include/gameviewport.h
 	- @mkdir -p compile
 	$(CXX) -o compile/level.o -c src/game/level.cpp $(CFLAGS)
 
-compile/parallaxlayer.o: src/game/parallaxlayer.cpp Makefile include/game.h include/level.h
+compile/parallaxlayer.o: src/game/parallaxlayer.cpp Makefile include/game.h include/level.h \
+	include/gameviewport.h
 	- @mkdir -p compile
 	$(CXX) -o compile/parallaxlayer.o -c src/game/parallaxlayer.cpp $(CFLAGS)
 
@@ -247,7 +249,8 @@ compile/physic.o: src/game/physic.cpp Makefile include/physic.h
 	- @mkdir -p compile
 	$(CXX) -o compile/physic.o -c src/game/physic.cpp $(CFLAGS)
 
-compile/objectsystem.o: src/game/objectsystem.cpp Makefile include/objectsystem.h
+compile/objectsystem.o: src/game/objectsystem.cpp Makefile include/objectsystem.h \
+	include/gameviewport.h
 	- @mkdir -p compile
 	$(CXX) -o compile/objectsystem.o -c src/game/objectsystem.cpp $(CFLAGS)
 
@@ -268,7 +271,8 @@ compile/particle.o: src/game/particle.cpp Makefile include/particle.h
 	- @mkdir -p compile
 	$(CXX) -o compile/particle.o -c src/game/particle.cpp $(CFLAGS)
 
-compile/particlesystem.o: src/game/particlesystem.cpp Makefile include/particle.h
+compile/particlesystem.o: src/game/particlesystem.cpp Makefile include/particle.h \
+	include/gameviewport.h
 	- @mkdir -p compile
 	$(CXX) -o compile/particlesystem.o -c src/game/particlesystem.cpp $(CFLAGS)
 
@@ -280,7 +284,8 @@ compile/player.o: src/game/player.cpp Makefile include/physic.h include/player.h
 	- @mkdir -p compile
 	$(CXX) -o compile/player.o -c src/game/player.cpp $(CFLAGS)
 
-compile/spritesystem.o: src/game/spritesystem.cpp Makefile include/game.h include/spritesystem.h
+compile/spritesystem.o: src/game/spritesystem.cpp Makefile include/game.h include/spritesystem.h \
+	include/gameviewport.h
 	- @mkdir -p compile
 	$(CXX) -o compile/spritesystem.o -c src/game/spritesystem.cpp $(CFLAGS)
 
