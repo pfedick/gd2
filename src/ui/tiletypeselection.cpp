@@ -13,6 +13,11 @@ TileTypeSelection::TileTypeSelection(int x, int y, int width, int height, Game* 
     this->addChild(tiletypesframe);
 }
 
+ppl7::String TileTypeSelection::widgetType() const
+{
+    return "TileTypeSelection";
+}
+
 void TileTypeSelection::setTileType(int nr)
 {
     tiletypesframe->setSelectedTile(nr);

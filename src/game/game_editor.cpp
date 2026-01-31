@@ -105,8 +105,8 @@ void GameEditor::showSpriteSelection()
 void GameEditor::handleMouseDrawInWorld(const ppltk::MouseState& mouse)
 {
     // ppl7::PrintDebug("GameEditor::handleMouseDrawInWorld\n");
-    //  const bool* state = SDL_GetKeyboardState(NULL);
-    //   if (state[SDL_SCANCODE_LSHIFT]) return;
+    //   const bool* state = SDL_GetKeyboardState(NULL);
+    //    if (state[SDL_SCANCODE_LSHIFT]) return;
 
     if (tiletype_selection) {
 

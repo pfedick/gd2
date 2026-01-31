@@ -11,6 +11,11 @@ MainMenue::MainMenue(int x, int y, int width, int height, Game* game)
     debug_submenu = NULL;
 }
 
+ppl7::String MainMenue::widgetType() const
+{
+    return "MainMenue";
+}
+
 void MainMenue::resize(int x, int y, int width, int height)
 {
     this->setPos(x, y);

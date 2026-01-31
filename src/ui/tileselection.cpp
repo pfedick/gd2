@@ -37,6 +37,11 @@ TilesSelection::TilesSelection(int x, int y, int width, int height, Game* game)
     tilesframe->setColor(colorframe->color());
 }
 
+ppl7::String TilesSelection::widgetType() const
+{
+    return "TilesSelection";
+}
+
 void TilesSelection::setSelectedTile(int nr)
 {
     tilesframe->setSelectedTile(nr);

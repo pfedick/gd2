@@ -22,6 +22,11 @@ TilesFrame::TilesFrame(int x, int y, int width, int height, Game* game)
     this->addChild(scrollbar);
 }
 
+ppl7::String TilesFrame::widgetType() const
+{
+    return "TilesFrame";
+}
+
 void TilesFrame::setSprites(SpriteTexture* tiles)
 {
     this->tiles = tiles;

@@ -19,6 +19,7 @@ private:
 
 public:
     TilesFrame(int x, int y, int width, int height, Game* game);
+    ppl7::String widgetType() const;
     void paint(ppl7::grafix::Drawable& draw) override;
     void mouseDownEvent(ppltk::MouseEvent* event) override;
     void mouseMoveEvent(ppltk::MouseEvent* event) override;
@@ -57,7 +58,7 @@ private:
 
 public:
     TilesSelection(int x, int y, int width, int height, Game* game);
-
+    ppl7::String widgetType() const;
     // virtual void paint(Drawable &draw);
 
     void setSelectedTile(int nr);

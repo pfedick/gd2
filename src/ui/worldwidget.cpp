@@ -141,6 +141,7 @@ WorldWidget::WorldWidget()
     : Widget::Widget()
 {
     setClientOffset(0, 0, 0, 0);
+
     stats_health = new StatsFrame(0, 0, 400, 70, translate("Health:"));
     stats_lifes = new StatsFrame(0, 0, 300, 70, translate("Lifes:"));
     stats_points = new StatsFrame(0, 0, 400, 70, translate("Points:"));

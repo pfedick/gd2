@@ -297,6 +297,7 @@ void Game::showUi(bool enable)
 
 void Game::run()
 {
+    this->printChildsTree();
     resizeEvent(NULL);
     world_widget->setVisible(true);
     world_widget->setEnabled(true);
@@ -673,7 +674,7 @@ void Game::mouseDownEvent(ppltk::MouseEvent* event)
 {
     // ppl7::PrintDebugTime("Game::mouseDownEvent\n");
     if (event->widget() == world_widget) {
-        // ppl7::PrintDebugTime("Game::mouseDownEvent\n");
+        ppl7::PrintDebugTime("Game::mouseDownEvent\n");
         wm->setKeyboardFocus(world_widget);
         game_viewport.translateMouseEvent(event);
         if (editor.sprite_selection != NULL) {
@@ -687,6 +688,8 @@ void Game::mouseDownEvent(ppltk::MouseEvent* event)
         } else if (editor.lights_selection != NULL) {
             // mouseDownEventOnLight(event);
         }
+    } else {
+        ppl7::PrintDebugTime("Game::mouseDownEvent outside world_widget: %s\n", (const char*)event->widget()->widgetType());
     }
 }
 

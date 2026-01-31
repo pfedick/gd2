@@ -113,6 +113,7 @@ public:
     bool visibility_hud;
 
     MainMenue(int x, int y, int width, int height, Game* game);
+    ppl7::String widgetType() const;
 
     void resize(int x, int y, int width, int height);
 

@@ -16,6 +16,7 @@ private:
 
 public:
     TileTypeSelection(int x, int y, int width, int height, Game* game, SpriteTexture* tiletypes);
+    ppl7::String widgetType() const override;
 
     void setTileType(int nr);
     int tileType() const;
