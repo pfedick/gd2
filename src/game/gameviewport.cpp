@@ -44,7 +44,6 @@ GameViewport::GameViewport()
     render_rect.y = 0;
     render_rect.w = 1920;
     render_rect.h = 1080;
-    setRect(0, 0, 1920, 1080);
     sprite_scale_factor = 1.0f;
     grid_size.x = TILE_WIDTH;
     grid_size.y = TILE_HEIGHT;
@@ -79,10 +78,10 @@ void GameViewport::update()
     } else {
         render_rect.y = 0;
     }
-    setRect((int)render_rect.x, (int)render_rect.y, (int)render_rect.w, (int)render_rect.h);
-
-    // if (menu_offset_x) render_rect.x+=(menu_offset_x / 2);
-    // ppl7::PrintDebugTime("vp width=%d, height=%d\n", render_rect.w, render_rect.h);
+    /*
+    ppl7::PrintDebugTime("GameViewport::update: WindowSize=%d:%d, RenderRect=%0.1f:%0.1f,%0.1f:%0.1f\n", window_size.width,
+                         window_size.height, render_rect.x, render_rect.y, render_rect.w, render_rect.h);
+    */
 }
 
 /*!\brief Fenstergröße setzen
@@ -108,10 +107,9 @@ void GameViewport::setWindowSize(const ppl7::grafix::Size& size)
 void GameViewport::setRenderSize(const ppl7::grafix::Size& size)
 {
     render_size = size;
-    setRect(0, 0, size.width, size.height);
     sprite_scale_factor = (float)render_size.width / 3840.0f;
-    grid_size.x = (float)(TILE_WIDTH * 2) * sprite_scale_factor;
-    grid_size.y = (float)(TILE_HEIGHT * 2) * sprite_scale_factor;
+    grid_size.x = (float)(TILE_WIDTH)*sprite_scale_factor;
+    grid_size.y = (float)(TILE_HEIGHT)*sprite_scale_factor;
 }
 
 const ppl7::grafix::Size& GameViewport::getRenderSize() const
@@ -160,27 +158,25 @@ const ppl7::grafix::PointF& GameViewport::getGridSize() const
 
 void GameViewport::translateMouseEvent(ppltk::MouseEvent* event)
 {
-    ppltk::MouseState mouse = ppltk::GetWindowManager()->getMouseState();
-    mouse.p.x = mouse.p.x - render_rect.x;
-    mouse.p.y = mouse.p.y - render_rect.y;
-    /*
-    ppl7::PrintDebugTime("translateMouseEvent, renderrect: %d:%d, %d:%d, mouse: %d:%d\n",
-        render_rect.x, render_rect.y, render_rect.w, render_rect.h,
-        mouse.p.x, mouse.p.y);
-    */
-    event->p = mouse.p;
+    event->p = translate(event->p);
 }
 
 ppl7::grafix::PointF GameViewport::translate(const ppl7::grafix::PointF& coords) const
 {
     ppl7::grafix::PointF p;
-    p.x = coords.x - render_rect.x;
-    p.y = coords.y - render_rect.y;
-    /*
-    ppl7::PrintDebugTime("translate, renderrect: %d:%d, %d:%d, mouse: %d:%d\n",
-        render_rect.x, render_rect.y, render_rect.w, render_rect.h,
-        p.x, p.y);
-    */
+
+    float scale_x = render_size.width / render_rect.w;
+    float scale_y = render_size.height / render_rect.h;
+
+    // ppl7::PrintDebug("scale_x=%0.3f, scale_y=%0.3f\n", scale_x, scale_y);
+
+    p.x = (coords.x - render_rect.x) * scale_x;
+    p.y = (coords.y - render_rect.y) * scale_y;
+
+    // ppl7::PrintDebug("translate, renderrect: %0.1f:%0.1f, %0.1f:%0.1f, mouse: %01.f:%0.1f\n", render_rect.x, render_rect.y,
+    // render_rect.w,
+    //                  render_rect.h, p.x, p.y);
+
     return p;
 }
 
@@ -195,4 +191,31 @@ void GameViewport::getRenderRect(SDL_FRect& rect) const
 const SDL_FRect& GameViewport::getRenderRect() const
 {
     return render_rect;
+}
+
+int GameViewport::width() const
+{
+    return render_size.width;
+}
+
+int GameViewport::height() const
+{
+    return render_size.height;
+}
+
+float GameViewport::scaledTileWidth() const
+{
+    return TILE_WIDTH * sprite_scale_factor;
+}
+float GameViewport::scaledTileHeight() const
+{
+    return TILE_HEIGHT * sprite_scale_factor;
+}
+float GameViewport::tileWidth() const
+{
+    return TILE_WIDTH;
+}
+float GameViewport::tileHeight() const
+{
+    return TILE_HEIGHT;
 }

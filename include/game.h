@@ -217,7 +217,7 @@ private:
     uint64_t frame_count = 0;
     double time_accumulator = 0.0f;
 
-    ppl7::grafix::Point WorldMoveStart;
+    ppl7::grafix::PointF WorldMoveStart;
     bool worldIsMoving;
 
     WorldWidget* world_widget;
@@ -263,6 +263,7 @@ public:
     void mouseWheelEvent(ppltk::MouseEvent* event);
     void keyDownEvent(ppltk::KeyEvent* event);
     void mouseMoveEvent(ppltk::MouseEvent* event);
+    void resizeEvent(ppltk::ResizeEvent* event);
 };
 
 Game& GetGame();

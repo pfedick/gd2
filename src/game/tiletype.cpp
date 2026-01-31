@@ -38,8 +38,14 @@ void TileTypePlane::create(int width, int height)
     tilematrix = (TileType::Type*)calloc(1, sizeof(TileType::Type) * (width + 1) * (height + 1));
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            tilematrix[y * width + x] = TileType::Type::NonBlocking;
+            tilematrix[y * width + x] = TileType::Type::Blocking;
         }
+    }
+
+    for (int i = 0; i < 10000; i++) {
+        int tx = rand() % width;
+        int ty = rand() % height;
+        tilematrix[ty * width + tx] = (TileType::Type)(rand() % ((int)TileType::Type::MaxType - 1) + 1);
     }
 }
 
@@ -98,30 +104,32 @@ void TileTypePlane::setTileTypesSprites(SpriteTexture* sprites)
  * \param viewport The GameViewport that defines the visible area.
  * \param worldcoords The world coordinates representing the top-left corner of the viewport.
  */
-void TileTypePlane::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords) const
+void TileTypePlane::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const
 {
     if (!tiletypes) return;
     const ppl7::grafix::Size& render_target_size = viewport.getRenderSize();
+    float scaled_tile_width = TILE_WIDTH * scale;
+    float scaled_tile_height = TILE_HEIGHT * scale;
 
-    int tiles_num_x = render_target_size.width / TILE_WIDTH + 2;
-    int tiles_num_y = render_target_size.height / TILE_HEIGHT + 2;
+    int tiles_num_x = render_target_size.width / scaled_tile_width + 2;
+    int tiles_num_y = render_target_size.height / scaled_tile_height + 2;
 
     // Start-Index in der Matrix berechnen
-    int start_x = static_cast<int>(worldcoords.x / TILE_WIDTH);
-    int start_y = static_cast<int>(worldcoords.y / TILE_HEIGHT);
+    int start_x = static_cast<int>(worldcoords.x / scaled_tile_width);
+    int start_y = static_cast<int>(worldcoords.y / scaled_tile_height);
 
     // Den Pixel-Versatz berechnen (Modulo für Floats)
-    float offset_x = worldcoords.x - (start_x * TILE_WIDTH);
-    float offset_y = worldcoords.y - (start_y * TILE_HEIGHT);
+    float offset_x = worldcoords.x - (start_x * scaled_tile_width);
+    float offset_y = worldcoords.y - (start_y * scaled_tile_height);
 
-    float x1 = viewport.x1 - offset_x;
-    float y1 = viewport.y1 - offset_y;
+    float x1 = -offset_x;
+    float y1 = -offset_y;
 
     for (int y = 0; y < tiles_num_y; y++) {
         for (int x = 0; x < tiles_num_x; x++) {
             TileType::Type type = getType(x + start_x, y + start_y);
             if (type > 0) {
-                batcher.addSprite(*tiletypes, type, x1 + x * TILE_WIDTH, y1 + y * TILE_HEIGHT);
+                batcher.addSprite(*tiletypes, type, x1 + x * scaled_tile_width, y1 + y * scaled_tile_height, scale, scale);
             }
         }
     }

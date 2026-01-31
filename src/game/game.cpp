@@ -40,6 +40,11 @@ Game::Game(GPUContext& gpu)
 
 Game::~Game()
 {
+    if (world_widget) {
+        this->removeChild(world_widget);
+        delete world_widget;
+        world_widget = NULL;
+    }
     if (player) {
         delete player;
         player = NULL;
@@ -77,7 +82,7 @@ void Game::createWindow()
         flags |= ppltk::Window::FullscreenDesktop | ppltk::Window::Resizeable;
     }
     setFlags(flags);
-    enableFixedUiSize(true, 1920, 1080);
+    enableFixedUiSize(false, 1920, 1080);
     setWindowTitle("GD2 Prototype");
     ppl7::grafix::Image icon;
     icon.load("res/icon_128.png");
@@ -110,6 +115,7 @@ void Game::init_grafix()
 
     // ppl7::PrintDebug("Grafix initialized\n");
     level.setTileset(1, &resources.Tiles);
+    level.setTileTypeSpriteset(&resources.TileTypes);
 }
 
 void Game::initUi()
@@ -147,6 +153,7 @@ void Game::resizeMenueAndStatusbar()
         editor.statusbar = new StatusBar(0, desktop.height - 32, desktop.width, 32);
         this->addChild(editor.statusbar);
     } else {
+        ppl7::PrintDebug("Resizing statusbar to %d:%d, %dx%d\n", 0, desktop.height - 32, desktop.width, 32);
         editor.statusbar->resize(0, desktop.height - 32, desktop.width, 32);
     }
 
@@ -243,6 +250,7 @@ void Game::startNewLevel(int width, int height)
 void Game::updateWorldCoords()
 {
     if (!player) return;
+    if (!editor.mainmenue->worldFollowsPlayer()) return;
     int mx = game_viewport.width() / 2;
     int my = game_viewport.height() / 2 + 100; // 192
     WorldCoords.x = player->x - mx;
@@ -295,6 +303,7 @@ void Game::run()
     showUi(true);
     SDL_ShowCursor();
     level.setShowTileGrid(true);
+    level.setShowTileTypes(true);
     sdl.setCursor(resources.Cursor.getDrawable(10), resources.Cursor.getPivot(10));
     ppl7::ppl_time_t last_second = ppl7::GetTime();
     quitGame = false;
@@ -313,9 +322,10 @@ void Game::run()
         }
         last_frame_time = start_time;
         wm->handleEvents();
-        WorldCoords.update(start_time, frame_rate_compensation);
         ppltk::MouseState mouse = wm->getMouseState();
         updateUi(mouse);
+        WorldCoords.update(start_time, frame_rate_compensation);
+
         gpu_batcher.clearQueues();
 
         SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
@@ -333,7 +343,7 @@ void Game::run()
             SDL_SubmitGPUCommandBuffer(cmdbuf);
             continue;
         }
-        clearScreen(cmdbuf, swapchainTexture);
+        // clearScreen(cmdbuf, swapchainTexture);
 
         // Ensure Depth Buffer matches window size
         int w, h;
@@ -387,6 +397,7 @@ void Game::updateUi(const ppltk::MouseState& mouse)
     ParallaxLayerId current_layer = editor.mainmenue->currentLayer();
     // ppl7::PrintDebug("Current Layer: %d\n", static_cast<int>(current_layer));
     level.setEditLayer(current_layer);
+    WorldCoords.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
 
     //}
 }
@@ -448,7 +459,7 @@ void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainText
 {
     ppl7::grafix::Rect viewport(0, 0, 1920, 1080); // TODO
     level.updateVisibleObjects(WorldCoords, viewport);
-    level.draw(cmdbuf, swapchainTexture, WorldCoords, viewport);
+    level.draw(cmdbuf, swapchainTexture, WorldCoords, game_viewport);
 
 #ifdef OLDCODE
     //  Start render pass (resets z-order counter)
@@ -615,8 +626,11 @@ void Game::updateSpriteFromUi()
 void Game::moveWorld(float offset_x, float offset_y)
 {
     if (offset_x == 0 && offset_y == 0) return;
-    WorldCoords.x += offset_x;
-    WorldCoords.y += offset_y;
+    ParallaxLayer& layer = level.editLayer();
+    // ppl7::PrintDebug("Move World by %f:%f (SpeedFactor=%f, SizeFactor=%f)\n", offset_x, offset_y, layer.speed_factor, layer.size_factor);
+
+    WorldCoords.x += (offset_x / layer.speed_factor / layer.size_factor);
+    WorldCoords.y += (offset_y / layer.speed_factor / layer.size_factor);
     if (WorldCoords.x < 0) WorldCoords.x = 0;
     if (WorldCoords.x > 62000) WorldCoords.x = 62000;
     if (WorldCoords.y < 0) WorldCoords.y = 0;
@@ -625,12 +639,13 @@ void Game::moveWorld(float offset_x, float offset_y)
 
 void Game::moveWorldOnMouseClick(const ppltk::MouseState& mouse)
 {
+    ppl7::grafix::PointF translated_mouse = game_viewport.translate(mouse.p);
     const bool* state = SDL_GetKeyboardState(NULL);
     if (worldIsMoving) {
         if (mouse.buttonMask == ppltk::MouseState::Middle ||
             ((mouse.buttonMask == ppltk::MouseState::Left) && state[SDL_SCANCODE_LSHIFT])) {
             // printf("Move\n");
-            moveWorld(WorldMoveStart.x - mouse.p.x, WorldMoveStart.y - mouse.p.y);
+            moveWorld(WorldMoveStart.x - translated_mouse.x, WorldMoveStart.y - translated_mouse.y);
             WorldMoveStart = mouse.p;
         } else {
             worldIsMoving = false;
@@ -643,7 +658,7 @@ void Game::moveWorldOnMouseClick(const ppltk::MouseState& mouse)
             // printf("Start\n");
             if (showui) {
                 worldIsMoving = true;
-                WorldMoveStart = mouse.p;
+                WorldMoveStart = translated_mouse;
                 editor.mainmenue->setWorldFollowsPlayer(false);
             }
         } else {
@@ -691,4 +706,16 @@ void Game::mouseMoveEvent(ppltk::MouseEvent* event)
         game_viewport.translateMouseEvent(event);
         editor.handleMouseDrawInWorld(*event);
     }
+}
+
+void Game::resizeEvent(ppltk::ResizeEvent* event)
+{
+    resizeMenueAndStatusbar();
+    if (world_widget == NULL) return;
+    const ppl7::grafix::Size& desktop = clientSize();
+    viewport.y1 = 33;
+    viewport.y2 = desktop.height - 33;
+    viewport.x2 = desktop.width;
+    world_widget->setViewport(viewport);
+    // const ppl7::grafix::Size& desktop=clientSize();
 }

@@ -40,11 +40,6 @@ GameEditor::~GameEditor()
 void GameEditor::init(Game& game)
 {
     this->game = &game;
-    mainmenue = new MainMenue(0, 0, 1920, 32, &game);
-    game.addChild(mainmenue);
-
-    statusbar = new StatusBar(0, 1080 - 30, 1920, 30);
-    game.addChild(statusbar);
 }
 
 void GameEditor::closeAll()

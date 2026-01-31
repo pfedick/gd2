@@ -4,7 +4,7 @@
 #include <ppl7-grafix.h>
 #include <ppltk.h>
 
-class GameViewport : public ppl7::grafix::Rect
+class GameViewport
 {
 private:
     int menu_offset_x;
@@ -23,6 +23,7 @@ public:
     void setRenderSize(const ppl7::grafix::Size& size);
     void setAspectRatio(float aspect_ratio);
     ppl7::grafix::PointF translate(const ppl7::grafix::PointF& coords) const;
+    ppltk::MouseState translate(const ppltk::MouseState& mouse) const;
     void translateMouseEvent(ppltk::MouseEvent* event);
     void getRenderRect(SDL_FRect& rect) const;
     const SDL_FRect& getRenderRect() const;
@@ -32,6 +33,12 @@ public:
     const ppl7::grafix::PointF& getGridSize() const;
     void setMenuOffset(int x);
     int getMenuOffset() const;
+    int width() const;              // returns width of render area
+    int height() const;             // returns height of render area
+    float scaledTileWidth() const;  // returns tile width scaled according to sprite scale factor
+    float scaledTileHeight() const; // returns tile height scaled according to sprite scale factor
+    float tileWidth() const;        // returns tile width (e.g. 64)
+    float tileHeight() const;       // returns tile height (e.g. 64)
 };
 
 #endif /* INCLUDE_GAMEVIEWPORT_H_ */

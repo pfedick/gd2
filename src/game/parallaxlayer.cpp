@@ -1,6 +1,7 @@
 #include "game.h"
 #include "level.h"
 #include "gpu.h"
+#include "constants.h"
 
 ParallaxLayer::ParallaxLayer()
 {
@@ -41,11 +42,6 @@ bool ParallaxLayer::hasVisibleGrafix() const
     return true;
 }
 
-void ParallaxLayer::showGrid(bool enable)
-{
-    bShowGrid = enable;
-}
-
 void ParallaxLayer::draw(RenderState& renderstate,
                          SDL_GPUTexture* swapchainTexture,
                          const ppl7::grafix::PointF& worldcoords,
@@ -61,8 +57,10 @@ void ParallaxLayer::draw(RenderState& renderstate,
     if (bShowGrid) {
         drawTileGrid(renderstate, swapchainTexture, parallax_worldcoords, viewport);
     }
-    TileTypeMatrix.draw(*renderstate.batcher, viewport, parallax_worldcoords);
-    // background_sprites.draw(batcher, cmdbuf, swapchainTexture, worldcoords, viewport
+    if (bShowTileTypes) {
+        TileTypeMatrix.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+    }
+    //  background_sprites.draw(batcher, cmdbuf, swapchainTexture, worldcoords, viewport
     renderstate.batcher->prepareInstanceData(renderstate.cmdbuf);
 
     SDL_GPUColorTargetInfo colorTargetInfo = {0};
@@ -96,22 +94,27 @@ void ParallaxLayer::drawTileGrid(RenderState& renderstate,
                                  const GameViewport& viewport)
 {
     ppl7::grafix::Color grid_color(255, 255, 255, 64);
-    float tile_width = 32 * size_factor;
-    float tile_height = 32 * size_factor;
+    float tile_width = viewport.tileWidth() * size_factor;
+    float tile_height = viewport.tileHeight() * size_factor;
     // ppl7::PrintDebug("Drawing tile grid...\n");
 
-    float start_x = static_cast<int>(worldcoords.x / tile_width) * tile_width - worldcoords.x;
-    float start_y = static_cast<int>(worldcoords.y / tile_height) * tile_height - worldcoords.y;
+    int start_x = static_cast<int>(worldcoords.x / tile_width);
+    int start_y = static_cast<int>(worldcoords.y / tile_height);
 
+    float offset_x = worldcoords.x - (start_x * tile_width);
+    float offset_y = worldcoords.y - (start_y * tile_height);
+
+    start_x = -offset_x;
+    start_y = -offset_y;
     // renderstate.batcher->addLine(100, 100, 200, 200, ppl7::grafix::Color(255, 0, 0, 255), 10.0f);
     // renderstate.batcher->addRect(300, 100, 50, 50, ppl7::grafix::Color(0, 255, 0, 255), 10.0f);
     // renderstate.batcher->addFilledRect(400, 100, 50, 50, ppl7::grafix::Color(0, 0, 255, 255));
 
     for (float x = start_x; x < viewport.width(); x += tile_width) {
-        renderstate.batcher->addLine(x, 0, x, viewport.height(), grid_color, 1.0f);
+        renderstate.batcher->addLine(x, 0, x, viewport.height(), grid_color, 2.0f);
     }
 
     for (float y = start_y; y < viewport.height(); y += tile_height) {
-        renderstate.batcher->addLine(0, y, viewport.width(), y, grid_color, 1.0f);
+        renderstate.batcher->addLine(0, y, viewport.width(), y, grid_color, 2.0f);
     }
 }

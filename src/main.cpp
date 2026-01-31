@@ -52,21 +52,23 @@ void start(int argc, char** argv)
     GPUContext gpu;
     gpu.initializeGPUDevice();
     Game game(gpu);
-    try {
-        game.init();
-        game.init_grafix();
-        if (ppl7::HaveArgv(argc, argv, "-l")) {
-            ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
-            game.loadLevel(level);
-        } else {
-            game.startNewLevel(1024, 1024);
-        }
-        game.run();
+    // try {
+    game.init();
+    game.init_grafix();
+    if (ppl7::HaveArgv(argc, argv, "-l")) {
+        ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
+        game.loadLevel(level);
+    } else {
+        game.startNewLevel(1024, 1024);
+    }
+    game.run();
+    /*
     }
     catch (const ppl7::Exception& ex) {
         ex.print();
         throw;
     }
+        */
 
     // game.audiosystem.shutdown();
 }

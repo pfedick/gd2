@@ -173,7 +173,7 @@ void WorldWidget::retranslateUi()
 
 void WorldWidget::setViewport(const ppl7::grafix::Rect& viewport)
 {
-    printf("WorldWidget::setViewport: %d x %d\n", viewport.width(), viewport.height());
+    // printf("WorldWidget::setViewport: %d x %d\n", viewport.width(), viewport.height());
     this->setPos(viewport.x1, viewport.y1);
     this->setSize(viewport.width(), viewport.height());
 

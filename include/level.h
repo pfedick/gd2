@@ -119,6 +119,7 @@ public:
     ParallaxLayerId layerType;
     bool isVisible;
     bool bShowGrid;
+    bool bShowTileTypes;
 
     Plane tiles;
     enum class SpritePosition
@@ -138,7 +139,6 @@ public:
     ~ParallaxLayer();
     void init(ParallaxLayerId layerType, float blur, float speed, float size);
     void clear();
-    void showGrid(bool enable);
     void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport);
     void draw(RenderState& renderstate,
               SDL_GPUTexture* swapchainTexture,
@@ -177,6 +177,7 @@ private:
     bool lightsEnabled;
 
     bool bShowGrid;
+    bool bShowTileTypes;
     ParallaxLayerId editlayer;
 
     void clear();
@@ -216,6 +217,10 @@ private:
     void blurLayer(SDL_Renderer* renderer, float factor = 0.0f);
     */
 
+    void clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf);
+    void copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const SDL_FRect& destRect);
+    void updateVisibility();
+
 public:
     Level();
     ~Level();
@@ -226,6 +231,7 @@ public:
     void setEnableLights(bool enabled);
     void setTileset(int no, SpriteTexture* tileset);
     void setSpriteset(int no, SpriteTexture* spriteset);
+    void setTileTypeSpriteset(SpriteTexture* spriteset);
     void create(int width, int height);
     void load(const ppl7::String& Filename);
     void save(const ppl7::String& Filename);
@@ -240,8 +246,10 @@ public:
     void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport);
     void setEditLayer(ParallaxLayerId layer);
     void setShowTileGrid(bool enable);
+    void setShowTileTypes(bool enable);
 
     ParallaxLayer& layer(ParallaxLayerId id);
+    ParallaxLayer& editLayer();
     Plane& plane(ParallaxLayerId id);
     SpriteSystem& spritesystem(ParallaxLayerId id, ParallaxLayer::SpritePosition layer);
     // SpriteSystem& spritesystem(int layer, int layer);
