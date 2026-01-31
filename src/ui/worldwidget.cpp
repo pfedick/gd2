@@ -281,12 +281,12 @@ void WorldWidget::setShowUi(bool enable)
 
 void WorldWidget::paint(ppl7::grafix::Drawable& draw)
 {
-    printf("WorldWidget::paint %d x %d\n", draw.width(), draw.height());
-    // draw.cls();
+    // printf("WorldWidget::paint %d x %d\n", draw.width(), draw.height());
+    //  draw.cls();
     if (!showui) return;
     ppl7::grafix::Point p0(1, 1);
     ppl7::grafix::Point p1(0, 0);
-    ppl7::grafix::Point p2(draw.width() - 1, draw.height() - 1);
+    ppl7::grafix::Point p2(draw.width(), draw.height());
     drawFrame(draw, p1, p2, ppl7::grafix::Color(192, 192, 196, 255), ppl7::grafix::Color(32, 32, 25, 255));
     p1 += p0;
     p2 -= p0;

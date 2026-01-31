@@ -144,6 +144,7 @@ void Game::initUi()
     world_widget->setViewport(viewport);
     this->addChild(world_widget);
     wm->setKeyboardFocus(world_widget);
+    game_viewport.setViewport(viewport);
 }
 
 void Game::resizeMenueAndStatusbar()
@@ -153,7 +154,7 @@ void Game::resizeMenueAndStatusbar()
         editor.statusbar = new StatusBar(0, desktop.height - 32, desktop.width, 32);
         this->addChild(editor.statusbar);
     } else {
-        ppl7::PrintDebug("Resizing statusbar to %d:%d, %dx%d\n", 0, desktop.height - 32, desktop.width, 32);
+        // ppl7::PrintDebug("Resizing statusbar to %d:%d, %dx%d\n", 0, desktop.height - 32, desktop.width, 32);
         editor.statusbar->resize(0, desktop.height - 32, desktop.width, 32);
     }
 
@@ -271,6 +272,7 @@ void Game::showUi(bool enable)
         viewport.x1 = 0;
         viewport.x2 = 1920;
         world_widget->setViewport(viewport);
+        game_viewport.setViewport(viewport);
 
         editor.mainmenue->setVisible(true);
         // editor.mainmenue->fitMetrics(viewport);
@@ -288,6 +290,7 @@ void Game::showUi(bool enable)
         viewport.x2 = 1920;
         // editor.mainmenue->fitMetrics(viewport);
         world_widget->setViewport(viewport);
+        game_viewport.setViewport(viewport);
     }
     // hud->setViewport(viewport);
 }
@@ -627,8 +630,6 @@ void Game::moveWorld(float offset_x, float offset_y)
 {
     if (offset_x == 0 && offset_y == 0) return;
     ParallaxLayer& layer = level.editLayer();
-    // ppl7::PrintDebug("Move World by %f:%f (SpeedFactor=%f, SizeFactor=%f)\n", offset_x, offset_y, layer.speed_factor, layer.size_factor);
-
     WorldCoords.x += (offset_x / layer.speed_factor / layer.size_factor);
     WorldCoords.y += (offset_y / layer.speed_factor / layer.size_factor);
     if (WorldCoords.x < 0) WorldCoords.x = 0;
@@ -646,7 +647,7 @@ void Game::moveWorldOnMouseClick(const ppltk::MouseState& mouse)
             ((mouse.buttonMask == ppltk::MouseState::Left) && state[SDL_SCANCODE_LSHIFT])) {
             // printf("Move\n");
             moveWorld(WorldMoveStart.x - translated_mouse.x, WorldMoveStart.y - translated_mouse.y);
-            WorldMoveStart = mouse.p;
+            WorldMoveStart = translated_mouse;
         } else {
             worldIsMoving = false;
             // printf("End\n");
@@ -672,7 +673,7 @@ void Game::mouseDownEvent(ppltk::MouseEvent* event)
 {
     // ppl7::PrintDebugTime("Game::mouseDownEvent\n");
     if (event->widget() == world_widget) {
-        ppl7::PrintDebugTime("Game::mouseDownEvent\n");
+        // ppl7::PrintDebugTime("Game::mouseDownEvent\n");
         wm->setKeyboardFocus(world_widget);
         game_viewport.translateMouseEvent(event);
         if (editor.sprite_selection != NULL) {

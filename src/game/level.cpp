@@ -737,6 +737,10 @@ void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
 
     // Copy final render target, which is 4k, into viewport on swapchain, which may be smaller or bigger
     SDL_FRect destRect = viewport.getRenderRect();
+    const ppl7::grafix::Rect& v = viewport.getViewport();
+    destRect.y += v.y1;
+    destRect.x += v.x1;
+
     copyRenderTargetToSwapchain(cmdbuf, swapchainTexture, destRect);
 }
 

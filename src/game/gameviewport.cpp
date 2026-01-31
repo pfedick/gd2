@@ -38,7 +38,6 @@
  */
 GameViewport::GameViewport()
 {
-    menu_offset_x = 0;
     aspect_ratio = (float)16 / (float)9;
     render_rect.x = 0;
     render_rect.y = 0;
@@ -130,15 +129,14 @@ void GameViewport::setAspectRatio(float aspect_ratio)
     update();
 }
 
-void GameViewport::setMenuOffset(int x)
+void GameViewport::setViewport(const ppl7::grafix::Rect& rect)
 {
-    menu_offset_x = x;
-    update();
+    viewport = rect;
 }
 
-int GameViewport::getMenuOffset() const
+const ppl7::grafix::Rect& GameViewport::getViewport() const
 {
-    return menu_offset_x;
+    return viewport;
 }
 
 const ppl7::grafix::Size& GameViewport::getWindowSize() const

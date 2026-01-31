@@ -38,7 +38,7 @@ void TileTypePlane::create(int width, int height)
     tilematrix = (TileType::Type*)calloc(1, sizeof(TileType::Type) * (width + 1) * (height + 1));
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            tilematrix[y * width + x] = TileType::Type::Blocking;
+            tilematrix[y * width + x] = TileType::Type::NonBlocking;
         }
     }
 

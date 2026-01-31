@@ -7,21 +7,24 @@
 class GameViewport
 {
 private:
-    int menu_offset_x;
     ppl7::grafix::Size window_size;
     ppl7::grafix::Size render_size;
     float aspect_ratio;
     SDL_FRect render_rect;
     float sprite_scale_factor;
     ppl7::grafix::PointF grid_size;
+    ppl7::grafix::Rect viewport;
 
     void update();
 
 public:
     GameViewport();
-    void setWindowSize(const ppl7::grafix::Size& size);
-    void setRenderSize(const ppl7::grafix::Size& size);
-    void setAspectRatio(float aspect_ratio);
+    void setWindowSize(const ppl7::grafix::Size& size); // Die tatsächliche Fenstergröße
+    void setRenderSize(const ppl7::grafix::Size& size); // Die Größe des Render-Targets (4k)
+    void setAspectRatio(float aspect_ratio);            // Das gewünschte Seitenverhältnis (z.B. 16.0f/9.0f)
+    void setViewport(const ppl7::grafix::Rect&
+                         rect); // Setzt den Renderbereich im Fenster. Ist identisch zur Fenstergröße, wenn kein UI-Bereich vorhanden ist
+    const ppl7::grafix::Rect& getViewport() const;
     ppl7::grafix::PointF translate(const ppl7::grafix::PointF& coords) const;
     ppltk::MouseState translate(const ppltk::MouseState& mouse) const;
     void translateMouseEvent(ppltk::MouseEvent* event);
@@ -31,8 +34,6 @@ public:
     const ppl7::grafix::Size& getRenderSize() const;
     float getSpriteScaleFactor() const;
     const ppl7::grafix::PointF& getGridSize() const;
-    void setMenuOffset(int x);
-    int getMenuOffset() const;
     int width() const;              // returns width of render area
     int height() const;             // returns height of render area
     float scaledTileWidth() const;  // returns tile width scaled according to sprite scale factor
