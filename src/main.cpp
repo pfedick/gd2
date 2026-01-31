@@ -15,6 +15,25 @@ void help()
     fflush(stdout);
 }
 
+void startLevel(Game& game, int argc, char** argv)
+{
+    ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
+    if (level.right(4) != ".lvl") level += ".lvl";
+    if (!ppl7::File::exists(level)) {
+        level = "level/" + level;
+    }
+    if (ppl7::File::exists(level)) {
+        game.startLevel(level);
+        game.showUi(true);
+        game.run();
+        game.audiosystem.shutdown();
+        return;
+    }
+    printf("ERROR: Level not found [%s]\n", (const char*)ppl7::GetArgv(argc, argv, "-l"));
+    game.audiosystem.shutdown();
+    return;
+}
+
 void start(int argc, char** argv)
 {
 #ifdef WIN32
@@ -56,15 +75,16 @@ void start(int argc, char** argv)
     game.init();
     game.init_grafix();
     if (ppl7::HaveArgv(argc, argv, "-l")) {
-        ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
-        game.startLevel(level);
+        startLevel(game, argc, argv);
     } else {
+
         LevelParameter params;
         params.width = 1024;
         params.height = 1024;
         game.createNewLevel(params);
+        game.run();
     }
-    game.run();
+
     /*
     }
     catch (const ppl7::Exception& ex) {
@@ -73,7 +93,7 @@ void start(int argc, char** argv)
     }
         */
 
-    // game.audiosystem.shutdown();
+    game.audiosystem.shutdown();
 }
 
 #ifdef WIN32

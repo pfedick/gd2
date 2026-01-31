@@ -276,7 +276,7 @@ public:
     void updateObjects(double time);
     void updateParticles(double time); // Wird vom ParticleUpdateThread aufgerufen!
 
-    ppl7::grafix::Image getScreenshot(int width, int height) const;
+    ppl7::grafix::Image getScreenshot(int width, int height);
 };
 
 #endif

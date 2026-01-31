@@ -744,11 +744,38 @@ void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
     copyRenderTargetToSwapchain(cmdbuf, swapchainTexture, destRect);
 }
 
-ppl7::grafix::Image Level::getScreenshot(int width, int height) const
+ppl7::grafix::Image Level::getScreenshot(int width, int height)
 {
     if (!renderstate.gpu || !renderstate.render_target) return ppl7::grafix::Image();
     ppl7::grafix::Image img;
-    renderstate.gpu->downloadTexture(renderstate.render_target, width, height, img);
+
+    // 1. Kleine temporäre Target-Textur erstellen
+    SDL_GPUTexture* thumbTex = renderstate.gpu->createRenderTarget(width, height);
+
+    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(renderstate.gpu->gpu);
+
+    // 2. In die kleine Textur rendern (Skalierung)
+    SDL_GPUColorTargetInfo targetInfo = {0};
+    targetInfo.texture = thumbTex;
+    targetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    SDL_GPURenderPass* pass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+
+    // Viewport auf die kleine Größe setzen
+    SDL_GPUViewport viewport = {0, 0, (float)width, (float)height, 0, 1};
+    SDL_SetGPUViewport(pass, &viewport);
+
+    SDL_BindGPUGraphicsPipeline(pass, renderstate.renderpipelines->copyPipeline);
+    SDL_GPUTextureSamplerBinding binding = {.texture = renderstate.render_target, .sampler = renderstate.renderpipelines->samplerClamp};
+    SDL_BindGPUFragmentSamplers(pass, 0, &binding, 1);
+
+    SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
+    SDL_EndGPURenderPass(pass);
+    SDL_SubmitGPUCommandBuffer(cmdbuf);
+
+    renderstate.gpu->downloadTexture(thumbTex, width, height, img);
+    renderstate.gpu->destroyGPUTexture(thumbTex);
     return img;
 }
 

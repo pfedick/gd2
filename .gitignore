@@ -9,3 +9,4 @@ config.status
 tmp/
 configure.ac~
 genscpfonts
+level/backup

@@ -389,6 +389,9 @@ SDL_GPUTexture* GPUStreamingTexture::getTexture() const
 
 void GPUContext::downloadTexture(SDL_GPUTexture* texture, int width, int height, ppl7::grafix::Image& target)
 {
+    if (!gpu) {
+        throw GPUException("GPU device is not initialized");
+    }
     // 1. Transfer Buffer für den Download erstellen
     Uint32 bufferSize = width * height * 4;
     SDL_GPUTransferBufferCreateInfo transferInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, .size = bufferSize};

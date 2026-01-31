@@ -41,12 +41,6 @@ void TileTypePlane::create(int width, int height)
             tilematrix[y * width + x] = TileType::Type::NonBlocking;
         }
     }
-
-    for (int i = 0; i < 10000; i++) {
-        int tx = rand() % width;
-        int ty = rand() % height;
-        tilematrix[ty * width + tx] = (TileType::Type)(rand() % ((int)TileType::Type::MaxType - 1) + 1);
-    }
 }
 
 void TileTypePlane::setType(int x, int y, TileType::Type type)

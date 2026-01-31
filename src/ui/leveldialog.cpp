@@ -535,6 +535,14 @@ void LevelDialog::mouseDownEvent(ppltk::MouseEvent* event)
     } else if (w == delete_soundtrack_button) {
         soundtrack_list->remove(soundtrack_list->currentIdentifier());
     } else if (w == thumb_take_screenshot) {
+        ppl7::grafix::Image img = game->level.getScreenshot(320, 180);
+        thumbnail->setIcon(img);
+        ppl7::grafix::ImageFilter_PNG png;
+        ppl7::MemFile memory;
+        png.save(thumbnail->icon(), memory);
+        // ppl7::PrintDebug("jpeg size: %d\n", (int)memory.size());
+        memory.load(compressed_screenshot);
+
         /* TODO: Screenshot functionality
         ppltk::WindowManager* wm = ppltk::GetWindowManager();
         screenshot = new Screenshot(Screenshot::Mode::Memory);
