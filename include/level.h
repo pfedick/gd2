@@ -139,7 +139,7 @@ public:
     ~ParallaxLayer();
     void init(ParallaxLayerId layerType, float blur, float speed, float size);
     void clear();
-    void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport);
+    void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
     void draw(RenderState& renderstate,
               SDL_GPUTexture* swapchainTexture,
               const ppl7::grafix::PointF& worldcoords,
@@ -243,7 +243,7 @@ public:
               const ppl7::grafix::PointF& worldcoords,
               const GameViewport& viewport);
 
-    void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport);
+    void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
     void setEditLayer(ParallaxLayerId layer);
     void setShowTileGrid(bool enable);
     void setShowTileTypes(bool enable);

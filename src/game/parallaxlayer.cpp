@@ -31,10 +31,10 @@ void ParallaxLayer::clear()
     tiles.clear();
 }
 
-void ParallaxLayer::updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport)
+void ParallaxLayer::updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size)
 {
-    background_sprites.updateVisibleSpriteList(worldcoords, viewport);
-    front_sprites.updateVisibleSpriteList(worldcoords, viewport);
+    background_sprites.updateVisibleSpriteList(worldcoords, render_target_size);
+    front_sprites.updateVisibleSpriteList(worldcoords, render_target_size);
 }
 
 bool ParallaxLayer::hasVisibleGrafix() const

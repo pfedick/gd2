@@ -111,20 +111,18 @@ bool SpriteSystem::getSprite(int id, SpriteSystem::Item& sprite)
     return false;
 }
 
-void SpriteSystem::updateVisibleSpriteList(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport)
+void SpriteSystem::updateVisibleSpriteList(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Size& render_target_size)
 {
     if (!bSpritesVisible) return;
     visible_sprite_map.clear();
     std::map<int, SpriteSystem::Item>::const_iterator it;
-    int width = viewport.width();
-    int height = viewport.height();
     for (it = sprite_list.begin(); it != sprite_list.end(); ++it) {
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
             int x = item.x - worldcoords.x;
             int y = item.y - worldcoords.y;
-            if (x + item.boundary.width() > 0 && y + item.boundary.height() > 0 && x - item.boundary.width() < width &&
-                y - item.boundary.height() < height) {
+            if (x + item.boundary.width() > 0 && y + item.boundary.height() > 0 && x - item.boundary.width() < render_target_size.width &&
+                y - item.boundary.height() < render_target_size.height) {
                 uint64_t id = ((uint64_t)item.z << 32 & 0x0000ffff00000000) | (uint64_t)(item.y << 16) | (uint64_t)item.x;
                 visible_sprite_map.insert(std::pair<uint64_t, const SpriteSystem::Item&>(id, item));
             }

@@ -744,12 +744,12 @@ void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
     copyRenderTargetToSwapchain(cmdbuf, swapchainTexture, destRect);
 }
 
-void Level::updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Rect& viewport)
+void Level::updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size)
 {
     // TODO: für die berechnung brauchen wir keinen Viewport, sondern nur dessen
     // Größe und die Weltkoordinaten
     for (auto& layer : parallax_layers) {
-        layer.updateVisibleObjects(worldcoords, viewport);
+        layer.updateVisibleObjects(worldcoords / layer.size_factor, render_target_size / layer.size_factor);
     }
 }
 

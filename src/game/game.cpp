@@ -461,8 +461,7 @@ struct BlurParams
 
 void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
-    ppl7::grafix::Rect viewport(0, 0, 1920, 1080); // TODO
-    level.updateVisibleObjects(WorldCoords, viewport);
+    level.updateVisibleObjects(WorldCoords, game_viewport.getWindowSize());
     level.draw(cmdbuf, swapchainTexture, WorldCoords, game_viewport);
 
 #ifdef OLDCODE
