@@ -9,6 +9,10 @@
 #include "level.h"
 #include "gamecontroller.h"
 #include "gameviewport.h"
+#include "background.h"
+#include "translate.h"
+#include "audio.h"
+#include "audiopool.h"
 
 #define APP_COMPANY "Patrick F.-Productions"
 #define APP_NAME "The Magican"
@@ -99,6 +103,7 @@ class TileTypeSelection;
 class Game;
 class Player;
 class WorldWidget;
+class FileDialog;
 
 class Camera : public ppl7::grafix::PointF
 {
@@ -125,6 +130,24 @@ public:
     bool isFollowingPlayer() const;
 };
 
+class Soundtrack
+{
+private:
+    AudioStream* playing_song;
+    size_t song_index;
+    AudioSystem& audiosystem;
+    const LevelParameter& params;
+    ppl7::String currentSong;
+
+public:
+    Soundtrack(AudioSystem& audio, const LevelParameter& level_params);
+    ~Soundtrack();
+    void update();
+    void playInitialSong();
+    void playSong(const ppl7::String& filename);
+    void fadeout(float seconds);
+};
+
 class GameEditor
 {
     friend class Game;
@@ -143,6 +166,8 @@ private:
 
     History history;
     Game* game;
+
+    void* selected_object;
 
     TilesSelection* tiles_selection;
     TileTypeSelection* tiletype_selection;
@@ -176,18 +201,14 @@ private:
     SDL_Renderer* sdl_renderer;
     GPUContext& gpu;
     GPUBatcher gpu_batcher;
+    Translator translator;
 
     ppltk::WindowManager_SDL3* wm;
     ppltk::WidgetStyle Style;
 
     ppl7::grafix::Image WidgetDrawbuffer;
 
-    /*
-    SDL_GPUTexture* render_target_layer;
-    SDL_GPUTexture* render_target_tmp1;
-    SDL_GPUTexture* render_target_tmp2;
-    SDL_GPUTexture* depthTexture;
-    */
+    FileDialog* filedialog;
 
     ppl7::grafix::Size render_target_size;
     ppl7::grafix::Rect viewport;
@@ -201,13 +222,18 @@ private:
 
     bool quitGame = false;
     bool showui = true;
+    bool controlsEnabled = true;
+
+    Soundtrack soundtrack = Soundtrack(audiosystem, level.params);
 
     void initUi();
+    void initAudio();
     void initGameController();
     void updateGameControllerMapping();
     void deleteUi();
     void resizeMenueAndStatusbar();
     void updateWorldCoords();
+    void checkFileDialog();
 
     void clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
     void drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse);
@@ -224,23 +250,27 @@ private:
 
     Player* player;
 
+    ppl7::String LevelFile;
+    ppl7::String nextLevelFile;
+    Background background = Background(gpu);
+
 public:
     GameEditor editor;
     GameController controller;
     Level level;
     RenderPipelines renderPipelines;
     Resources resources;
+    AudioPool audiopool;
+    AudioSystem audiosystem;
     Config config;
     FPS fps;
     Game(GPUContext& gpu);
     ~Game();
 
+    ppltk::Window& window();
+
     void init();
     void init_grafix();
-
-    void loadLevel(const ppl7::String& filename);
-    void startNewLevel(int width, int height);
-    void saveLevel(const ppl7::String& filename);
 
     void run();
     void updateUi(const ppltk::MouseState& mouse);
@@ -254,7 +284,23 @@ public:
     const ppl7::grafix::Rect& getViewport() const;
     const ppl7::grafix::PointF& getWorldCoords() const;
 
+    void enableControls(bool enable);
+    bool getControlsEnabled() const;
+
     Player* getPlayer();
+
+    // Level Management
+    void startLevel(const ppl7::String& filename);
+    void unloadLevel();
+    bool nextLevel(const ppl7::String& filename);
+    void save(const ppl7::String& filename);
+    void load();
+    void createNewLevel(const LevelParameter& params);
+    void updateFromLevelParameters();
+    void openSaveAsDialog();
+    void openLoadDialog();
+    void openNewLevelDialog();
+    const ppl7::String& getLevelFilename() const;
 
     // EventHandler
     void quitEvent(ppltk::Event* event);
@@ -267,3 +313,4 @@ public:
 };
 
 Game& GetGame();
+ppltk::Window* GetGameWindow();

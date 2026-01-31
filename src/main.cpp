@@ -57,9 +57,12 @@ void start(int argc, char** argv)
     game.init_grafix();
     if (ppl7::HaveArgv(argc, argv, "-l")) {
         ppl7::String level = ppl7::GetArgv(argc, argv, "-l");
-        game.loadLevel(level);
+        game.startLevel(level);
     } else {
-        game.startNewLevel(1024, 1024);
+        LevelParameter params;
+        params.width = 1024;
+        params.height = 1024;
+        game.createNewLevel(params);
     }
     game.run();
     /*

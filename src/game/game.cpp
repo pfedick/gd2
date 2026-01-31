@@ -1,9 +1,11 @@
 #include "game.h"
+#include <ppltk.h>
 #include "player.h"
 #include "ui/menue.h"
 #include "ui/statusbar.h"
 #include "ui/worldwidget.h"
 #include "constants.h"
+#include "translate.h"
 
 ppl7::grafix::Point GetViewPos()
 {
@@ -19,10 +21,17 @@ Game& GetGame()
     return *game;
 }
 
+ppltk::Window* GetGameWindow()
+{
+    if (!game) throw ppl7::Exception("Game not initialized!");
+    return &game->window();
+}
+
 Game::Game(GPUContext& gpu)
     : ppltk::Window(),
       gpu(gpu)
 {
+    game = this;
     wm = (ppltk::WindowManager_SDL3*)ppltk::GetWindowManager();
     // wm->enableGPURenderer(gpu.gpu);
     Style.setStyle(ppltk::WidgetStyle::Dark);
@@ -30,7 +39,9 @@ Game::Game(GPUContext& gpu)
     quitGame = false;
     showui = false;
     worldIsMoving = false;
+    controlsEnabled = true;
     world_widget = NULL;
+    filedialog = NULL;
     last_frame_time = 0.0f;
     frame_rate_compensation = 1.0f;
     game_viewport.setRenderSize(ppl7::grafix::Size(3840, 2160));
@@ -52,8 +63,15 @@ Game::~Game()
     deleteUi();
 }
 
+ppltk::Window& Game::window()
+{
+    return *this;
+}
+
 void Game::init()
 {
+    translator.load();
+    translator.setLanguage(config.TextLanguage);
     wm->useGPUAPI(gpu.gpu);
     // wm->enableGPURenderer(gpu.gpu);
     createWindow();
@@ -66,6 +84,7 @@ void Game::init()
     gpu_batcher.updateMatrices(1920, 1080);
     level.initialize(gpu, renderPipelines, gpu_batcher);
     initUi();
+    initAudio();
     initGameController();
 }
 
@@ -145,6 +164,17 @@ void Game::initUi()
     this->addChild(world_widget);
     wm->setKeyboardFocus(world_widget);
     game_viewport.setViewport(viewport);
+}
+
+void Game::initAudio()
+{
+    audiosystem.init();
+    audiosystem.setGlobalVolume(config.volumeTotal);
+    audiosystem.setVolume(AudioClass::Effect, config.volumeEffects);
+    audiosystem.setVolume(AudioClass::Music, config.volumeMusic);
+    audiopool.load();
+    audiopool.load_speech(config.SpeechLanguage);
+    audiopool.setAudioSystem(&audiosystem);
 }
 
 void Game::resizeMenueAndStatusbar()
@@ -238,16 +268,6 @@ void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
 }
     */
 
-void Game::loadLevel(const ppl7::String& filename)
-{
-    level.load(filename);
-}
-
-void Game::startNewLevel(int width, int height)
-{
-    level.create(width, height);
-}
-
 void Game::updateWorldCoords()
 {
     if (!player) return;
@@ -297,7 +317,7 @@ void Game::showUi(bool enable)
 
 void Game::run()
 {
-    this->printChildsTree();
+    // this->printChildsTree();
     resizeEvent(NULL);
     world_widget->setVisible(true);
     world_widget->setEnabled(true);
@@ -328,6 +348,7 @@ void Game::run()
         wm->handleEvents();
         ppltk::MouseState mouse = wm->getMouseState();
         updateUi(mouse);
+        if (filedialog) checkFileDialog();
         WorldCoords.update(start_time, frame_rate_compensation);
 
         gpu_batcher.clearQueues();
@@ -624,6 +645,16 @@ void Game::closeEvent(ppltk::Event* event)
 void Game::updateSpriteFromUi()
 {
     // TODO
+}
+
+void Game::enableControls(bool enable)
+{
+    controlsEnabled = enable;
+}
+
+bool Game::getControlsEnabled() const
+{
+    return controlsEnabled;
 }
 
 void Game::moveWorld(float offset_x, float offset_y)

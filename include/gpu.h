@@ -76,6 +76,8 @@ public:
 
     SDL_GPUTexture* createRenderTarget(int width, int height);
     SDL_GPUTexture* createDepthBuffer(int width, int height);
+
+    void downloadTexture(SDL_GPUTexture* texture, int width, int height, ppl7::grafix::Image& target);
 };
 
 GPUContext& getGlobalGPUContext();

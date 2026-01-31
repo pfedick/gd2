@@ -29,6 +29,7 @@ APPNAME = gd2
 OBJECTS=compile/main.o \
 	compile/game.o \
 	compile/game_editor.o \
+	compile/game_level_handling.o \
 	compile/gameviewport.o \
 	compile/camera.o \
 	compile/translate.o \
@@ -60,6 +61,7 @@ OBJECTS=compile/main.o \
 	compile/objectspritesets.o \
 	compile/object.o \
 	compile/collision.o \
+	compile/soundtrack.o \
 	compile/audio_audioinstance.o \
 	compile/audio_audiopool.o \
 	compile/audio_audiosample.o \
@@ -74,7 +76,8 @@ UI=compile/ui/menue.o \
 	compile/ui/worldwidget.o \
 	compile/ui/hud.o \
 	compile/ui/tilesframe.o \
-	compile/ui/tiletypeselection.o
+	compile/ui/tiletypeselection.o \
+	compile/ui/leveldialog.o
 
 
 WIDGETS = compile/widgets/colorwidget.o \
@@ -212,6 +215,10 @@ compile/animation.o: src/game/animation.cpp Makefile include/animation.h
 	- @mkdir -p compile
 	$(CXX) -o compile/animation.o -c src/game/animation.cpp $(CFLAGS)
 
+compile/soundtrack.o: src/game/soundtrack.cpp Makefile include/game.h include/audio.h
+	- @mkdir -p compile
+	$(CXX) -o compile/soundtrack.o -c src/game/soundtrack.cpp $(CFLAGS)
+
 compile/game.o: src/game/game.cpp Makefile include/game.h include/version.h \
 	include/renderpipelines.h include/translate.h include/gameviewport.h
 	- @mkdir -p compile
@@ -222,6 +229,12 @@ compile/game_editor.o: src/game/game_editor.cpp Makefile include/game.h include/
 	include/ui/statusbar.h include/ui/menue.h include/gameviewport.h
 	- @mkdir -p compile
 	$(CXX) -o compile/game_editor.o -c src/game/game_editor.cpp $(CFLAGS)
+
+compile/game_level_handling.o: src/game/game_level_handling.cpp Makefile include/game.h \
+	include/translate.h
+	- @mkdir -p compile
+	$(CXX) -o compile/game_level_handling.o -c src/game/game_level_handling.cpp $(CFLAGS)
+
 
 compile/gameviewport.o: src/game/gameviewport.cpp Makefile include/gameviewport.h
 	- @mkdir -p compile

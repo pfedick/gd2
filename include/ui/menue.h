@@ -4,6 +4,7 @@
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include <ppltk.h>
+#include "ui/leveldialog.h"
 
 class Game;
 class MainMenue;
@@ -93,6 +94,9 @@ private:
     VisibilitySubMenu* visibility;
     DebugSubMenu* debug_submenu;
 
+    LevelDialog* level_dialog;
+    bool controlsEnabled;
+
     void setupUi();
 
 public:
@@ -113,6 +117,7 @@ public:
     bool visibility_hud;
 
     MainMenue(int x, int y, int width, int height, Game* game);
+    void update();
     ppl7::String widgetType() const;
 
     void resize(int x, int y, int width, int height);
@@ -129,6 +134,7 @@ public:
     bool worldFollowsPlayer() const;
     void setGodMode(bool enable);
     void setShowTileTypes(bool show);
+    void openLevelDialog(bool new_flag);
 };
 
 #endif /* INCLUDE_UI_MENUE_H_ */

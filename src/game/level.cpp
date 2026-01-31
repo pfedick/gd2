@@ -744,6 +744,14 @@ void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
     copyRenderTargetToSwapchain(cmdbuf, swapchainTexture, destRect);
 }
 
+ppl7::grafix::Image Level::getScreenshot(int width, int height) const
+{
+    if (!renderstate.gpu || !renderstate.render_target) return ppl7::grafix::Image();
+    ppl7::grafix::Image img;
+    renderstate.gpu->downloadTexture(renderstate.render_target, width, height, img);
+    return img;
+}
+
 void Level::updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size)
 {
     // TODO: für die berechnung brauchen wir keinen Viewport, sondern nur dessen

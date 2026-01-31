@@ -1,0 +1,381 @@
+{
+    "ui": {
+        "Game over": {
+            "en": "Game over",
+            "de": "Game over"
+        },
+        "Level completed": {
+            "en": "Level completed",
+            "de": "Level beendet"
+        },
+        "Press space to continue": {
+            "de": "Drücke die Leertaste zum Fortfahren"
+        },
+        "Bonus:": {
+            "de": "Bonus:"
+        },
+        "Points": {
+            "de": "Punkte"
+        },
+        "Points so far:": {
+            "de": "Punkte bisher:"
+        },
+        "Coins:": {
+            "de": "Münzen:"
+        },
+        "You collected:": {
+            "de": "Du hast folgendes gesammelt:"
+        },
+        "Diamonds:": {
+            "de": "Diamanten:"
+        },
+        "Chrystals:": {
+            "de": "Kristalle:"
+        },
+        "Treasure Chests:": {
+            "de": "Schatztruhen"
+        },
+        "Extra Lives:": {
+            "de": "Extraleben:"
+        },
+        "Bonus Points:": {
+            "de": "Bonuspunkte:"
+        },
+        "Final Points:": {
+            "de": "Endpunktestand:"
+        },
+        "OK": {
+            "de": "OK"
+        },
+        "Cancel": {
+            "de": "Abbrechen"
+        },
+        "Settings": {
+            "de": "Einstellungen"
+        },
+        "Audio": {
+            "de": "Audio"
+        },
+        "Video": {
+            "de": "Video"
+        },
+        "Misc": {
+            "de": "Verschiedenes"
+        },
+        "back (ESC)": {
+            "de": "zurück (ESC)"
+        },
+        "Audio device:": {
+            "de": "Soundkarte"
+        },
+        "Volume:": {
+            "de": "Lautstärke:"
+        },
+        "all:": {
+            "de": "Gesamt:"
+        },
+        "music:": {
+            "de": "Musik:"
+        },
+        "effects:": {
+            "de": "Effekte:"
+        },
+        "ambience:": {
+            "de": "Umgebung:"
+        },
+        "speech:": {
+            "de": "Sprache:"
+        },
+        "Video device:": {
+            "de": "Grafikkarte:"
+        },
+        "Screen resolution:": {
+            "de": "Bildschirmauflösung:"
+        },
+        "Window mode:": {
+            "de": "Fenster Modus:"
+        },
+        "Window": {
+            "de": "Fenster"
+        },
+        "Fullscreen": {
+            "de": "Vollbild"
+        },
+        "Fullscreen Desktop": {
+            "de": "Vollbild Fenster"
+        },
+        "use video settings": {
+            "de": "Video Einstellungen übernehmen"
+        },
+        "Text language:": {
+            "en": "Language:",
+            "de": "Sprache:"
+        },
+        "english": {
+            "de": "englisch"
+        },
+        "german": {
+            "de": "deutsch"
+        },
+        "Start Game": {
+            "de": "Spiel starten"
+        },
+        "Level editor": {
+            "de": "Level Editor"
+        },
+        "Exit game": {
+            "de": "Spiel beenden"
+        },
+        "%Y-%m-%d": {
+            "de": "%d.%m.%Y"
+        },
+        "Version": {
+            "de": "Version"
+        },
+        "Builddate": {
+            "de": "gebaut am"
+        },
+        "save file": {
+            "de": "Datei speichern"
+        },
+        "load file": {
+            "de": "Datei laden"
+        },
+        "Path:": {
+            "de": "Pfad:"
+        },
+        "Drives:": {
+            "de": "Laufwerke:"
+        },
+        "Filename:": {
+            "de": "Dateiname:"
+        },
+        "Lifes:": {
+            "de": "Leben:"
+        },
+        "Health:": {
+            "de": "Gesundheit:"
+        },
+        "Points:": {
+            "de": "Punkte:"
+        },
+        "Oxygen:": {
+            "de": "Sauerstoff:"
+        },
+        "Energy:": {
+            "de": "Energie:"
+        },
+        "Batteries:": {
+            "de": "Batterien:"
+        },
+        "Start Tutorial": {
+            "de": "Tutorial starten"
+        },
+        "Select Level": {
+            "de": "Level auswählen"
+        },
+        "Language Settings:": {
+            "de": "Spracheinstellungen:"
+        },
+        "Text:": {
+            "de": "Text:"
+        },
+        "Menue": {
+            "en": "Menu",
+            "de": "Menü"
+        },
+        "skip intro": {
+            "de": "Intro überspringen"
+        },
+        "easy": {
+            "de": "einfach"
+        },
+        "normal": {
+            "de": "normal"
+        },
+        "hard": {
+            "de": "schwer"
+        },
+        "no falling damage, less enemies, less damage": {
+            "de": "kein Fallschaden, weniger Gegner, weniger Schaden bei Berührungen",
+            "en": "no falling damage, less enemies, less damage on contacts"
+        },
+        "all the fun, play how it's meant to be played": {
+            "de": "Der ganze Spass, spiel es so, wie es gedacht war",
+            "en": "all the fun, play it how it's meant to be played"
+        },
+        "more enemies, more damage": {
+            "de": "Mehr Gegner, mehr Schaden",
+            "en": "more enemies, more damage"
+        },
+        "Controller": {
+            "de": "Controller"
+        },
+        "Deadzone:": {
+            "de": "Totzone:"
+        },
+        "Difficulty:": {
+            "de": "Schwierigkeitsgrad:"
+        },
+        "Stick walk:": {
+            "de": "Stick laufen:"
+        },
+        "Stick jump:": {
+            "de": "Stick springen:"
+        },
+        "Button up:": {
+            "de": "Knopf hoch:"
+        },
+        "Button down:": {
+            "de": "Knopf runter:"
+        },
+        "Button left:": {
+            "de": "Knopf links:"
+        },
+        "Button right:": {
+            "de": "Knopf rechts:"
+        },
+        "Button menu:": {
+            "de": "Knopf Menü:"
+        },
+        "Button action:": {
+            "de": "Knopf Aktion:"
+        },
+        "Button back:": {
+            "de": "Knopf zurück:"
+        },
+        "Button jump:": {
+            "de": "Knopf Springen:"
+        },
+        "Button crouch:": {
+            "de": "Knopf krabbeln:"
+        },
+        "Button flashlight:": {
+            "de": "Knopf Taschenlampe:"
+        },
+        "Stick left horizontal": {
+            "de": "Stick links horizontal"
+        },
+        "Stick left vertical": {
+            "de": "Stick links vertikal"
+        },
+        "Stick right horizontal": {
+            "de": "Stick rechts horizontal"
+        },
+        "Stick right vertical": {
+            "de": "Stick rechts vertikal"
+        },
+        "Trigger left": {
+            "de": "Trigger links"
+        },
+        "Trigger right": {
+            "de": "Trigger rechts"
+        },
+        "Button A": {
+            "de": "Knopf A"
+        },
+        "Button B": {
+            "de": "Knopf B"
+        },
+        "Button X": {
+            "de": "Knopf X"
+        },
+        "Button Y": {
+            "de": "Knopf Y"
+        },
+        "Button back": {
+            "de": "Knopf zurück"
+        },
+        "Button start": {
+            "de": "Knopf start"
+        },
+        "Button guide": {
+            "de": "Knopf guide"
+        },
+        "Stick left": {
+            "de": "Stick links"
+        },
+        "Stick right": {
+            "de": "Stick rechts"
+        },
+        "Shoulder left": {
+            "de": "Shoulder left"
+        },
+        "Shoulder right": {
+            "de": "Shoulder right"
+        },
+        "Pad up": {
+            "de": "Pad hoch"
+        },
+        "Pad down": {
+            "de": "Pad runter"
+        },
+        "Pad left": {
+            "de": "Pad links"
+        },
+        "Pad right": {
+            "de": "Pad rechts"
+        },
+        "Button misc": {
+            "de": "Knopf verschiedenes"
+        },
+        "Paddle 1": {
+            "de": "Paddle 1"
+        },
+        "Paddle 2": {
+            "de": "Paddle 2"
+        },
+        "Paddle 3": {
+            "de": "Paddle 3"
+        },
+        "Paddle 4": {
+            "de": "Paddle 4"
+        },
+        "no blood": {
+            "de": "kein Blut"
+        },
+        "rumble when player gets hurt": {
+            "de": "vibrieren, wenn Spieler Schaden nimmt"
+        },
+        "unknown level": {
+            "de": "Unbekannter Level"
+        },
+        "no description": {
+            "de": "Keine Beschreibung"
+        },
+        "Author:": {
+            "de": "Autor:"
+        },
+        "Description:": {
+            "de": "Beschreibung:"
+        },
+        "elloooooeerraiieemmm": {
+            "en": "elloooooeerraiieemmm"
+        },
+        "Hello, here I am!": {
+            "en": "Hello, here I am!",
+            "de": "Halli, hier bin ich!"
+        },
+        "elooo": {
+            "en": "elooo"
+        },
+        "Hello!": {
+            "en": "Hello!",
+            "de": "Hallo!"
+        },
+        "pleiiwissme": {
+            "en": "pleiiwissme"
+        },
+        "Play with me!": {
+            "en": "Play with me!",
+            "de": "Spiel mit mir!"
+        },
+        "eloooo": {
+            "en": "eloooo"
+        },
+        "Hello?": {
+            "en": "Hello?",
+            "de": "Hallo?"
+        }
+    }
+}

@@ -386,3 +386,32 @@ SDL_GPUTexture* GPUStreamingTexture::getTexture() const
 {
     return texture;
 }
+
+void GPUContext::downloadTexture(SDL_GPUTexture* texture, int width, int height, ppl7::grafix::Image& target)
+{
+    // 1. Transfer Buffer für den Download erstellen
+    Uint32 bufferSize = width * height * 4;
+    SDL_GPUTransferBufferCreateInfo transferInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, .size = bufferSize};
+    SDL_GPUTransferBuffer* downloadBuffer = SDL_CreateGPUTransferBuffer(gpu, &transferInfo);
+
+    // 2. Download-Befehl abschicken
+    SDL_GPUCommandBuffer* cmd = SDL_AcquireGPUCommandBuffer(gpu);
+    SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
+
+    SDL_GPUTextureRegion sourceRegion = {.texture = texture, .w = (Uint32)width, .h = (Uint32)height, .d = 1};
+    SDL_GPUTextureTransferInfo destInfo = {.transfer_buffer = downloadBuffer, .offset = 0};
+
+    SDL_DownloadFromGPUTexture(copyPass, &sourceRegion, &destInfo);
+    SDL_EndGPUCopyPass(copyPass);
+
+    // 3. Warten, bis die GPU fertig ist (Synchroner Download)
+    SDL_SubmitGPUCommandBuffer(cmd);
+    SDL_WaitForGPUIdle(gpu);
+    // 4. Daten mappen und in PPL7 Image kopieren
+    void* mapped = SDL_MapGPUTransferBuffer(gpu, downloadBuffer, false);
+    target.create(width, height, ppl7::grafix::RGBFormat::A8R8G8B8);
+    memcpy(target.adr(), mapped, bufferSize);
+
+    SDL_UnmapGPUTransferBuffer(gpu, downloadBuffer);
+    SDL_ReleaseGPUTransferBuffer(gpu, downloadBuffer);
+}

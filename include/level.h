@@ -273,9 +273,10 @@ public:
     size_t tileCount() const;
     // ppl7::grafix::Rect getOccupiedArea() const;
     ppl7::grafix::Rect getOccupiedAreaFromTileTypePlane(ParallaxLayerId layer) const;
-    // void TakeScreenshot(Screenshot* screenshot);
     void updateObjects(double time);
     void updateParticles(double time); // Wird vom ParticleUpdateThread aufgerufen!
+
+    ppl7::grafix::Image getScreenshot(int width, int height) const;
 };
 
 #endif

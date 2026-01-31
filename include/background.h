@@ -14,7 +14,7 @@ public:
     };
 
 private:
-    GPUContext& sdl;
+    GPUContext& gpu;
     SDL_Texture* tex_sky;
     ppl7::grafix::Size tex_size;
     ppl7::grafix::Color color;
@@ -32,7 +32,7 @@ private:
     void drawFade(SDL_Renderer* renderer, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& WorldCoords);
 
 public:
-    Background(GPUContext& s);
+    Background(GPUContext& gpu);
     void clear();
     void setImage(const ppl7::String& filename);
     void setColor(const ppl7::grafix::Color& color);

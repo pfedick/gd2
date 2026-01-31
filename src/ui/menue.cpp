@@ -9,6 +9,15 @@ MainMenue::MainMenue(int x, int y, int width, int height, Game* game)
     setupUi();
     visibility = NULL;
     debug_submenu = NULL;
+    level_dialog = NULL;
+}
+
+void MainMenue::update()
+{
+    if (game->getLevelFilename().isEmpty())
+        save_button->setEnabled(false);
+    else
+        save_button->setEnabled(true);
 }
 
 ppl7::String MainMenue::widgetType() const
@@ -129,7 +138,7 @@ void MainMenue::setupUi()
     world_follows_player_checkbox = new ppltk::CheckBox(width() - 280, 0, 180, s.height, "World follows player", true);
     this->addChild(world_follows_player_checkbox);
 
-    // update();
+    update();
 }
 
 void MainMenue::setWorldFollowsPlayer(bool enable)
@@ -163,13 +172,27 @@ bool MainMenue::worldFollowsPlayer() const
 void MainMenue::setGodMode(bool enabled)
 {
     godmode_checkbox->setChecked(enabled);
-    // game->getPlayer()->setGodMode(enabled);
+    game->getPlayer()->setGodMode(enabled);
+}
+
+void MainMenue::openLevelDialog(bool new_flag)
+{
+    controlsEnabled = game->getControlsEnabled();
+    if (level_dialog) delete level_dialog;
+    game->enableControls(false);
+    int w = 800, h = 640;
+    level_dialog = new LevelDialog(w, h);
+    level_dialog->setNewLevelFlag(new_flag);
+    level_dialog->setGame(game);
+    level_dialog->setEventHandler(this);
+    if (!new_flag) level_dialog->loadValues(game->level.params);
+    GetGameWindow()->addChild(level_dialog);
 }
 
 void MainMenue::toggledEvent(ppltk::Event* event, bool checked)
 {
     if (event->widget() == godmode_checkbox) {
-        // game->getPlayer()->setGodMode(checked);
+        game->getPlayer()->setGodMode(checked);
     }
 }
 
@@ -188,6 +211,16 @@ void MainMenue::mouseDownEvent(ppltk::MouseEvent* event)
         game->editor.showTileTypeSelection();
     } else if (event->widget() == edit_sprites_button) {
         game->editor.showSpriteSelection();
+    } else if (event->widget() == edit_level_button) {
+        openLevelDialog(false);
+    } else if (event->widget() == save_button) {
+        game->save(game->getLevelFilename());
+    } else if (event->widget() == save_as_button) {
+        game->openSaveAsDialog();
+    } else if (event->widget() == new_button) {
+        openLevelDialog(true);
+    } else if (event->widget() == load_button) {
+        game->openLoadDialog();
     } else if (event->widget() == show_visibility_submenu_button) {
         if (visibility) {
             delete visibility;
@@ -222,6 +255,32 @@ void MainMenue::mouseDownEvent(ppltk::MouseEvent* event)
 
 void MainMenue::closeEvent(ppltk::Event* event)
 {
+    if (event->widget() == level_dialog) {
+        if (level_dialog->state() == LevelDialog::DialogState::OK) {
+            if (level_dialog->isNewLevel()) {
+                LevelParameter new_params;
+                level_dialog->saveValues(new_params);
+                delete (level_dialog);
+                level_dialog = NULL;
+                game->createNewLevel(new_params);
+                return;
+            } else {
+                level_dialog->saveValues(game->level.params);
+                delete (level_dialog);
+                level_dialog = NULL;
+                game->enableControls(controlsEnabled);
+                game->updateFromLevelParameters();
+            }
+        } else if (level_dialog->state() == LevelDialog::DialogState::Aborted) {
+            delete (level_dialog);
+            level_dialog = NULL;
+            game->enableControls(controlsEnabled);
+        }
+    } else if (event->widget() == visibility) {
+        visibility = NULL;
+    } else if (event->widget() == debug_submenu) {
+        debug_submenu = NULL;
+    }
 }
 
 VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
