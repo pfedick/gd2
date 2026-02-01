@@ -16,7 +16,8 @@ void GameEditor::History::clear()
     lastTileset = 2;
     lastTile = 0;
     lastTileColor = 2;
-    lastTileLayer = 0;
+    lastTileLayer = 2;
+    lastTileType = 1;
 }
 
 GameEditor::GameEditor()
@@ -45,10 +46,15 @@ void GameEditor::init(Game& game)
 void GameEditor::closeAll()
 {
     if (tiles_selection) {
+        history.lastTileset = tiles_selection->currentTileSet();
+        history.lastTile = tiles_selection->selectedTile();
+        history.lastTileColor = tiles_selection->colorIndex();
+        history.lastTileLayer = tiles_selection->currentTileLayer();
         delete tiles_selection;
         tiles_selection = NULL;
     }
     if (tiletype_selection) {
+        history.lastTileType = tiletype_selection->tileType();
         delete tiletype_selection;
         tiletype_selection = NULL;
     }
@@ -65,11 +71,12 @@ void GameEditor::showTilesSelection()
     }
     closeAll();
     tiles_selection = new TilesSelection(0, 32, 300, statusbar->y() - 32, game);
-    tiles_selection->setTileSet(1, "Concrete", &game->resources.TilesUi);
+    tiles_selection->setTileSet(static_cast<int>(Resources::TileSets::Granit), "Concrete",
+                                &game->resources.Tiles[static_cast<int>(Resources::TileSets::Granit)].SpritesUi);
     tiles_selection->setCurrentTileSet(history.lastTileset);
     tiles_selection->setSelectedTile(history.lastTile);
     tiles_selection->setColorIndex(history.lastTileColor);
-    tiles_selection->setLayer(history.lastTileLayer);
+    tiles_selection->setTileLayer(history.lastTileLayer);
     game->addChild(tiles_selection);
 
     game->viewport.x1 = 300;
@@ -86,6 +93,7 @@ void GameEditor::showTileTypeSelection()
     }
     closeAll();
     tiletype_selection = new TileTypeSelection(0, 32, 300, statusbar->y() - 32, game, &game->resources.TileTypes);
+    tiletype_selection->setTileType(history.lastTileType);
     game->addChild(tiletype_selection);
     // viewport.x1 = 300;
     game->viewport.x1 = 300;
@@ -105,13 +113,13 @@ void GameEditor::showSpriteSelection()
 void GameEditor::handleMouseDrawInWorld(const ppltk::MouseState& mouse)
 {
     // ppl7::PrintDebug("GameEditor::handleMouseDrawInWorld\n");
-    //   const bool* state = SDL_GetKeyboardState(NULL);
+    const bool* state = SDL_GetKeyboardState(NULL);
     //    if (state[SDL_SCANCODE_LSHIFT]) return;
 
     if (tiletype_selection) {
 
-        ParallaxLayerId currentlayer = mainmenue->currentLayer();
-        ParallaxLayer& layer = game->level.layer(currentlayer);
+        ParallaxLayerId currentLayer = mainmenue->currentLayer();
+        ParallaxLayer& layer = game->level.layer(currentLayer);
         ppl7::grafix::Point coords = game->WorldCoords * layer.size_factor * layer.speed_factor;
         int x = (mouse.p.x + coords.x) / TILE_WIDTH;
         int y = (mouse.p.y + coords.y) / TILE_HEIGHT;
@@ -123,49 +131,45 @@ void GameEditor::handleMouseDrawInWorld(const ppltk::MouseState& mouse)
             layer.TileTypeMatrix.setType(x, y, TileType::Type::NonBlocking);
         }
     } else if (tiles_selection) {
-        /*
-        int currentPlane = editor.mainmenue->currentPlane();
+        ParallaxLayerId currentLayer = mainmenue->currentLayer();
+        ParallaxLayer& layer = game->level.layer(currentLayer);
 
-        ppl7::grafix::Point coords = WorldCoords * planeFactor[currentPlane];
+        ppl7::grafix::Point coords = game->WorldCoords * layer.size_factor * layer.speed_factor;
         int x = (mouse.p.x + coords.x) / TILE_WIDTH;
         int y = (mouse.p.y + coords.y) / TILE_HEIGHT;
 
         int selectedTile = tiles_selection->selectedTile();
         int selectedTileSet = tiles_selection->currentTileSet();
-        int currentLayer = tiles_selection->currentLayer();
+        int currentTileLayer = tiles_selection->currentTileLayer();
         int color_index = tiles_selection->colorIndex();
-        Plane& plane = level.plane(currentPlane);
 
         if ((mouse.buttonMask == ppltk::MouseState::Right || mouse.buttonMask == ppltk::MouseState::Middle) && state[SDL_SCANCODE_LSHIFT]) {
             // Pick Tile
-            ppl7::grafix::Point p = plane.getOccupationOrigin(x, y, currentLayer);
+            ppl7::grafix::Point p = layer.tiles.getOccupationOrigin(x, y, currentTileLayer);
             if (p.x >= 0 && p.y >= 0) {
-                tiles_selection->setCurrentTileSet(plane.getTileSet(p.x, p.y, currentLayer));
-                tiles_selection->setSelectedTile(plane.getTileNo(p.x, p.y, currentLayer));
-                tiles_selection->setColorIndex(plane.getColorIndex(p.x, p.y, currentLayer));
+                tiles_selection->setCurrentTileSet(layer.tiles.getTileSet(p.x, p.y, currentTileLayer));
+                tiles_selection->setSelectedTile(layer.tiles.getTileNo(p.x, p.y, currentTileLayer));
+                tiles_selection->setColorIndex(layer.tiles.getColorIndex(p.x, p.y, currentTileLayer));
             }
         } else if (mouse.buttonMask == ppltk::MouseState::Left && selectedTile >= 0 && state[SDL_SCANCODE_LSHIFT] == 0) {
-            BrickOccupation::Matrix occupation = brick_occupation.get(selectedTile);
-            if (selectedTileSet == 1) occupation = brick_occupation_solid;
-            if (!plane.isOccupied(x, y, currentLayer, occupation)) {
-                plane.setTile(x, y, currentLayer, selectedTileSet, selectedTile, color_index, true);
-                plane.setOccupation(x, y, currentLayer, occupation);
+            const TileOccupation::Matrix& occupation = game->resources.Tiles[selectedTileSet].Occupation.get(selectedTile);
+            if (!layer.tiles.isOccupied(x, y, currentTileLayer, occupation)) {
+                layer.tiles.setTile(x, y, currentTileLayer, selectedTileSet, selectedTile, color_index, true);
+                layer.tiles.setOccupation(x, y, currentTileLayer, occupation);
             }
         } else if (mouse.buttonMask == ppltk::MouseState::Right && state[SDL_SCANCODE_LSHIFT] == 0) {
-            ppl7::grafix::Point origin = plane.getOccupationOrigin(x, y, currentLayer);
+            ppl7::grafix::Point origin = layer.tiles.getOccupationOrigin(x, y, currentTileLayer);
             if (origin.x >= 0 && origin.y >= 0) {
-                int origin_tile = plane.getTileNo(origin.x, origin.y, currentLayer);
-                int origin_tileset = plane.getTileSet(origin.x, origin.y, currentLayer);
+                int origin_tile = layer.tiles.getTileNo(origin.x, origin.y, currentTileLayer);
+                int origin_tileset = layer.tiles.getTileSet(origin.x, origin.y, currentTileLayer);
                 if (origin_tile >= 0) {
-                    BrickOccupation::Matrix occupation = brick_occupation.get(origin_tile);
-                    if (origin_tileset == 1) occupation = brick_occupation_solid;
-                    plane.clearOccupation(origin.x, origin.y, currentLayer, occupation);
+                    const TileOccupation::Matrix& occupation = game->resources.Tiles[origin_tileset].Occupation.get(origin_tile);
+                    layer.tiles.clearOccupation(origin.x, origin.y, currentTileLayer, occupation);
                 }
-                plane.clearTile(origin.x, origin.y, currentLayer);
+                layer.tiles.clearTile(origin.x, origin.y, currentTileLayer);
             } else {
-                plane.clearTile(x, y, currentLayer);
+                layer.tiles.clearTile(x, y, currentTileLayer);
             }
         }
-        */
     }
 }

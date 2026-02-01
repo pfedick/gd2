@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <ppl7-grafix.h>
 
-Plane::Plane()
+TileGrid::TileGrid()
 {
     tilematrix = NULL;
     width = 0;
@@ -12,12 +12,12 @@ Plane::Plane()
     tile_count = 0;
 }
 
-Plane::~Plane()
+TileGrid::~TileGrid()
 {
     clear();
 }
 
-void Plane::clear()
+void TileGrid::clear()
 {
     if (tilematrix) {
         for (int y = 0; y < height; y++) {
@@ -34,7 +34,7 @@ void Plane::clear()
     tile_count = 0;
 }
 
-void Plane::create(int width, int height)
+void TileGrid::create(int width, int height)
 {
     clear();
     this->width = width;
@@ -47,15 +47,15 @@ void Plane::create(int width, int height)
     }
 }
 
-ppl7::grafix::Size Plane::getSize() const
+ppl7::grafix::Size TileGrid::getSize() const
 {
     return ppl7::grafix::Size(width, height);
 }
 
-void Plane::setTile(int x, int y, int z, int tileset, int tileno, int color_index, bool showStuds)
+void TileGrid::setTile(int x, int y, int z, int tileset, int tileno, int color_index, bool showStuds)
 {
     if (x < 0 || x >= width || y < 0 || y >= height || tilematrix == NULL) return;
-    if (z < 0 || z >= MAX_TILE_LAYER) return;
+    if (z < 0 || z >= MAX_LAYERS_PER_TILE) return;
 
     if (tilematrix[y * width + x] == NULL) {
         tilematrix[y * width + x] = new Tile();
@@ -64,7 +64,7 @@ void Plane::setTile(int x, int y, int z, int tileset, int tileno, int color_inde
     tilematrix[y * width + x]->setSprite(z, tileset, tileno, color_index, showStuds);
 }
 
-void Plane::setOccupation(int x, int y, int z, Tile::TileOccupation o, int origin_x, int origin_y)
+void TileGrid::setOccupation(int x, int y, int z, Tile::Occupation o, int origin_x, int origin_y)
 {
     if (x < 0 || x >= width || y < 0 || y >= height || tilematrix == NULL) return;
     if (tilematrix[y * width + x] == NULL) {
@@ -73,7 +73,7 @@ void Plane::setOccupation(int x, int y, int z, Tile::TileOccupation o, int origi
     tilematrix[y * width + x]->setOccupation(z, o, origin_x, origin_y);
 }
 
-void Plane::setBlockBackground(int x, int y, bool block)
+void TileGrid::setBlockBackground(int x, int y, bool block)
 {
     if (x < 0 || x >= width || y < 0 || y >= height || tilematrix == NULL) return;
     if (tilematrix[y * width + x] == NULL) {
@@ -82,102 +82,102 @@ void Plane::setBlockBackground(int x, int y, bool block)
     tilematrix[y * width + x]->block_background = block;
 }
 
-void Plane::setOccupation(int x, int y, int z, const BrickOccupation::Matrix& matrix)
+void TileGrid::setOccupation(int x, int y, int z, const TileOccupation::Matrix& matrix)
 {
-    BrickOccupation::Matrix::const_iterator it;
+    TileOccupation::Matrix::const_iterator it;
     for (it = matrix.begin(); it != matrix.end(); ++it) {
-        const BrickOccupation::Item& item = (*it);
+        const TileOccupation::Item& item = (*it);
         setOccupation(x + item.x, y - item.y, z, item.o, x, y);
     }
 }
 
-void Plane::clearOccupation(int x, int y, int z, const BrickOccupation::Matrix& matrix)
+void TileGrid::clearOccupation(int x, int y, int z, const TileOccupation::Matrix& matrix)
 {
-    BrickOccupation::Matrix::const_iterator it;
+    TileOccupation::Matrix::const_iterator it;
     for (it = matrix.begin(); it != matrix.end(); ++it) {
-        const BrickOccupation::Item& item = (*it);
-        setOccupation(x + item.x, y - item.y, z, Tile::OccupationNone);
+        const TileOccupation::Item& item = (*it);
+        setOccupation(x + item.x, y - item.y, z, Tile::Occupation::None);
     }
-    setOccupation(x, y, z, Tile::OccupationNone);
+    setOccupation(x, y, z, Tile::Occupation::None);
 }
 
-Tile::TileOccupation Plane::getOccupation(int x, int y, int z)
+Tile::Occupation TileGrid::getOccupation(int x, int y, int z)
 {
-    if (x < 0 || x >= width || y < 0 || y >= height || tilematrix == NULL) return Tile::TileOccupation::OccupationNone;
-    if (tilematrix[y * width + x] == NULL || z < 0 || z >= MAX_TILE_LAYER) return Tile::TileOccupation::OccupationNone;
-    return tilematrix[y * width + x]->layer[z].occupation;
+    if (x < 0 || x >= width || y < 0 || y >= height || tilematrix == NULL) return Tile::Occupation::None;
+    if (tilematrix[y * width + x] == NULL || z < 0 || z >= MAX_LAYERS_PER_TILE) return Tile::Occupation::None;
+    return tilematrix[y * width + x]->tileLayers[z].occupation;
 }
 
-bool Plane::isOccupied(int x, int y, int z, const BrickOccupation::Matrix& matrix)
+bool TileGrid::isOccupied(int x, int y, int z, const TileOccupation::Matrix& matrix)
 {
-    BrickOccupation::Matrix::const_iterator it;
+    TileOccupation::Matrix::const_iterator it;
     for (it = matrix.begin(); it != matrix.end(); ++it) {
-        const BrickOccupation::Item& item = (*it);
-        Tile::TileOccupation o = getOccupation(x + item.x, y - item.y, z);
-        if (o) return true;
+        const TileOccupation::Item& item = (*it);
+        Tile::Occupation o = getOccupation(x + item.x, y - item.y, z);
+        if (o != Tile::Occupation::None) return true;
     }
     return false;
 }
 
-void Plane::clearTile(int x, int y, int z)
+void TileGrid::clearTile(int x, int y, int z)
 {
     if (x < 0 || x >= width || y < 0 || y >= height || tilematrix == NULL) return;
-    if (z < 0 || z >= MAX_TILE_LAYER) return;
+    if (z < 0 || z >= MAX_LAYERS_PER_TILE) return;
     if (tilematrix[y * width + x] != NULL) {
         if (!tilematrix[y * width + x]->hasSprite(z) && tile_count > 0) tile_count--;
         tilematrix[y * width + x]->setSprite(z, 0, 0, 0, true);
-        tilematrix[y * width + x]->setOccupation(z, Tile::OccupationNone);
+        tilematrix[y * width + x]->setOccupation(z, Tile::Occupation::None);
     }
 }
 
-const Tile* Plane::get(int x, int y) const
+const Tile* TileGrid::get(int x, int y) const
 {
     if (x < 0 || x >= width || y < 0 || y >= height || tilematrix == NULL) return NULL;
     return tilematrix[y * width + x];
 }
 
-int Plane::getTileNo(int x, int y, int z)
+int TileGrid::getTileNo(int x, int y, int z)
 {
-    if (z < 0 || z >= MAX_TILE_LAYER) return -1;
+    if (z < 0 || z >= MAX_LAYERS_PER_TILE) return -1;
     const Tile* t = get(x, y);
     if (!t) return -1;
-    return t->layer[z].tileno;
+    return t->tileLayers[z].tileno;
 }
 
-int Plane::getTileSet(int x, int y, int z)
+int TileGrid::getTileSet(int x, int y, int z)
 {
-    if (z < 0 || z >= MAX_TILE_LAYER) return -1;
+    if (z < 0 || z >= MAX_LAYERS_PER_TILE) return -1;
     const Tile* t = get(x, y);
     if (!t) return -1;
-    return t->layer[z].tileset;
+    return t->tileLayers[z].tileset;
 }
 
-int Plane::getColorIndex(int x, int y, int z)
+int TileGrid::getColorIndex(int x, int y, int z)
 {
-    if (z < 0 || z >= MAX_TILE_LAYER) return -1;
+    if (z < 0 || z >= MAX_LAYERS_PER_TILE) return -1;
     const Tile* t = get(x, y);
     if (!t) return -1;
-    return t->layer[z].color_index;
+    return t->tileLayers[z].color_index;
 }
 
-ppl7::grafix::Point Plane::getOccupationOrigin(int x, int y, int z)
+ppl7::grafix::Point TileGrid::getOccupationOrigin(int x, int y, int z)
 {
     const Tile* t = get(x, y);
-    if (t == NULL || z < 0 || z >= MAX_TILE_LAYER) return ppl7::grafix::Point(-1, -1);
-    return ppl7::grafix::Point(t->layer[z].origin_x, t->layer[z].origin_y);
+    if (t == NULL || z < 0 || z >= MAX_LAYERS_PER_TILE) return ppl7::grafix::Point(-1, -1);
+    return ppl7::grafix::Point(t->tileLayers[z].origin_x, t->tileLayers[z].origin_y);
 }
 
-void Plane::setVisible(bool visible)
+void TileGrid::setVisible(bool visible)
 {
     bTilesVisible = visible;
 }
 
-bool Plane::isVisible() const
+bool TileGrid::isVisible() const
 {
     return bTilesVisible;
 }
 
-void Plane::save(ppl7::FileObject& file, int chunk_id, int layer) const
+void TileGrid::save(ppl7::FileObject& file, int chunk_id, int layer) const
 {
     if (tilematrix == NULL) return;
     // calculate required size
@@ -186,7 +186,7 @@ void Plane::save(ppl7::FileObject& file, int chunk_id, int layer) const
         for (int x = 0; x < width; x++) {
             const Tile* t = tilematrix[y * width + x];
             if (t) {
-                buffersize += (5 + MAX_TILE_LAYER * 11);
+                buffersize += (5 + MAX_LAYERS_PER_TILE * 11);
             }
         }
     }
@@ -206,14 +206,14 @@ void Plane::save(ppl7::FileObject& file, int chunk_id, int layer) const
                 ppl7::Poke16(buffer + p + 2, y);
                 ppl7::Poke8(buffer + p + 4, (int)t->block_background);
                 p += 5;
-                for (int z = 0; z < MAX_TILE_LAYER; z++) {
-                    ppl7::Poke16(buffer + p, t->layer[z].tileset);
-                    ppl7::Poke16(buffer + p + 2, t->layer[z].tileno);
-                    ppl7::Poke16(buffer + p + 4, t->layer[z].origin_x);
-                    ppl7::Poke16(buffer + p + 6, t->layer[z].origin_y);
-                    ppl7::Poke8(buffer + p + 8, t->layer[z].occupation);
-                    ppl7::Poke8(buffer + p + 9, t->layer[z].showStuds);
-                    ppl7::Poke8(buffer + p + 10, t->layer[z].color_index);
+                for (int z = 0; z < MAX_LAYERS_PER_TILE; z++) {
+                    ppl7::Poke16(buffer + p, t->tileLayers[z].tileset);
+                    ppl7::Poke16(buffer + p + 2, t->tileLayers[z].tileno);
+                    ppl7::Poke16(buffer + p + 4, t->tileLayers[z].origin_x);
+                    ppl7::Poke16(buffer + p + 6, t->tileLayers[z].origin_y);
+                    ppl7::Poke8(buffer + p + 8, static_cast<uint8_t>(t->tileLayers[z].occupation));
+                    ppl7::Poke8(buffer + p + 9, t->tileLayers[z].showStuds);
+                    ppl7::Poke8(buffer + p + 10, t->tileLayers[z].color_index);
                     p += 11;
                 }
             }
@@ -225,7 +225,7 @@ void Plane::save(ppl7::FileObject& file, int chunk_id, int layer) const
     free(buffer);
 }
 
-void Plane::load(const ppl7::ByteArrayPtr& ba)
+void TileGrid::load(const ppl7::ByteArrayPtr& ba)
 {
     const char* buffer = ba.toCharPtr();
     int version = ppl7::Peek8(buffer + 1);
@@ -241,7 +241,7 @@ void Plane::load(const ppl7::ByteArrayPtr& ba)
             int y = ppl7::Peek16(buffer + p + 2);
             bool block_background = (bool)ppl7::Peek8(buffer + p + 4);
             p += 5;
-            for (int z = 0; z < MAX_TILE_LAYER; z++) {
+            for (int z = 0; z < MAX_LAYERS_PER_TILE; z++) {
                 int tileset = ppl7::Peek16(buffer + p);
                 int tileno = ppl7::Peek16(buffer + p + 2);
                 int origin_x = ppl7::Peek16(buffer + p + 4);
@@ -251,7 +251,7 @@ void Plane::load(const ppl7::ByteArrayPtr& ba)
                 int color_index = ppl7::Peek8(buffer + p + 10);
                 if (tileset > 2) tileset = 2;
                 setTile(x, y, z, tileset, tileno, color_index, showStuds);
-                setOccupation(x, y, z, (Tile::TileOccupation)occupation, origin_x, origin_y);
+                setOccupation(x, y, z, (Tile::Occupation)occupation, origin_x, origin_y);
                 p += 11;
             }
             setBlockBackground(x, y, block_background);
@@ -262,7 +262,7 @@ void Plane::load(const ppl7::ByteArrayPtr& ba)
     // printf("Plane hat %zd tiles\n", tileCount());
 }
 
-ppl7::grafix::Rect Plane::getOccupiedArea() const
+ppl7::grafix::Rect TileGrid::getOccupiedArea() const
 {
     ppl7::grafix::Rect r;
     r.x1 = width;
@@ -283,7 +283,7 @@ ppl7::grafix::Rect Plane::getOccupiedArea() const
     return r;
 }
 
-size_t Plane::tileCount() const
+size_t TileGrid::tileCount() const
 {
     return tile_count;
 }

@@ -1,7 +1,7 @@
 #include "game.h"
 #include "level.h"
 #include "ui/spriteselection.h"
-#include "ui/colorselection.h"
+#include "widgets/colorselection.h"
 
 SpriteSelection::SpriteSelection(int x, int y, int width, int height, Game* game)
     : ppltk::Frame(x, y, width, height)

@@ -165,11 +165,6 @@ void Level::create(int width, int height)
     }
 }
 
-Plane& Level::plane(ParallaxLayerId id)
-{
-    return parallax_layers[static_cast<int>(id)].tiles;
-}
-
 ParallaxLayer& Level::layer(ParallaxLayerId id)
 {
     return parallax_layers[static_cast<int>(id)];
@@ -354,16 +349,18 @@ void Level::drawPlane(SDL_Renderer* renderer, const Plane& plane, const ppl7::gr
 
     std::map<int, ColorPaletteItem>::const_iterator cit;
 
-    for (int z = 0; z < MAX_TILE_LAYER; z++) {
+    for (int z = 0; z < MAX_LAYERS_PER_TILE; z++) {
         for (int y = tiles_height; y >= 0; y--) {
             for (int x = 0; x < tiles_width; x++) {
                 const Tile* tile = plane.get(x + start_x, y + start_y);
                 if (tile) {
-                    // if (tile->layer[z].tileset>8) printf ("draw %d, %d\n",tile->layer[z].tileset, tile->layer[z].tileno);
-                    if (tileset[tile->layer[z].tileset]) {
+                    // if (tile->tileLayers[z].tileset>8) printf ("draw %d, %d\n",tile->tileLayers[z].tileset,
+                    // tile->tileLayers[z].tileno);
+                    if (tileset[tile->tileLayers[z].tileset]) {
                         // printf ("%d = %zd\n,",tile->tileset[z], tileset[tile->tileset[z]]);
-                        tileset[tile->layer[z].tileset]->draw(renderer, x1 + x * TILE_WIDTH, y1 + y * TILE_HEIGHT, tile->layer[z].tileno,
-                                                              palette.getColor(tile->layer[z].color_index));
+                        tileset[tile->tileLayers[z].tileset]->draw(renderer, x1 + x * TILE_WIDTH, y1 + y * TILE_HEIGHT,
+                                                                   tile->tileLayers[z].tileno,
+                                                                   palette.getColor(tile->tileLayers[z].color_index));
                     }
                 }
             }

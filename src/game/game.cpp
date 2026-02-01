@@ -133,7 +133,8 @@ void Game::init_grafix()
     player->setTileTypeResource(resources.TileTypes);
 
     // ppl7::PrintDebug("Grafix initialized\n");
-    level.setTileset(1, &resources.Tiles);
+    level.setTileset(static_cast<int>(Resources::TileSets::Granit),
+                     &resources.Tiles[static_cast<int>(Resources::TileSets::Granit)].Sprites);
     level.setTileTypeSpriteset(&resources.TileTypes);
 }
 

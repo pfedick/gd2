@@ -160,6 +160,7 @@ private:
         int lastTile;
         int lastTileColor;
         int lastTileLayer;
+        int lastTileType = 1;
         History();
         void clear();
     };

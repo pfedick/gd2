@@ -42,6 +42,7 @@ private:
     ppltk::RadioButton* layer1;
     ppltk::RadioButton* layer2;
     ppltk::RadioButton* layer3;
+    ppltk::RadioButton* layer4;
     ppltk::ComboBox* tileset_combobox;
     class TileSet
     {
@@ -66,8 +67,8 @@ public:
     void setCurrentTileSet(int id);
     int currentTileSet() const;
     void setTileSet(int id, const ppl7::String& name, SpriteTexture* tiles);
-    int currentLayer() const;
-    void setLayer(int layer);
+    int currentTileLayer() const;
+    void setTileLayer(int layer);
     int colorIndex() const;
     void setColorIndex(int index);
 

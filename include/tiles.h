@@ -5,20 +5,40 @@
 #include "sprite.h"
 #include <vector>
 
-#define MAX_TILE_LAYER 4
+#define MAX_LAYERS_PER_TILE 5
+
+class TileOccupation;
 
 class Tile
 {
 public:
-    enum TileOccupation
+    enum class Occupation
     {
-        OccupationNone = 0,
-        OccupationPlate0 = 1,
-        OccupationPlate1 = 2,
-        OccupationPlate2 = 4,
-        OccupationBrick = 7
+        None = 0,
+        Plate0 = 1,
+        Plate1 = 2,
+        Plate2 = 4,
+        Full = 7
     };
-    class Layer
+    // Bitweise OR Operator
+    friend inline Occupation operator|(Occupation a, Occupation b)
+    {
+        return static_cast<Occupation>(static_cast<int>(a) | static_cast<int>(b));
+    }
+
+    // Bitweise AND Operator (hilfreich für Abfragen)
+    friend inline Occupation operator&(Occupation a, Occupation b)
+    {
+        return static_cast<Occupation>(static_cast<int>(a) & static_cast<int>(b));
+    }
+
+    friend inline Occupation& operator|=(Occupation& a, Occupation b)
+    {
+        a = a | b;
+        return a;
+    }
+
+    class TileLayer
     {
     public:
         int tileset;
@@ -26,43 +46,43 @@ public:
         int origin_x;
         int origin_y;
         int color_index;
-        TileOccupation occupation;
+        Occupation occupation;
         bool showStuds;
     };
 
-    Layer layer[MAX_TILE_LAYER];
+    TileLayer tileLayers[MAX_LAYERS_PER_TILE];
     bool block_background;
     Tile();
     void setSprite(int z, int tileset, int tileno, int color_index, bool showStuds);
     bool hasSprite(int z) const;
     bool hasSprite() const;
-    void setOccupation(int z, TileOccupation o, int origin_x = -1, int origin_y = -1);
+    void setOccupation(int z, Occupation o, int origin_x = -1, int origin_y = -1);
 };
 
-class BrickOccupation
+class TileOccupation
 {
 public:
     class Item
     {
     public:
-        Item(int x, int y, Tile::TileOccupation o);
+        Item(int x, int y, Tile::Occupation o);
         int x, y;
-        Tile::TileOccupation o;
+        Tile::Occupation o;
     };
-    typedef std::list<BrickOccupation::Item> Matrix;
+    typedef std::list<TileOccupation::Item> Matrix;
 
 private:
-    std::map<int, BrickOccupation::Matrix> tiles;
-    BrickOccupation::Matrix empty;
+    std::map<int, TileOccupation::Matrix> tiles;
+    TileOccupation::Matrix empty;
 
 public:
     void createFromSpriteTexture(const SpriteTexture& tex, int brick_width, int brick_height);
     void createFromImage(int id, const ppl7::grafix::Drawable& img, int brick_width, int brick_height);
-    void set(int id, const BrickOccupation::Matrix& matrix);
-    const BrickOccupation::Matrix& get(int id);
+    void set(int id, const TileOccupation::Matrix& matrix);
+    const TileOccupation::Matrix& get(int id) const;
 };
 
-class Plane
+class TileGrid
 {
     // friend class Level;
 private:
@@ -75,19 +95,19 @@ private:
     size_t tile_count;
 
 public:
-    Plane();
-    ~Plane();
+    TileGrid();
+    ~TileGrid();
     void clear();
     void create(int width, int height);
     ppl7::grafix::Size getSize() const;
     void setTile(int x, int y, int z, int tileset, int tileno, int color_index, bool showStuds = true);
     void setBlockBackground(int x, int y, bool block);
-    void setOccupation(int x, int y, int z, Tile::TileOccupation o, int origin_x = -1, int origin_y = -1);
-    Tile::TileOccupation getOccupation(int x, int y, int z);
+    void setOccupation(int x, int y, int z, Tile::Occupation o, int origin_x = -1, int origin_y = -1);
+    Tile::Occupation getOccupation(int x, int y, int z);
     ppl7::grafix::Point getOccupationOrigin(int x, int y, int z);
-    void setOccupation(int x, int y, int z, const BrickOccupation::Matrix& matrix);
-    void clearOccupation(int x, int y, int z, const BrickOccupation::Matrix& matrix);
-    bool isOccupied(int x, int y, int z, const BrickOccupation::Matrix& matrix);
+    void setOccupation(int x, int y, int z, const TileOccupation::Matrix& matrix);
+    void clearOccupation(int x, int y, int z, const TileOccupation::Matrix& matrix);
+    bool isOccupied(int x, int y, int z, const TileOccupation::Matrix& matrix);
     void clearTile(int x, int y, int z);
     const Tile* get(int x, int y) const;
     void save(ppl7::FileObject& file, int chunk_id, int layer) const;

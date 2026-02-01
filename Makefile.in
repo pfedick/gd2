@@ -48,8 +48,9 @@ OBJECTS=compile/main.o \
 	compile/level.o \
 	compile/parallaxlayer.o \
 	compile/tile.o \
+	compile/tileoccupation.o \
 	compile/tiletype.o \
-	compile/plane.o \
+	compile/tilegrid.o \
 	compile/spritesystem.o \
 	compile/levelparameter.o \
 	compile/physic.o \
@@ -80,7 +81,8 @@ UI=compile/ui/menue.o \
 	compile/ui/leveldialog.o
 
 
-WIDGETS = compile/widgets/colorwidget.o \
+WIDGETS = compile/widgets/colorsliderwidget.o \
+	compile/widgets/colorselectionframe.o \
 	compile/widgets/controllerbuttonselector.o \
 	compile/widgets/dialog.o \
 	compile/widgets/filedialog.o \
@@ -89,7 +91,9 @@ WIDGETS = compile/widgets/colorwidget.o \
 	compile/widgets/gradientwidget.o \
 	compile/widgets/groupbox.o \
 	compile/widgets/levelselection.o \
-	compile/widgets/levelselectionitem.o
+	compile/widgets/levelselectionitem.o \
+	
+
 
 $(PROGRAM): update_version ppl7 ppl_toolkit $(OBJECTS) $(UI) $(WIDGETS)
 	$(CXX) -o $(PROGRAM) $(OBJECTS) $(UI) $(WIDGETS) $(LIBS)
@@ -279,7 +283,6 @@ compile/collision.o: src/game/collision.cpp Makefile include/objectsystem.h
 	- @mkdir -p compile
 	$(CXX) -o compile/collision.o -c src/game/collision.cpp $(CFLAGS)
 
-
 compile/particle.o: src/game/particle.cpp Makefile include/particle.h
 	- @mkdir -p compile
 	$(CXX) -o compile/particle.o -c src/game/particle.cpp $(CFLAGS)
@@ -334,13 +337,17 @@ compile/tile.o: src/game/tile.cpp Makefile include/tiles.h
 	- @mkdir -p compile
 	$(CXX) -o compile/tile.o -c src/game/tile.cpp $(CFLAGS)
 
+compile/tileoccupation.o: src/game/tileoccupation.cpp Makefile include/tiles.h
+	- @mkdir -p compile
+	$(CXX) -o compile/tileoccupation.o -c src/game/tileoccupation.cpp $(CFLAGS)
+
 compile/tiletype.o: src/game/tiletype.cpp Makefile include/tiletypes.h
 	- @mkdir -p compile
 	$(CXX) -o compile/tiletype.o -c src/game/tiletype.cpp $(CFLAGS)
 
-compile/plane.o: src/game/plane.cpp Makefile include/tiles.h
+compile/tilegrid.o: src/game/tilegrid.cpp Makefile include/tiles.h
 	- @mkdir -p compile
-	$(CXX) -o compile/plane.o -c src/game/plane.cpp $(CFLAGS)
+	$(CXX) -o compile/tilegrid.o -c src/game/tilegrid.cpp $(CFLAGS)
 
 compile/levelparameter.o: src/game/levelparameter.cpp Makefile include/level.h
 	- @mkdir -p compile
@@ -415,10 +422,14 @@ compile/ui/tiletypeselection.o: src/ui/tiletypeselection.cpp Makefile include/ga
 
 ### WIDGETS #####################################################################
 
-
-compile/widgets/colorwidget.o: src/widgets/colorwidget.cpp Makefile include/widgets.h
+compile/widgets/colorsliderwidget.o: src/widgets/colorsliderwidget.cpp Makefile include/widgets.h
 	- @mkdir -p compile/widgets
-	$(CXX) -o compile/widgets/colorwidget.o -c src/widgets/colorwidget.cpp $(CFLAGS)
+	$(CXX) -o compile/widgets/colorsliderwidget.o -c src/widgets/colorsliderwidget.cpp $(CFLAGS)
+
+compile/widgets/colorselectionframe.o: src/widgets/colorselectionframe.cpp Makefile include/widgets.h \
+	include/widgets/colorselection.h
+	- @mkdir -p compile/widgets
+	$(CXX) -o compile/widgets/colorselectionframe.o -c src/widgets/colorselectionframe.cpp $(CFLAGS)
 
 compile/widgets/controllerbuttonselector.o: src/widgets/controllerbuttonselector.cpp Makefile include/widgets.h
 	- @mkdir -p compile/widgets

@@ -121,7 +121,7 @@ public:
     bool bShowGrid;
     bool bShowTileTypes;
 
-    Plane tiles;
+    TileGrid tiles;
     enum class SpritePosition
     {
         Background = 0,
@@ -250,7 +250,6 @@ public:
 
     ParallaxLayer& layer(ParallaxLayerId id);
     ParallaxLayer& editLayer();
-    Plane& plane(ParallaxLayerId id);
     SpriteSystem& spritesystem(ParallaxLayerId id, ParallaxLayer::SpritePosition layer);
     // SpriteSystem& spritesystem(int layer, int layer);
     // LightLayer& lightsystem(int plane);

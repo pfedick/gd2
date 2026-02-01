@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "resources.h"
 #include "objectsystem.h"
+#include "constants.h"
 
 static Resources* resources = NULL;
 
@@ -34,10 +35,8 @@ void Resources::load(GPUContext& gpu)
         Cursor.load(gpu, "res/ui/cursor.tex", SpriteBuffer::Memory);
         Hud.load(gpu, "res/ui/hud.tex", SpriteBuffer::Memory);
 
-        // TODO TileTypes resource hinzufügen
-        Tiles.load(gpu, "res/tiles.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
+        loadTiles(gpu);
         TileTypes.load(gpu, "res/tiletypes.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
-        TilesUi.load(gpu, "res/ui/tiles.tex", SpriteBuffer::Memory);
         Player.load(gpu, "res/player.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
         Particles.load(gpu, "res/particles.tex", SpriteBuffer::GPU);
         Font24.load(gpu, "res/fonts/scp_24.tex", SpriteBuffer::GPU);
@@ -48,4 +47,12 @@ void Resources::load(GPUContext& gpu)
         exp.print();
         throw ResourceException("Couldn't load resources: %s", (const char*)exp.text());
     }
+}
+
+void Resources::loadTiles(GPUContext& gpu)
+{
+    TileResource& res = Tiles[static_cast<int>(TileSets::Granit)];
+    res.Sprites.load(gpu, "res/tiles.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
+    res.SpritesUi.load(gpu, "res/ui/tiles.tex", SpriteBuffer::Memory);
+    res.Occupation.createFromSpriteTexture(res.Sprites, TILE_WIDTH, TILE_HEIGHT);
 }

@@ -3,6 +3,7 @@
 
 #include "sprite.h"
 #include "gpu.h"
+#include "tiles.h"
 
 class ResourceException : public ppl7::Exception
 {
@@ -25,16 +26,30 @@ public:
 
 class ObjectSpritesets;
 
+class TileResource
+{
+public:
+    SpriteTexture Sprites;
+    SpriteTexture SpritesUi;
+    TileOccupation Occupation;
+};
+
 class Resources
 {
 private:
+    void loadTiles(GPUContext& gpu);
+
 public:
+    enum class TileSets
+    {
+        Granit = 1,
+        MaxTileSet,
+    };
     SpriteTexture Cursor;
     SpriteTexture Hud;
     SpriteTexture Player;
     SpriteTexture TileTypes;
-    SpriteTexture Tiles;
-    SpriteTexture TilesUi;
+    TileResource Tiles[static_cast<int>(TileSets::MaxTileSet)];
     SpriteTexture Trees;
     SpriteTexture Font24;
 
