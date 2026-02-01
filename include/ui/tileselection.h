@@ -49,6 +49,8 @@ private:
     public:
         ppl7::String name;
         SpriteTexture* tiles;
+        int min;
+        int max;
     };
     std::map<int, TileSet> tilesets;
 
@@ -67,6 +69,10 @@ public:
     void setCurrentTileSet(int id);
     int currentTileSet() const;
     void setTileSet(int id, const ppl7::String& name, SpriteTexture* tiles);
+    // TODO: Erlauben, dass in einer SpriteTexture mehrere Tilesets enthalten sind,
+    // die in einem Bereich von min bis max liegen
+    // void addTileSet(int id, const ppl7::String& name, SpriteTexture* tiles, int min, int max);
+
     int currentTileLayer() const;
     void setTileLayer(int layer);
     int colorIndex() const;

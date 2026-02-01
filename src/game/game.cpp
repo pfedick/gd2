@@ -705,7 +705,7 @@ void Game::mouseDownEvent(ppltk::MouseEvent* event)
 {
     // ppl7::PrintDebugTime("Game::mouseDownEvent\n");
     if (event->widget() == world_widget) {
-        ppl7::PrintDebugTime("Game::mouseDownEvent\n");
+        // ppl7::PrintDebugTime("Game::mouseDownEvent\n");
         wm->setKeyboardFocus(world_widget);
         game_viewport.translateMouseEvent(event);
         if (editor.sprite_selection != NULL) {

@@ -42,9 +42,10 @@ Level::Level()
     parallax_layers[static_cast<int>(ParallaxLayerId::Far)].init(ParallaxLayerId::Far, 0.8f, 0.6f, 0.6f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].init(ParallaxLayerId::Horizon, 1.2f, 0.4f, 0.4f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].init(ParallaxLayerId::Sky, 0.0f, 0.3f, 0.3f);
-    for (auto layer : parallax_layers) {
+    for (auto& layer : parallax_layers) {
         layer.background_sprites.setColorPalette(palette);
         layer.front_sprites.setColorPalette(palette);
+        layer.tiles.setColorPalette(palette);
     }
 }
 
@@ -134,10 +135,9 @@ void Level::setTileTypeSpriteset(SpriteTexture* tileset)
 
 void Level::setTileset(int no, SpriteTexture* tileset)
 {
-    if (no >= (int)this->tileset.size()) {
-        this->tileset.resize(no + 1, nullptr);
+    for (auto& layer : parallax_layers) {
+        layer.tiles.setTileset(no, tileset);
     }
-    this->tileset[no] = tileset;
 }
 
 void Level::setSpriteset(int no, SpriteTexture* spriteset)
@@ -237,6 +237,7 @@ void Level::load(const ppl7::String& Filename)
                 params.load(ba);
                 runtimeParams = params;
                 runtimeParams.CurrentSong = params.InitialSong;
+
             } else if (id == ChunkId::ColorPalette) {
                 palette.load(ba);
             } else if (id == ChunkId::Tiles) {
@@ -269,6 +270,14 @@ void Level::load(const ppl7::String& Filename)
         }
     }
     ff.close();
+    for (auto& layer : parallax_layers) {
+        int layer_width = static_cast<int>(params.width * layer.size_factor);
+        int layer_height = static_cast<int>(params.height * layer.size_factor);
+        if (layer.tiles.getSize().width != layer_width || layer.tiles.getSize().height != layer_height)
+            layer.tiles.create(layer_width, layer_height);
+        if (layer.TileTypeMatrix.size().width != layer_width || layer.TileTypeMatrix.size().height != layer_height)
+            layer.TileTypeMatrix.create(layer_width, layer_height);
+    }
 }
 
 void Level::save(const ppl7::String& Filename)

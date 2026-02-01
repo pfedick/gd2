@@ -3,6 +3,9 @@
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include "sprite.h"
+#include "gpu.h"
+#include "colorpalette.h"
+#include "gameviewport.h"
 #include <vector>
 
 #define MAX_LAYERS_PER_TILE 5
@@ -94,6 +97,9 @@ private:
     ppl7::grafix::Rect plane_dimension;
     size_t tile_count;
 
+    std::vector<SpriteTexture*> tileset;
+    ColorPalette* palette;
+
 public:
     TileGrid();
     ~TileGrid();
@@ -120,6 +126,10 @@ public:
 
     size_t tileCount() const;
     ppl7::grafix::Rect getOccupiedArea() const;
+
+    void setTileset(int no, SpriteTexture* tileset);
+    void setColorPalette(ColorPalette& palette);
+    void draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const;
 };
 
 #endif

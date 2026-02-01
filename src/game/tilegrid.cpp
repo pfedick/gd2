@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ppl7-grafix.h>
+#include "gameviewport.h"
+#include "gpu.h"
+#include "constants.h"
 
 TileGrid::TileGrid()
 {
@@ -10,6 +13,7 @@ TileGrid::TileGrid()
     height = 0;
     bTilesVisible = true;
     tile_count = 0;
+    palette = NULL;
 }
 
 TileGrid::~TileGrid()
@@ -177,7 +181,7 @@ bool TileGrid::isVisible() const
     return bTilesVisible;
 }
 
-void TileGrid::save(ppl7::FileObject& file, int chunk_id, int layer) const
+void TileGrid::save(ppl7::FileObject& file, int chunk_id, int parallax_layer) const
 {
     if (tilematrix == NULL) return;
     // calculate required size
@@ -193,11 +197,12 @@ void TileGrid::save(ppl7::FileObject& file, int chunk_id, int layer) const
     unsigned char* buffer = (unsigned char*)malloc(buffersize);
     ppl7::Poke32(buffer + 0, 0);
     ppl7::Poke8(buffer + 4, chunk_id);
-    ppl7::Poke8(buffer + 5, layer); // Layer
-    ppl7::Poke8(buffer + 6, 1);     // Version
+    ppl7::Poke8(buffer + 5, parallax_layer); // ParallaxLayer
+    ppl7::Poke8(buffer + 6, 2);              // Version
     ppl7::Poke16(buffer + 7, width);
     ppl7::Poke16(buffer + 9, height);
-    size_t p = 11;
+    ppl7::Poke8(buffer + 11, MAX_LAYERS_PER_TILE);
+    size_t p = 12;
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             const Tile* t = tilematrix[y * width + x];
@@ -227,13 +232,15 @@ void TileGrid::save(ppl7::FileObject& file, int chunk_id, int layer) const
 
 void TileGrid::load(const ppl7::ByteArrayPtr& ba)
 {
+    // ppl7::PrintDebug("Loading TileGrid from ByteArray of size %zu\n", ba.size());
     const char* buffer = ba.toCharPtr();
     int version = ppl7::Peek8(buffer + 1);
     size_t p = 2;
-    if (version == 1) {
+    if (version == 2) {
         width = ppl7::Peek16(buffer + p);
         height = ppl7::Peek16(buffer + p + 2);
-        p += 4;
+        int max_tile_layers = ppl7::Peek8(buffer + p + 4);
+        p += 5;
         // printf ("width: %d, height: %d\n",width,height);
         create(width, height);
         while (p < ba.size()) {
@@ -241,7 +248,7 @@ void TileGrid::load(const ppl7::ByteArrayPtr& ba)
             int y = ppl7::Peek16(buffer + p + 2);
             bool block_background = (bool)ppl7::Peek8(buffer + p + 4);
             p += 5;
-            for (int z = 0; z < MAX_LAYERS_PER_TILE; z++) {
+            for (int z = 0; z < max_tile_layers; z++) {
                 int tileset = ppl7::Peek16(buffer + p);
                 int tileno = ppl7::Peek16(buffer + p + 2);
                 int origin_x = ppl7::Peek16(buffer + p + 4);
@@ -286,4 +293,55 @@ ppl7::grafix::Rect TileGrid::getOccupiedArea() const
 size_t TileGrid::tileCount() const
 {
     return tile_count;
+}
+
+void TileGrid::setTileset(int no, SpriteTexture* tileset)
+{
+    if (no >= (int)this->tileset.size()) {
+        this->tileset.resize(no + 1, nullptr);
+    }
+    this->tileset[no] = tileset;
+}
+
+void TileGrid::setColorPalette(ColorPalette& palette)
+{
+    this->palette = &palette;
+}
+
+void TileGrid::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const
+{
+    // ppl7::PrintDebugTime("Drawing TileGrid at worldcoords %.2f/%.2f, scale %.2f\n", worldcoords.x, worldcoords.y, scale);
+    if (!palette) return;
+    if (!bTilesVisible) return;
+
+    const ppl7::grafix::Size& render_target_size = viewport.getRenderSize();
+    float scaled_tile_width = TILE_WIDTH * scale;
+    float scaled_tile_height = TILE_HEIGHT * scale;
+
+    int tiles_num_x = render_target_size.width / scaled_tile_width + 2;
+    int tiles_num_y = render_target_size.height / scaled_tile_height + 2;
+
+    // Start-Index in der Matrix berechnen
+    int start_x = static_cast<int>(worldcoords.x / scaled_tile_width);
+    int start_y = static_cast<int>(worldcoords.y / scaled_tile_height);
+
+    // Den Pixel-Versatz berechnen (Modulo für Floats)
+    float offset_x = worldcoords.x - (start_x * scaled_tile_width);
+    float offset_y = worldcoords.y - (start_y * scaled_tile_height);
+
+    float x1 = -offset_x;
+    float y1 = scaled_tile_height - offset_y;
+    // ppl7::PrintDebug("Drawing TileGrid from %d/%d, num tiles %d/%d, offset %.2f/%.2f\n", start_x, start_y, tiles_num_x, tiles_num_y,
+    //                  offset_x, offset_y);
+    for (int z = 0; z < MAX_LAYERS_PER_TILE; z++) {
+        for (int y = tiles_num_y - 1; y >= 0; y--) {
+            for (int x = 0; x < tiles_num_x; x++) {
+                const Tile* tile = get(x + start_x, y + start_y);
+                if (tile != NULL && tile->tileLayers[z].tileset) {
+                    batcher.addSprite(*tileset[tile->tileLayers[z].tileset], tile->tileLayers[z].tileno, x1 + x * scaled_tile_width,
+                                      y1 + y * scaled_tile_height, scale, scale, 0.0f, palette->getColor(tile->tileLayers[z].color_index));
+                }
+            }
+        }
+    }
 }

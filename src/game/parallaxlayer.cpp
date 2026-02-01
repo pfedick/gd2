@@ -53,6 +53,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     }
     // renderstate.batcher->startRenderPass();
     renderstate.batcher->startRenderPass();
+    tiles.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
 
     if (bShowGrid) {
         drawTileGrid(renderstate, swapchainTexture, parallax_worldcoords, viewport);

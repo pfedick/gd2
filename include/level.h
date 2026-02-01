@@ -165,7 +165,6 @@ private:
     // ParticleSystem* particles;
     // Waynet waynet;
 
-    std::vector<SpriteTexture*> tileset;
     std::vector<SpriteTexture*> spriteset;
     // SDL_GPUTexture* tex_render_target;
     ppl7::grafix::Size render_target_size;
