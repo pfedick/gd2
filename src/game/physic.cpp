@@ -33,8 +33,8 @@ Physic::Physic()
     for (int i = 0; i < TileType::Type::MaxType; i++)
         collision_type_count[i] = 0;
     player_stands_on_object = NULL;
-    speed_walk = 2.0f;
-    speed_run = 6.0f;
+    speed_walk = 2.0f * 2.0f;
+    speed_run = 6.0f * 2.0f;
 }
 
 ppl7::String Physic::getState() const

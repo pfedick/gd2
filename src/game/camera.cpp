@@ -1,3 +1,4 @@
+#include <math.h>
 #include "game.h"
 #include "constants.h"
 
@@ -9,7 +10,6 @@ Camera::Camera()
     zoom_speed = 0.0f;
     dead_zone_x = 160.0f;
     dead_zone_y = 128;
-    move_speed = 0.0f;
     follow_player = true;
 }
 void Camera::setZoom(float zoom)
@@ -28,30 +28,36 @@ void Camera::setTargetZoom(float zoom, float speed)
     zoom_speed = speed;
 }
 
-void Camera::update(double time, float frame_rate_compensation)
+void Camera::update(double time, float frame_rate_compensation, const GameViewport& viewport)
 {
-    if (zoom < target_zoom) {
-        zoom += zoom_speed * frame_rate_compensation;
-        if (zoom > target_zoom) zoom = target_zoom;
-    } else if (zoom > target_zoom) {
-        zoom -= zoom_speed * frame_rate_compensation;
-        if (zoom < target_zoom) zoom = target_zoom;
-    }
     if (follow_player) {
-        float diff_x = player_position.x - x;
-        float diff_y = player_position.y - y;
+        int screen_width = viewport.width();
+        int screen_height = viewport.height();
+        float target_x = player_position.x - (viewport.width() / 2.0f);
+        float target_y = player_position.y - (viewport.height() / 2.0f) - 3 * 64.0f;
 
-        if (diff_x > dead_zone_x) {
-            x += diff_x - dead_zone_x;
-        } else if (diff_x < -dead_zone_x) {
-            x += diff_x + dead_zone_x;
-        }
+        float diff_x = fabs(target_x - x);
+        float diff_y = fabs(target_y - y);
 
-        if (diff_y > dead_zone_y) {
-            y += diff_y - dead_zone_y;
-        } else if (diff_y < -dead_zone_y) {
-            y += diff_y + dead_zone_y;
+        if (diff_x < dead_zone_x) {
+            if (speed.x > 0.0f) {
+                speed.x -= 0.1f * frame_rate_compensation;
+                if (speed.x < 0.0f) speed.x = 0.0f;
+            } else if (speed.x < 0.0f) {
+                speed.x += 0.1f * frame_rate_compensation;
+                if (speed.x > 0.0f) speed.x = 0.0f;
+            }
+        } else {
+            if (target_x > x) {
+                speed.x += 0.1f * frame_rate_compensation;
+                if (speed.x > 10.0f) speed.x = 10.0f;
+            } else if (target_x < x) {
+                speed.x -= (0.1f * frame_rate_compensation);
+                if (speed.x < -10.0f) speed.x = -10.0f;
+            }
         }
+        x += speed.x;
+        y += speed.y;
     }
 }
 void Camera::setPlayerPosition(const ppl7::grafix::PointF& pos)
@@ -73,6 +79,11 @@ void Camera::setDeadZone(float x, float y)
 
 void Camera::setFollowPlayer(bool enable)
 {
+    if (enable && !follow_player) {
+        x = player_position.x;
+        y = player_position.y;
+        speed.setPoint(0.0f, 0.0f);
+    }
     follow_player = enable;
 }
 

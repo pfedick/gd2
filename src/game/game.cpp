@@ -271,18 +271,6 @@ void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
 }
     */
 
-void Game::updateWorldCoords()
-{
-    if (!player) return;
-    if (!editor.mainmenue->worldFollowsPlayer()) return;
-    int mx = game_viewport.width() / 2;
-    int my = game_viewport.height() / 2 + 100; // 192
-    WorldCoords.x = player->x - mx;
-    WorldCoords.y = player->y - my;
-    if (WorldCoords.x < 0) WorldCoords.x = 0;
-    if (WorldCoords.y < 0) WorldCoords.y = 0;
-}
-
 void Game::showUi(bool enable)
 {
     // const ppl7::grafix::Size& desktop=clientSize();
@@ -352,7 +340,6 @@ void Game::run()
         ppltk::MouseState mouse = wm->getMouseState();
         updateUi(mouse);
         if (filedialog) checkFileDialog();
-        WorldCoords.update(start_time, frame_rate_compensation);
 
         player->WorldCoords = WorldCoords;
         player->Viewport = game_viewport;
@@ -361,6 +348,9 @@ void Game::run()
             ParallaxLayer& layer = level.layer(player_layer);
             player->update(start_time, layer, frame_rate_compensation);
         }
+        WorldCoords.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
+        WorldCoords.setPlayerPosition(player->position());
+        WorldCoords.update(start_time, frame_rate_compensation, game_viewport);
 
         gpu_batcher.clearQueues();
 

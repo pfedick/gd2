@@ -1180,13 +1180,13 @@ void Player::update(double time, const TileTypePlane& world, ObjectSystem* objec
             // ppl7::PrintDebugTime("crawling\n");
         }
     } else if (keys.matrix == (KeyboardKeys::Left) && movement == Jump) {
-        if (!isCollisionLeft()) velocity_move.x = -2 * frame_rate_compensation;
+        if (!isCollisionLeft()) velocity_move.x = -4 * frame_rate_compensation;
     } else if (keys.matrix == (KeyboardKeys::Right) && movement == Jump) {
-        if (!isCollisionLeft()) velocity_move.x = 2 * frame_rate_compensation;
+        if (!isCollisionLeft()) velocity_move.x = 4 * frame_rate_compensation;
     } else if (keys.matrix == (KeyboardKeys::Left | KeyboardKeys::Shift) && movement == Jump) {
-        if (!isCollisionLeft()) velocity_move.x = -8 * frame_rate_compensation;
+        if (!isCollisionLeft()) velocity_move.x = -16 * frame_rate_compensation;
     } else if (keys.matrix == (KeyboardKeys::Right | KeyboardKeys::Shift) && movement == Jump) {
-        if (!isCollisionLeft()) velocity_move.x = 8 * frame_rate_compensation;
+        if (!isCollisionLeft()) velocity_move.x = 16 * frame_rate_compensation;
 
     } else {
         if (movement != Stand && movement != Jump && movement != Falling) {

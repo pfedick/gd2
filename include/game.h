@@ -113,8 +113,8 @@ private:
     float zoom_speed;
     float dead_zone_x;
     float dead_zone_y;
-    float move_speed;
     ppl7::grafix::PointF player_position;
+    ppl7::grafix::PointF speed;
     bool follow_player;
 
 public:
@@ -122,7 +122,7 @@ public:
     void setZoom(float zoom);
     float getZoom() const;
     void setTargetZoom(float zoom, float speed);
-    void update(double time, float frame_rate_compensation);
+    void update(double time, float frame_rate_compensation, const GameViewport& viewport);
     void setPlayerPosition(const ppl7::grafix::PointF& pos);
     void setPosition(const ppl7::grafix::PointF& pos);
     void setDeadZone(float x, float y);
@@ -233,7 +233,6 @@ private:
     void updateGameControllerMapping();
     void deleteUi();
     void resizeMenueAndStatusbar();
-    void updateWorldCoords();
     void checkFileDialog();
 
     void clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
