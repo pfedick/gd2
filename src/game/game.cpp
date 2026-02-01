@@ -47,6 +47,8 @@ Game::Game(GPUContext& gpu)
     game_viewport.setRenderSize(ppl7::grafix::Size(3840, 2160));
     game_viewport.setAspectRatio(16.0f / 9.0f);
     player = new Player(this);
+    player->setSavePoint(ppl7::grafix::PointF(1920.0f, 1080.0f));
+    player->move(1920.0f, 1080.0f);
 }
 
 Game::~Game()
@@ -352,6 +354,14 @@ void Game::run()
         if (filedialog) checkFileDialog();
         WorldCoords.update(start_time, frame_rate_compensation);
 
+        player->WorldCoords = WorldCoords;
+        player->Viewport = game_viewport;
+        if (this->controlsEnabled || player->isAutoWalk()) {
+            ParallaxLayerId player_layer = player->getParallaxLayer();
+            ParallaxLayer& layer = level.layer(player_layer);
+            player->update(start_time, layer, frame_rate_compensation);
+        }
+
         gpu_batcher.clearQueues();
 
         SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
@@ -435,6 +445,9 @@ void Game::updateUi(const ppltk::MouseState& mouse)
     for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
         level.layer(static_cast<ParallaxLayerId>(i)).setVisible(editor.mainmenue->layer_visibility[i]);
     }
+
+    if (player) editor.statusbar->setPlayerCoords(ppl7::grafix::Point(player->x, player->y));
+    if (player) editor.statusbar->setPlayerState(player->getState());
 }
 
 void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
@@ -493,7 +506,7 @@ struct BlurParams
 void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
     level.updateVisibleObjects(WorldCoords, game_viewport.getWindowSize());
-    level.draw(cmdbuf, swapchainTexture, WorldCoords, game_viewport);
+    level.draw(cmdbuf, swapchainTexture, WorldCoords, game_viewport, player);
 
 #ifdef OLDCODE
     //  Start render pass (resets z-order counter)

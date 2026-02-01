@@ -154,7 +154,7 @@ public:
 
     // is updated every frame
     ppl7::grafix::PointF WorldCoords;
-    ppl7::grafix::Rect Viewport;
+    GameViewport Viewport;
 
     explicit Player(Game* game);
     ~Player();
@@ -187,7 +187,7 @@ public:
     void setSavePoint(const ppl7::grafix::Point& p);
     void setSpriteResource(const SpriteTexture& resource);
     void setTileTypeResource(const SpriteTexture& resource);
-    void draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const;
+    void draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords, float size) const;
     // void addFlashlightToLightSystem(LightSystem& lights);
     void drawCollision(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const;
     void move(int x, int y);
@@ -197,6 +197,7 @@ public:
     bool isAutoWalk() const;
     void startEmittingParticles(double endtime, ParticleReason reason);
     void startHacking(Objects::Object* object);
+    void update(double time, ParallaxLayer& layer, float frame_rate_compensation);
     void update(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation);
 
     /*

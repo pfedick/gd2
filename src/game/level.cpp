@@ -722,10 +722,11 @@ void Level::copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTex
 void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
                  SDL_GPUTexture* swapchainTexture,
                  const ppl7::grafix::PointF& worldcoords,
-                 const GameViewport& viewport)
+                 const GameViewport& viewport,
+                 Player* player)
 {
     renderstate.cmdbuf = cmdbuf;
-
+    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].setPlayer(player);
     // Step 1: Clear internal render target
     clearRenderTarget(cmdbuf);
 

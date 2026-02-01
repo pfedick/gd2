@@ -63,7 +63,7 @@ Player::Player(Game* game)
 {
     x = y = 0;
     currentLayer = ParallaxLayerId::Player;
-    scale = 1.0f;
+    scale = 2.0f;
     last_animation_sound_played = -1;
     sprite_resource = NULL;
     tiletype_resource = NULL;
@@ -376,10 +376,10 @@ void Player::move(int x, int y)
     this->y = y;
 }
 
-void Player::draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const
+void Player::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords, float size) const
 {
     if (!visible) return;
-    ppl7::grafix::PointF p(x + viewport.x1 - worldcoords.x, y + viewport.y1 - worldcoords.y);
+    ppl7::grafix::PointF p(x - worldcoords.x, y - worldcoords.y);
     if (movement == Slide) p.y += 35;
     int frame = animation.getFrame();
     if (flashlightOn) {
@@ -392,7 +392,7 @@ void Player::draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const
         else if (frame >= 415 && frame <= 432)
             frame += 18;
     }
-    batcher.addSprite(*sprite_resource, frame, p.x, p.y + 1, scale, scale, 0.0f, color_modulation);
+    batcher.addSprite(*sprite_resource, frame, p.x, p.y + 1, scale * size, scale * size, 0.0f, color_modulation);
     // sprite_resource->draw(renderer, p.x, p.y + 1, frame, color_modulation);
 }
 
@@ -897,6 +897,11 @@ void Player::playSoundOnAnimationSprite()
         play_step(ap);
     if (movement == ClimbUp && (sprite == 91 || sprite == 96)) play_ladder(ap);
     if (movement == ClimbDown && (sprite == 101 || sprite == 96)) play_ladder(ap);
+}
+
+void Player::update(double time, ParallaxLayer& layer, float frame_rate_compensation)
+{
+    update(time, layer.TileTypeMatrix, &layer.objects, frame_rate_compensation);
 }
 
 void Player::update(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation)

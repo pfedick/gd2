@@ -111,6 +111,7 @@ private:
                       SDL_GPUTexture* target_texture,
                       const ppl7::grafix::PointF& worldcoords,
                       const GameViewport& viewport);
+    Player* player;
 
 public:
     float blur_factor = 0.0f;
@@ -138,6 +139,7 @@ public:
     ParallaxLayer();
     ~ParallaxLayer();
     void init(ParallaxLayerId layerType, float blur, float speed, float size);
+    void setPlayer(Player* p);
     void clear();
     void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
     void draw(RenderState& renderstate,
@@ -242,7 +244,8 @@ public:
     void draw(SDL_GPUCommandBuffer* cmdbuf,
               SDL_GPUTexture* swapchainTexture,
               const ppl7::grafix::PointF& worldcoords,
-              const GameViewport& viewport);
+              const GameViewport& viewport,
+              Player* player = NULL);
 
     void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
     void setEditLayer(ParallaxLayerId layer);

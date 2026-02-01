@@ -211,6 +211,10 @@ void Game::startLevel(const ppl7::String& filename)
     ppl7::grafix::Point startpoint = level.layer(ParallaxLayerId::Player).objects.findPlayerStart();
     editor.mainmenue->setWorldFollowsPlayer(true);
     player->setParallaxLayer(ParallaxLayerId::Player);
+
+    // DEBUG, TODO REMOVE
+    startpoint.x = 1920;
+    startpoint.y = 1080;
     if (startpoint.x > 0) {
         player->move(startpoint.x, startpoint.y);
         player->setSavePoint(startpoint);

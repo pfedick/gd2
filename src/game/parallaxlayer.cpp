@@ -2,6 +2,7 @@
 #include "level.h"
 #include "gpu.h"
 #include "constants.h"
+#include "player.h"
 
 ParallaxLayer::ParallaxLayer()
 {
@@ -10,6 +11,8 @@ ParallaxLayer::ParallaxLayer()
     size_factor = 1.0f;
     isVisible = true;
     bShowGrid = false;
+    bShowTileTypes = false;
+    player = NULL;
 }
 
 ParallaxLayer::~ParallaxLayer()
@@ -47,6 +50,11 @@ void ParallaxLayer::setVisible(bool visible)
     isVisible = visible;
 }
 
+void ParallaxLayer::setPlayer(Player* p)
+{
+    player = p;
+}
+
 void ParallaxLayer::draw(RenderState& renderstate,
                          SDL_GPUTexture* swapchainTexture,
                          const ppl7::grafix::PointF& worldcoords,
@@ -59,6 +67,10 @@ void ParallaxLayer::draw(RenderState& renderstate,
     // renderstate.batcher->startRenderPass();
     renderstate.batcher->startRenderPass();
     tiles.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+
+    if (layerType == ParallaxLayerId::Player && player != NULL) {
+        player->draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+    }
 
     if (bShowGrid) {
         drawTileGrid(renderstate, swapchainTexture, parallax_worldcoords, viewport);
