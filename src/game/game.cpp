@@ -425,7 +425,16 @@ void Game::updateUi(const ppltk::MouseState& mouse)
     level.setEditLayer(current_layer);
     WorldCoords.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
 
-    //}
+    // Update visibility settings
+    level.setShowTileGrid(editor.mainmenue->visibility_grid);
+    level.setShowTileTypes(editor.mainmenue->visibility_tiletypes);
+    level.setShowSprites(editor.mainmenue->visibility_sprites);
+    level.setShowObjects(editor.mainmenue->visibility_objects);
+    level.setShowParticles(editor.mainmenue->visibility_particles);
+    level.setLightingEnabled(editor.mainmenue->visibility_lighting);
+    for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
+        level.layer(static_cast<ParallaxLayerId>(i)).setVisible(editor.mainmenue->layer_visibility[i]);
+    }
 }
 
 void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)

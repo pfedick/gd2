@@ -5,6 +5,7 @@
 #include <ppl7-grafix.h>
 #include <ppltk.h>
 #include "ui/leveldialog.h"
+#include "level.h"
 
 class Game;
 class MainMenue;
@@ -22,13 +23,15 @@ private:
     ppltk::CheckBox* show_objects_checkbox;
     ppltk::CheckBox* show_particles_checkbox;
     ppltk::CheckBox* show_hud_checkbox;
-    ppltk::CheckBox* visible_plane_player_checkbox;
+    ppltk::CheckBox* visible_layer_checkbox[static_cast<int>(ParallaxLayerId::MaxLayerId)];
     ppltk::CheckBox* visible_plane_front_checkbox;
     ppltk::CheckBox* visible_plane_far_checkbox;
     ppltk::CheckBox* visible_plane_back_checkbox;
     ppltk::CheckBox* visible_plane_middle_checkbox;
     ppltk::CheckBox* visible_plane_horizon_checkbox;
     ppltk::CheckBox* visible_plane_near_checkbox;
+
+    void addVisibilityCheckbox(int& y1, ParallaxLayerId layerId, const ppl7::String& label, bool initialState);
 
 public:
     VisibilitySubMenu(int x, int y, MainMenue* menue);
@@ -100,13 +103,7 @@ private:
     void setupUi();
 
 public:
-    bool visibility_plane_player;
-    bool visibility_plane_front;
-    bool visibility_plane_back;
-    bool visibility_plane_middle;
-    bool visibility_plane_far;
-    bool visibility_plane_horizon;
-    bool visibility_plane_near;
+    bool layer_visibility[static_cast<int>(ParallaxLayerId::MaxLayerId)];
     bool visibility_sprites;
     bool visibility_objects;
     bool visibility_particles;

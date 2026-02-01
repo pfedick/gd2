@@ -144,6 +144,8 @@ public:
               SDL_GPUTexture* swapchainTexture,
               const ppl7::grafix::PointF& worldcoords,
               const GameViewport& viewport);
+
+    void setVisible(bool visible);
 };
 
 class Level
@@ -227,7 +229,7 @@ public:
     void setShowSprites(bool enabled);
     void setShowObjects(bool enabled);
     void setShowParticles(bool enabled);
-    void setEnableLights(bool enabled);
+    void setLightingEnabled(bool enabled);
     void setTileset(int no, SpriteTexture* tileset);
     void setSpriteset(int no, SpriteTexture* spriteset);
     void setTileTypeSpriteset(SpriteTexture* spriteset);

@@ -42,6 +42,11 @@ bool ParallaxLayer::hasVisibleGrafix() const
     return true;
 }
 
+void ParallaxLayer::setVisible(bool visible)
+{
+    isVisible = visible;
+}
+
 void ParallaxLayer::draw(RenderState& renderstate,
                          SDL_GPUTexture* swapchainTexture,
                          const ppl7::grafix::PointF& worldcoords,

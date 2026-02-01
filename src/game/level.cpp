@@ -93,7 +93,7 @@ void Level::setShowParticles(bool enabled)
     showParticles = enabled;
 }
 
-void Level::setEnableLights(bool enabled)
+void Level::setLightingEnabled(bool enabled)
 {
     lightsEnabled = enabled;
 }
