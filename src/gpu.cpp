@@ -347,7 +347,7 @@ void GPUStreamingTexture::resize(int width, int height)
     textureInfo.height = size.height;
     textureInfo.layer_count_or_depth = 1;
     textureInfo.num_levels = 1;
-    ppl7::PrintDebug("SDL_CreateGPUTexture for Window\n");
+    // ppl7::PrintDebug("SDL_CreateGPUTexture for Window\n");
     texture = SDL_CreateGPUTexture(gpu, &textureInfo);
     if (!texture) throw GPUException("SDL_CreateGPUTexture ERROR: %s", SDL_GetError());
 

@@ -195,7 +195,7 @@ void Level::resizeRenderBuffer(const ppl7::grafix::Size& size)
 {
     if (!renderstate.gpu) return;
     if (size != render_target_size) {
-        ppl7::PrintDebug("Resizing Level Render Targets to %dx%d\n", size.width, size.height);
+        // ppl7::PrintDebug("Resizing Level Render Targets to %dx%d\n", size.width, size.height);
         if (renderstate.render_target) renderstate.gpu->destroyGPUTexture(renderstate.render_target);
         renderstate.render_target = renderstate.gpu->createRenderTarget(size.width, size.height);
         if (renderstate.render_layer) renderstate.gpu->destroyGPUTexture(renderstate.render_layer);
