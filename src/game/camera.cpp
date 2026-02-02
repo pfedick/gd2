@@ -78,27 +78,30 @@ void Camera::update(double time, float frame_rate_compensation, const Player* pl
 
     // 5. Zustands-Logik (Horizontal)
     bool is_moving = (fabs(player->velocity_move.x) > 0.1f);
-    bool outside_deadzone = (fabs(player_x - cam_center_x) > dead_zone.x);
+    bool outside_deadzone_x = (fabs(player_x - cam_center_x) > dead_zone.x);
+    // Kamera ist aktiv, wenn sie bereits rollt ODER wenn der Spieler die Deadzone verlässt.
+    bool camera_active_x = (fabs(speed.x) > 0.1f) || outside_deadzone_x;
 
-    if (outside_deadzone || is_moving) {
-        // State: Beschleunigen / Folgen
-        // Die Kamera strebt eine Geschwindigkeit an, die den Abstand verringert
+    if (camera_active_x) {
+        // State: Beschleunigen / Folgen / Einschwingen
         float target_speed_x = player->velocity_move.x + (diff_x * 0.05f);
         speed.x += (target_speed_x - speed.x) * ACCEL;
     } else {
-        // State: Spieler steht / in Deadzone -> Abbremsen und zentrieren
+        // State: Deadzone aktiv - Kamera steht still
         speed.x *= FRICTION;
-        // Sanftes "Einschwingen" in die Mitte, wenn fast stillstand
-        if (!is_moving) {
-            speed.x += diff_x * 0.01f * frame_rate_compensation;
-        }
+        if (fabs(speed.x) < 0.05f) speed.x = 0.0f;
     }
 
-    // 6. Vertikale Bewegung (meistens direkter oder mit eigener Deadzone)
-    if (fabs(diff_y) > dead_zone.y || fabs(player->velocity_move.y) > 0.1f) {
-        speed.y += (diff_y * 0.1f - speed.y) * ACCEL;
+    // 6. Vertikale Bewegung (Analog)
+    bool outside_deadzone_y = (fabs(diff_y) > dead_zone.y);
+    bool camera_active_y = (fabs(speed.y) > 0.1f) || outside_deadzone_y;
+
+    if (camera_active_y) {
+        float target_speed_y = player->velocity_move.y + (diff_y * 0.1f);
+        speed.y += (target_speed_y - speed.y) * ACCEL;
     } else {
         speed.y *= FRICTION;
+        if (fabs(speed.y) < 0.05f) speed.y = 0.0f;
     }
 
     // 7. Position aktualisieren

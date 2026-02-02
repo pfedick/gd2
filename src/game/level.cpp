@@ -32,8 +32,8 @@ Level::Level()
     lightsEnabled = true;
     editlayer = ParallaxLayerId::Player;
     SetGlobalColorPalette(palette);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].init(ParallaxLayerId::Near, 1.5f, 1.5f, 2.0f);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].init(ParallaxLayerId::Close, 0.8f, 1.3f, 1.5f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].init(ParallaxLayerId::Near, 1.5f, 1.4f, 1.6f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].init(ParallaxLayerId::Close, 0.8f, 1.2f, 1.3f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Front)].init(ParallaxLayerId::Front, 0.0f, 1.0f, 1.0f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Player)].init(ParallaxLayerId::Player, 0.0f, 1.0f, 1.0f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Back)].init(ParallaxLayerId::Back, 0.0f, 1.0f, 1.0f);
