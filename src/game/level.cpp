@@ -32,7 +32,7 @@ Level::Level()
     lightsEnabled = true;
     editlayer = ParallaxLayerId::Player;
     SetGlobalColorPalette(palette);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].init(ParallaxLayerId::Near, 1.5f, 1.4f, 1.6f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].init(ParallaxLayerId::Near, 2.0f, 1.4f, 1.6f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Close)].init(ParallaxLayerId::Close, 0.8f, 1.2f, 1.3f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Front)].init(ParallaxLayerId::Front, 0.0f, 1.0f, 1.0f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Player)].init(ParallaxLayerId::Player, 0.0f, 1.0f, 1.0f);
@@ -41,7 +41,7 @@ Level::Level()
     parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].init(ParallaxLayerId::Middle, 0.3f, 0.8f, 0.8f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Far)].init(ParallaxLayerId::Far, 0.8f, 0.6f, 0.6f);
     parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].init(ParallaxLayerId::Horizon, 1.2f, 0.4f, 0.4f);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].init(ParallaxLayerId::Sky, 0.0f, 0.3f, 0.3f);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].init(ParallaxLayerId::Sky, 2.0f, 0.3f, 0.3f);
     for (auto& layer : parallax_layers) {
         layer.background_sprites.setColorPalette(palette);
         layer.front_sprites.setColorPalette(palette);
@@ -207,6 +207,7 @@ void Level::resizeRenderBuffer(const ppl7::grafix::Size& size)
         if (renderstate.depth_buffer) renderstate.gpu->destroyGPUTexture(renderstate.depth_buffer);
         renderstate.depth_buffer = renderstate.gpu->createDepthBuffer(size.width, size.height);
         render_target_size = size;
+        renderstate.render_target_size = size;
     }
 }
 

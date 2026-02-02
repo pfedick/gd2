@@ -56,7 +56,7 @@ void ParallaxLayer::setPlayer(Player* p)
 }
 
 void ParallaxLayer::draw(RenderState& renderstate,
-                         SDL_GPUTexture* swapchainTexture,
+                         SDL_GPUTexture* render_target,
                          const ppl7::grafix::PointF& worldcoords,
                          const GameViewport& viewport)
 {
@@ -73,7 +73,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     }
 
     if (bShowGrid) {
-        drawTileGrid(renderstate, swapchainTexture, parallax_worldcoords, viewport);
+        drawTileGrid(renderstate, parallax_worldcoords, viewport);
     }
     if (bShowTileTypes) {
         TileTypeMatrix.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
@@ -82,9 +82,9 @@ void ParallaxLayer::draw(RenderState& renderstate,
     renderstate.batcher->prepareInstanceData(renderstate.cmdbuf);
 
     SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.texture = swapchainTexture;
-    colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.4f, 1.0f}; // Black background
-    colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+    colorTargetInfo.texture = renderstate.render_layer;
+    colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 0.0f}; // Black background
+    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
 
@@ -104,12 +104,15 @@ void ParallaxLayer::draw(RenderState& renderstate,
 
     renderstate.batcher->endRenderPass(renderstate.cmdbuf, renderPass);
     SDL_EndGPURenderPass(renderPass);
+
+    // Post-Processing: Blur
+    if (blur_factor > 0.0f) {
+        blur(renderstate, renderstate.render_layer);
+    }
+    copyLayerToTarget(renderstate, renderstate.render_layer, render_target);
 }
 
-void ParallaxLayer::drawTileGrid(RenderState& renderstate,
-                                 SDL_GPUTexture* target_texture,
-                                 const ppl7::grafix::PointF& worldcoords,
-                                 const GameViewport& viewport)
+void ParallaxLayer::drawTileGrid(RenderState& renderstate, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport)
 {
     ppl7::grafix::Color grid_color(255, 255, 255, 64);
     float tile_width = viewport.tileWidth() * size_factor;
@@ -135,4 +138,86 @@ void ParallaxLayer::drawTileGrid(RenderState& renderstate,
     for (float y = start_y; y < viewport.height(); y += tile_height) {
         renderstate.batcher->addLine(0, y, viewport.width(), y, grid_color, 2.0f);
     }
+}
+
+struct BlurParams
+{
+    float blurStrength;
+    float padding; // WICHTIG: 4 Bytes Füllmaterial für std140 Alignment
+    float texelSizeX;
+    float texelSizeY;
+};
+
+void ParallaxLayer::blur(RenderState& renderstate, SDL_GPUTexture* target_texture)
+{
+    SDL_GPUColorTargetInfo targetInfo = {};
+    SDL_GPUTextureSamplerBinding binding = {};
+
+    BlurParams params;
+    params.blurStrength = blur_factor;
+    params.padding = 0.0f;                                                   // Egal was hier steht
+    params.texelSizeX = 1.0f / (float)renderstate.render_target_size.width;  // Breite der Textur
+    params.texelSizeY = 1.0f / (float)renderstate.render_target_size.height; // Höhe der Textur
+
+    // Slot Index 0 (passend zu binding = 0 im Shader, Set 3 ist implizit für Fragment Uniforms)
+    SDL_PushGPUFragmentUniformData(renderstate.cmdbuf, 0, &params, sizeof(BlurParams));
+
+    targetInfo.texture = renderstate.blur_temp; // Ziel: Temp Textur
+    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE;
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &targetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
+
+    SDL_BindGPUGraphicsPipeline(renderPass, renderstate.renderpipelines->blurHorizontalPipeline);
+    binding.texture = target_texture;
+    binding.sampler = renderstate.renderpipelines->samplerClamp; // Einen Clamp-Sampler benutzen!
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+
+    SDL_EndGPURenderPass(renderPass);
+
+    targetInfo.texture = target_texture;
+    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE; // Wir überschreiben alles
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &targetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
+
+    SDL_BindGPUGraphicsPipeline(renderPass, renderstate.renderpipelines->blurVerticalPipeline);
+
+    // Eingabe-Textur binden (das Bild aus Pass 2)
+    binding.texture = renderstate.blur_temp;
+    binding.sampler = renderstate.renderpipelines->samplerClamp;
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+    SDL_EndGPURenderPass(renderPass);
+}
+
+void ParallaxLayer::copyLayerToTarget(RenderState& renderstate, SDL_GPUTexture* source, SDL_GPUTexture* target)
+{
+    SDL_GPUColorTargetInfo targetInfo = {};
+    SDL_GPUTextureSamplerBinding binding = {};
+    targetInfo.texture = target;
+    targetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &targetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
+
+    SDL_BindGPUGraphicsPipeline(renderPass, renderstate.renderpipelines->uiPipeline);
+    binding.texture = source;
+    binding.sampler = renderstate.renderpipelines->samplerClamp; // Einen Clamp-Sampler benutzen!
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+
+    SDL_EndGPURenderPass(renderPass);
 }

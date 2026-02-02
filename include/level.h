@@ -99,6 +99,7 @@ public:
     GPUContext* gpu;
     RenderPipelines* renderpipelines;
     GPUBatcher* batcher;
+    ppl7::grafix::Size render_target_size;
 
     RenderState();
 };
@@ -107,10 +108,10 @@ class ParallaxLayer
 {
 private:
     bool hasVisibleGrafix() const;
-    void drawTileGrid(RenderState& renderstate,
-                      SDL_GPUTexture* target_texture,
-                      const ppl7::grafix::PointF& worldcoords,
-                      const GameViewport& viewport);
+    void drawTileGrid(RenderState& renderstate, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport);
+
+    void blur(RenderState& renderstate, SDL_GPUTexture* texture);
+    void copyLayerToTarget(RenderState& renderstate, SDL_GPUTexture* source, SDL_GPUTexture* target);
     Player* player;
 
 public:
