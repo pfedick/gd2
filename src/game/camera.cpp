@@ -42,66 +42,135 @@ void Camera::update(double time, float frame_rate_compensation, const Player* pl
     player_position = player->position();
     if (!follow_player) return;
 
-    // 1. Parameter für das Feeling
-    const float SMOOTHING = 0.04f * frame_rate_compensation;
+    // 1. Konstanten für das Feeling (können später in den Header oder eine Config)
+    const float ACCEL = 0.1f * frame_rate_compensation;
+    const float FRICTION = 0.90f;        // Je kleiner, desto schneller bleibt die Kamera stehen
+    const float LOOK_AHEAD_MAX = 300.0f; // Pixel Vorsprung in 4K
     const float LOOK_AHEAD_SPEED = 0.02f * frame_rate_compensation;
-    const float PLAYER_PIVOT_ADJUST = 150.0f;    // Fokuspunkt von Füßen Richtung Körpermitte
-    const float VERTICAL_SCREEN_OFFSET = 200.0f; // Spieler im unteren Drittel
+    const float VERTICAL_OFFSET = 200.0f; // Spieler etwas unter der Mitte platzieren
 
     // 2. Aktuelle Mitte der Kamera in Weltkoordinaten
     float cam_center_x = x + (render_size.width / 2.0f);
     float cam_center_y = y + (render_size.height / 2.0f);
 
-    // 3. Ziel-Vorsprung (Look-Ahead) berechnen
+    // 3. Ziel-Vorsprung berechnen (Look-Ahead)
     float target_look_ahead = 0;
-    if (player->velocity_move.x > 1.0f)
-        target_look_ahead = look_ahead_distance;
-    else if (player->velocity_move.x < -1.0f)
-        target_look_ahead = -look_ahead_distance;
+    if (player->velocity_move.x > 0.5f)
+        target_look_ahead = LOOK_AHEAD_MAX;
+    else if (player->velocity_move.x < -0.5f)
+        target_look_ahead = -LOOK_AHEAD_MAX;
     else {
-        // Im Stehen nur halber Look-Ahead basierend auf Blickrichtung
+        // Wenn Spieler steht, entscheidet die Blickrichtung (Orientation)
         if (player->orientation == Physic::Right)
-            target_look_ahead = look_ahead_distance * 0.4f;
+            target_look_ahead = LOOK_AHEAD_MAX * 0.5f;
         else if (player->orientation == Physic::Left)
-            target_look_ahead = -look_ahead_distance * 0.4f;
+            target_look_ahead = -LOOK_AHEAD_MAX * 0.5f;
     }
-
-    // Look-Ahead sanft gleiten lassen (verhindert Ruckeln bei Richtungswechsel)
+    // Look-Ahead sanft anpassen (Interpolation)
     look_ahead_x += (target_look_ahead - look_ahead_x) * LOOK_AHEAD_SPEED;
 
-    // 4. Deadzone als "Fenster" (Lock-Box)
-    // Wenn der Spieler sich innerhalb der Deadzone bewegt, "schiebt" er das Fenster nicht.
-    float target_base_x = cam_center_x;
-    float dist_x = player->x - cam_center_x;
-    if (dist_x > dead_zone.x)
-        target_base_x = player->x - dead_zone.x;
-    else if (dist_x < -dead_zone.x)
-        target_base_x = player->x + dead_zone.x;
+    // 4. Distanzen berechnen
+    float player_x = player->x;
+    float player_y = player->y - 128.0f; // Versatz, da Pivot an den Füßen ist
 
-    float player_focus_y = player->y - PLAYER_PIVOT_ADJUST;
-    float target_base_y = cam_center_y + VERTICAL_SCREEN_OFFSET;
-    float dist_y = player_focus_y - (cam_center_y + VERTICAL_SCREEN_OFFSET);
-    if (dist_y > dead_zone.y)
-        target_base_y = player_focus_y - dead_zone.y;
-    else if (dist_y < -dead_zone.y)
-        target_base_y = player_focus_y + dead_zone.y;
+    float diff_x = (player_x + look_ahead_x) - cam_center_x;
+    float diff_y = (player_y - VERTICAL_OFFSET) - cam_center_y;
 
-    // 5. Finales Ziel (Basis + Look-Ahead)
-    float final_target_x = target_base_x + look_ahead_x;
-    float final_target_y = target_base_y - VERTICAL_SCREEN_OFFSET;
+    // 5. Zustands-Logik (Horizontal)
+    bool is_moving = (fabs(player->velocity_move.x) > 0.1f);
+    bool outside_deadzone = (fabs(player_x - cam_center_x) > dead_zone.x);
 
-    // 6. Sanfte Annäherung (Interpolation)
-    float ideal_speed_x = (final_target_x - cam_center_x) * SMOOTHING;
-    float ideal_speed_y = (final_target_y - cam_center_y) * SMOOTHING;
+    if (outside_deadzone || is_moving) {
+        // State: Beschleunigen / Folgen
+        // Die Kamera strebt eine Geschwindigkeit an, die den Abstand verringert
+        float target_speed_x = player->velocity_move.x + (diff_x * 0.05f);
+        speed.x += (target_speed_x - speed.x) * ACCEL;
+    } else {
+        // State: Spieler steht / in Deadzone -> Abbremsen und zentrieren
+        speed.x *= FRICTION;
+        // Sanftes "Einschwingen" in die Mitte, wenn fast stillstand
+        if (!is_moving) {
+            speed.x += diff_x * 0.01f * frame_rate_compensation;
+        }
+    }
 
-    float accel_limit = 0.1f * frame_rate_compensation;
-    speed.x += (ideal_speed_x - speed.x) * accel_limit;
-    speed.y += (ideal_speed_y - speed.y) * accel_limit;
+    // 6. Vertikale Bewegung (meistens direkter oder mit eigener Deadzone)
+    if (fabs(diff_y) > dead_zone.y || fabs(player->velocity_move.y) > 0.1f) {
+        speed.y += (diff_y * 0.1f - speed.y) * ACCEL;
+    } else {
+        speed.y *= FRICTION;
+    }
 
     // 7. Position aktualisieren
+    x += speed.x * frame_rate_compensation;
+    y += speed.y * frame_rate_compensation;
+}
+
+#ifdef VARIATION
+void Camera::update(double time, float frame_rate_compensation, const Player* player)
+{
+    player_position = player->position();
+    if (!follow_player) return;
+
+    // --- DEINE FAVORISIERTEN WERTE ---
+    const float ACCEL = 0.9f * frame_rate_compensation; // Feste Kraft (war 0.15, viel zu wenig)
+    const float FRICTION = 0.94f;                       // Kräftige Reibung gegen das "Vorbeifliegen"
+    const float LOOK_AHEAD_SPEED = 0.07f * frame_rate_compensation;
+    const float PLAYER_PIVOT_Y = 150.0f;
+    const float TARGET_SCREEN_Y = 200.0f;
+
+    float cam_center_x = x + (render_size.width / 2.0f);
+    float cam_center_y = y + (render_size.height / 2.0f);
+    float dist_x = player->x - cam_center_x;
+    float dist_y = (player->y - PLAYER_PIVOT_Y) - (cam_center_y + TARGET_SCREEN_Y);
+
+    // 1. Sanfter Look-Ahead (wie gehabt)
+    float target_look_ahead = 0;
+    if (fabs(player->velocity_move.x) > 1.0f) {
+        target_look_ahead = (player->velocity_move.x > 0) ? look_ahead_distance : -look_ahead_distance;
+    }
+    look_ahead_x += (target_look_ahead - look_ahead_x) * LOOK_AHEAD_SPEED;
+
+    // 2. Deadzone-State Check
+    // "Kamera steht still und Spieler ist drin" -> Deadzone aktiv
+    bool camera_is_moving_x = (fabs(speed.x) > 0.5f);
+    bool outside_deadzone_x = (fabs(dist_x) > dead_zone.x);
+
+    if (!camera_is_moving_x && !outside_deadzone_x) {
+        speed.x = 0;
+    } else {
+        // Wir folgen dem Zielpunkt (Spieler + Look-Ahead)
+        float target_x_pos = player->x + look_ahead_x - (render_size.width / 2.0f);
+
+        // Feste Beschleunigung in Zielrichtung
+        if (target_x_pos > x)
+            speed.x += ACCEL;
+        else if (target_x_pos < x)
+            speed.x -= ACCEL;
+
+        speed.x *= FRICTION;
+    }
+
+    // Analog für Y
+    bool camera_is_moving_y = (fabs(speed.y) > 0.5f);
+    bool outside_deadzone_y = (fabs(dist_y) > dead_zone.y);
+
+    if (!camera_is_moving_y && !outside_deadzone_y) {
+        speed.y = 0;
+    } else {
+        float target_y_pos = (player->y - PLAYER_PIVOT_Y) - (render_size.height / 2.0f) - TARGET_SCREEN_Y;
+        if (target_y_pos > y)
+            speed.y += ACCEL;
+        else if (target_y_pos < y)
+            speed.y -= ACCEL;
+        speed.y *= FRICTION;
+    }
+
+    // 3. Position aktualisieren
     x += speed.x;
     y += speed.y;
 }
+#endif
 
 void Camera::setPosition(const ppl7::grafix::PointF& pos)
 {
