@@ -111,10 +111,12 @@ private:
     float zoom;
     float target_zoom;
     float zoom_speed;
-    float dead_zone_x;
-    float dead_zone_y;
-    ppl7::grafix::PointF player_position;
+    float look_ahead_x;        // Der aktuelle gleitende Vorsprung
+    float look_ahead_distance; // Maximaler Vorsprung
+    ppl7::grafix::PointF dead_zone;
     ppl7::grafix::PointF speed;
+    ppl7::grafix::PointF player_position;
+    ppl7::grafix::Size render_size;
     bool follow_player;
 
 public:
@@ -122,8 +124,8 @@ public:
     void setZoom(float zoom);
     float getZoom() const;
     void setTargetZoom(float zoom, float speed);
-    void update(double time, float frame_rate_compensation, const GameViewport& viewport);
-    void setPlayerPosition(const ppl7::grafix::PointF& pos);
+    void setRenderSize(const ppl7::grafix::Size& size);
+    void update(double time, float frame_rate_compensation, const Player* player);
     void setPosition(const ppl7::grafix::PointF& pos);
     void setDeadZone(float x, float y);
     void setFollowPlayer(bool enable);

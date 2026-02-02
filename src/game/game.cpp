@@ -349,8 +349,8 @@ void Game::run()
             player->update(start_time, layer, frame_rate_compensation);
         }
         WorldCoords.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
-        WorldCoords.setPlayerPosition(player->position());
-        WorldCoords.update(start_time, frame_rate_compensation, game_viewport);
+        WorldCoords.setRenderSize(game_viewport.getRenderSize());
+        WorldCoords.update(start_time, frame_rate_compensation, player);
 
         gpu_batcher.clearQueues();
 
