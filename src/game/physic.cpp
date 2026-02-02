@@ -51,17 +51,17 @@ Physic::PlayerMovement Physic::getMovement() const
 
 bool Physic::updatePhysics(const TileTypePlane& world, float frame_rate_compensation)
 {
-    if (movement == Slide && acceleration_slide < 4.0f) {
-        acceleration_slide += 0.03f * frame_rate_compensation;
-        if (acceleration_slide > 3.0f) acceleration_slide = 4.0f;
+    if (movement == Slide && acceleration_slide < 8.0f) {
+        acceleration_slide += 0.06f * frame_rate_compensation;
+        if (acceleration_slide > 8.0f) acceleration_slide = 8.0f;
         // ppl7::PrintDebug("acc=%0.3f\n", acceleration_slide);
 
         if (orientation == Left) {
-            velocity_move.x = -((float)TILE_WIDTH / 8.0f) * acceleration_slide * frame_rate_compensation;
-            velocity_move.y = ((float)TILE_HEIGHT / 8.0f) * acceleration_slide * frame_rate_compensation;
+            velocity_move.x = -((float)TILE_WIDTH / 16.0f) * acceleration_slide * frame_rate_compensation;
+            velocity_move.y = ((float)TILE_HEIGHT / 16.0f) * acceleration_slide * frame_rate_compensation;
         } else {
-            velocity_move.x = +((float)TILE_WIDTH / 8.0f) * acceleration_slide * frame_rate_compensation;
-            velocity_move.y = ((float)TILE_HEIGHT / 8.0f) * acceleration_slide * frame_rate_compensation;
+            velocity_move.x = +((float)TILE_WIDTH / 16.0f) * acceleration_slide * frame_rate_compensation;
+            velocity_move.y = ((float)TILE_HEIGHT / 16.0f) * acceleration_slide * frame_rate_compensation;
         }
     }
     if (movement == Jump || movement == Slide || movement == Dead) return false;
@@ -71,16 +71,16 @@ bool Physic::updatePhysics(const TileTypePlane& world, float frame_rate_compensa
         if (collision_matrix[2][5] == TileType::NonBlocking && collision_matrix[3][5] == TileType::NonBlocking) {
             if (!player_stands_on_object) {
                 // printf ("gravity\n");
-                if (acceleration_gravity < 6.0f) acceleration_gravity += 0.05f * frame_rate_compensation;
-                if (acceleration_gravity > 6.0f) acceleration_gravity = 6.0f;
+                if (acceleration_gravity < 12.0f) acceleration_gravity += 0.1f * frame_rate_compensation;
+                if (acceleration_gravity > 12.0f) acceleration_gravity = 12.0f;
                 match = true;
             }
         }
     }
     if (collision_matrix[2][5] == TileType::Water && collision_matrix[3][5] == TileType::Water) {
         if (!player_stands_on_object) {
-            if (acceleration_gravity < 6.0f) acceleration_gravity += 0.2f * frame_rate_compensation;
-            if (acceleration_gravity > 6.0f) acceleration_gravity = 6.0f;
+            if (acceleration_gravity < 12.0f) acceleration_gravity += 0.4f * frame_rate_compensation;
+            if (acceleration_gravity > 12.0f) acceleration_gravity = 12.0f;
             // match=true;
         }
     }
@@ -100,23 +100,23 @@ bool Physic::updatePhysics(const TileTypePlane& world, float frame_rate_compensa
 
     if (acceleration_gravity > 0.0f) {
         if (!match) {
-            acceleration_gravity -= (acceleration_gravity / (2.0f * frame_rate_compensation));
+            acceleration_gravity -= (acceleration_gravity / (4.0f * frame_rate_compensation));
             if (acceleration_gravity < 0.0f) acceleration_gravity = 0.0f;
         }
         if (inWater) {
-            if (gravity > 0.0f) gravity -= ((gravity / 8.0f) * frame_rate_compensation);
-            if (gravity > 0.0f && gravity < 0.5) gravity = 0.0f;
+            if (gravity > 0.0f) gravity -= ((gravity / 16.0f) * frame_rate_compensation);
+            if (gravity > 0.0f && gravity < 1.0) gravity = 0.0f;
         } else {
             gravity += (acceleration_gravity * frame_rate_compensation);
-            if (gravity > 16.0f * frame_rate_compensation) gravity = 16.0f * frame_rate_compensation;
+            if (gravity > 32.0f * frame_rate_compensation) gravity = 32.0f * frame_rate_compensation;
         }
     }
     if (inWater) return false;
     match = false;
     if (collision_matrix[2][4] == TileType::AirStream || collision_matrix[3][4] == TileType::AirStream) {
         // if (acceleration_airstream<8.0f) acceleration_airstream+=(0.1f+(acceleration_airstream/200.0f));
-        if (acceleration_airstream < 8.0f * frame_rate_compensation) acceleration_airstream += (0.2f * frame_rate_compensation);
-        if (acceleration_airstream > 8.0f * frame_rate_compensation) acceleration_airstream = (8.0f * frame_rate_compensation);
+        if (acceleration_airstream < 16.0f * frame_rate_compensation) acceleration_airstream += (0.4f * frame_rate_compensation);
+        if (acceleration_airstream > 16.0f * frame_rate_compensation) acceleration_airstream = (16.0f * frame_rate_compensation);
         match = true;
         movement = Floating;
     }
@@ -126,16 +126,16 @@ bool Physic::updatePhysics(const TileTypePlane& world, float frame_rate_compensa
             // if (acceleration_airstream < 0.0f) acceleration_airstream=0.0f;
             acceleration_airstream = 0.0f;
         }
-        if (gravity > 0.0f) gravity -= (gravity / (20.0f * frame_rate_compensation));
+        if (gravity > 0.0f) gravity -= (gravity / (40.0f * frame_rate_compensation));
         gravity -= acceleration_airstream;
-        if (gravity < -8.0f) gravity = -(8.0f * frame_rate_compensation);
+        if (gravity < -16.0f) gravity = -(16.0f * frame_rate_compensation);
         // ppl7::PrintDebugTime("out of air, acc=%0.3f, gravity=%0.3f\n", acceleration_airstream, gravity);
     }
     if (collision_at_pivoty[1] == TileType::RampLeft && movement != Slide) {
         // Start Slide
-        acceleration_slide = 1.0f;
-        velocity_move.x = -((float)TILE_WIDTH / 8.0f) * acceleration_slide * frame_rate_compensation;
-        velocity_move.y = ((float)TILE_HEIGHT / 8.0f) * acceleration_slide * frame_rate_compensation;
+        acceleration_slide = 2.0f;
+        velocity_move.x = -((float)TILE_WIDTH / 16.0f) * acceleration_slide * frame_rate_compensation;
+        velocity_move.y = ((float)TILE_HEIGHT / 16.0f) * acceleration_slide * frame_rate_compensation;
         gravity = 0.0f;
         acceleration_gravity = 0.0f;
         movement = Slide;
@@ -143,9 +143,9 @@ bool Physic::updatePhysics(const TileTypePlane& world, float frame_rate_compensa
         return true;
     } else if (collision_at_pivoty[1] == TileType::RampRight && movement != Slide) {
         // Start Slide
-        acceleration_slide = 1.0f;
-        velocity_move.x = ((float)TILE_WIDTH / 8.0f) * acceleration_slide * frame_rate_compensation;
-        velocity_move.y = ((float)TILE_HEIGHT / 8.0f) * acceleration_slide * frame_rate_compensation;
+        acceleration_slide = 2.0f;
+        velocity_move.x = ((float)TILE_WIDTH / 16.0f) * acceleration_slide * frame_rate_compensation;
+        velocity_move.y = ((float)TILE_HEIGHT / 16.0f) * acceleration_slide * frame_rate_compensation;
         gravity = 0.0f;
         acceleration_gravity = 0.0f;
         movement = Slide;
@@ -577,28 +577,28 @@ void Physic::updateMovement(float frame_rate_compensation)
             velocity_move.x = speed_run * frame_rate_compensation;
         }
     } else if (movement == ClimbUp) {
-        velocity_move.y = -4 * frame_rate_compensation;
+        velocity_move.y = -8 * frame_rate_compensation;
     } else if (movement == ClimbDown) {
-        velocity_move.y = 4 * frame_rate_compensation;
+        velocity_move.y = 8 * frame_rate_compensation;
     } else if (movement == Jump) {
         // printf("we are jumping... ");
         if (jump_climax > time) {
-            if (acceleration_jump < (4.0f * frame_rate_compensation))
-                acceleration_jump += (acceleration_jump / 10.f * frame_rate_compensation);
-            if (acceleration_jump > (4.0f * frame_rate_compensation)) acceleration_jump = (4.0f * frame_rate_compensation);
+            if (acceleration_jump < (8.0f * frame_rate_compensation))
+                acceleration_jump += (acceleration_jump / 20.f * frame_rate_compensation);
+            if (acceleration_jump > (8.0f * frame_rate_compensation)) acceleration_jump = (8.0f * frame_rate_compensation);
             velocity_move.y -= acceleration_jump;
-            if (velocity_move.y < (-12.0f * frame_rate_compensation)) velocity_move.y = -(12.0f * frame_rate_compensation);
+            if (velocity_move.y < (-24.0f * frame_rate_compensation)) velocity_move.y = -(24.0f * frame_rate_compensation);
             if (gravity < 0.0f) gravity = 0.0f;
             // ppl7::PrintDebug("JUMP under climax, accelerating %0.3f, velocity.y=%0.3f\n", acceleration_jump, velocity_move.y);
         } else {
-            if (acceleration_jump > 0) acceleration_jump -= (acceleration_jump / (10.0f * frame_rate_compensation));
-            if (acceleration_jump < 0.5f) {
-                acceleration_jump = 0.5;
+            if (acceleration_jump > 0) acceleration_jump -= (acceleration_jump / (20.0f * frame_rate_compensation));
+            if (acceleration_jump < 1.0f) {
+                acceleration_jump = 1.0;
             }
             // velocity_move.y+=(4.0f * frame_rate_compensation) - (acceleration_jump * frame_rate_compensation);
-            velocity_move.y += (4.0f * frame_rate_compensation) - acceleration_jump;
+            velocity_move.y += (8.0f * frame_rate_compensation) - acceleration_jump;
 
-            if (velocity_move.y > -0.1f) {
+            if (velocity_move.y > -0.2f) {
                 velocity_move.y = 0.0f;
                 acceleration_jump = 0.0f;
                 movement = Falling;
@@ -612,8 +612,8 @@ void Physic::updateMovement(float frame_rate_compensation)
             */
 
     } else if (movement == Falling) {
-        if (velocity_move.y < -0.1f) velocity_move.y -= (velocity_move.y / 3.0f) * frame_rate_compensation;
-        if (velocity_move.y > -0.1f) velocity_move.y = 0;
+        if (velocity_move.y < -0.2f) velocity_move.y -= (velocity_move.y / 6.0f) * frame_rate_compensation;
+        if (velocity_move.y > -0.2f) velocity_move.y = 0;
         // printf ("Player::updateMovement, velocity_move.y=%0.3f\n",velocity_move.y);
     } else if (movement == Crawling) {
         if (orientation == Left) {
@@ -626,13 +626,13 @@ void Physic::updateMovement(float frame_rate_compensation)
         velocity_move.y = 0;
         velocity_move.x = 0;
     }
-    if (gravity > 10 && isSwimming() == false) {
+    if (gravity > 20 && isSwimming() == false) {
         movement = Falling;
         if (velocity_move.x > 0.0f) {
-            velocity_move.x -= 0.2f * frame_rate_compensation;
+            velocity_move.x -= 0.4f * frame_rate_compensation;
             if (velocity_move.x < 0.0f) velocity_move.x = 0.0f;
         } else if (velocity_move.x < 0.0f) {
-            velocity_move.x += 0.2f * frame_rate_compensation;
+            velocity_move.x += 0.4f * frame_rate_compensation;
             if (velocity_move.x > 0.0f) velocity_move.x = 0.0f;
         }
     }
