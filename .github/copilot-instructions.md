@@ -258,34 +258,43 @@ SDL_PresentGPUWindow(window);
 
 ## Screen Resolution & Scaling
 
-**Strategy: Fixed 4K Internal Rendering (KISS Principle)**
+**Strategy: Logical 4K / Physical Variable Rendering**
  
-To simplify coordinate systems, movement, and asset scaling, the game will render its world to a fixed internal 4K resolution (3840x2160). This provides a single, consistent coordinate space for all game logic.
+To balance simplicity and performance, the game uses a dual-resolution approach:
+ 
+- **Logical Engine (4K)**: All game logic coordinates, physics, collision detection, and sprite placements are calculated in a fixed 3840x2160 (4K) coordinate system. This ensures consistent gameplay regardless of the actual rendering resolution.
+- **Physical Rendering (Targeted, e.g., 1080p)**: The actual GPU render targets (G-Buffer, Lightmaps, Blur-Buffers) use a potentially lower resolution (e.g., 1920x1080) to significantly reduce the fill-rate and memory bandwidth requirements on integrated or entry-level GPUs.
  
 - **Workflow**:
-  1. All game world rendering (sprites, tiles, effects) is done into a dedicated 4K render target. All positions, sizes, and speeds are based on this 4K coordinate system.
-  2. This 4K texture is then scaled down (or up, if the monitor is >4K) to fit the player's actual window size, maintaining a 16:9 aspect ratio.
-  3. Letterboxing or pillarboxing will be used to handle window aspect ratios that are not 16:9. The `GameViewport` class is responsible for calculating the final render rectangle on the screen.
+  1. All positions and sizes are passed to the `GPUBatcher` in 4K logical units.
+  2. `GPUBatcher` uses projection matrices derived from both `logicalSize` and `renderSize` to map these 4K coordinates into the physical render target.
+  3. The internal render targets are then scaled to the final window size (with letterboxing/pillarboxing maintaining a 16:9 ratio) by the `GameViewport` and `Level::draw` logic.
  
-- **Rationale**: This "Keep It Simple, Stupid" approach avoids the complexities of resolution-independent rendering logic at the cost of some performance and memory overhead on lower-resolution displays. This is a deliberate trade-off to speed up development. Optimization can be addressed later if it becomes a bottleneck.
+- **Rationale**: Optimization for integrated GPUs while keeping the development simplicity of a single coordinate space.
  
-- **UI Rendering**: The UI (managed by PPLTK) is rendered separately and should use the full native window resolution, on top of the scaled game world.
- 
+- **UI Rendering**: The UI (managed by PPLTK) is rendered at the native window resolution for maximum text clarity, overlayed on the scaled game world.
+
+## Alpha & Blending
+
+**Strategy: Global Pre-multiplied Alpha (PMA)**
+
+To avoid dark borders during blurring, scaling, and transparency blending across offscreen layers, the entire engine uses a Pre-multiplied Alpha pipeline.
+
+- **Assets**: Textures can be stored as Straight Alpha; the `sprite.frag` shader or the CPU loader converts them to PMA (`rgb * alpha`) before any blending occurs.
+- **Pipelines**: All blend states use `src_color_blendfactor = ONE` and `dst_color_blendfactor = ONE_MINUS_SRC_ALPHA`.
+- **Modulation**: Color modulation (tinting) is applied as a PMA multiplication in the `GPUBatcher`.
 
 ## Asset Resolution Strategy
 
-When rendering at screen resolution, sprite quality depends on asset resolution:
+When rendering high-res assets into a smaller physical buffer, image stability is key:
 
-**High-res sprites (recommended)**
-- Create sprites at or above your target base resolution (e.g., 1920×1080 minimum, or 2× for future-proofing). Hand-draw/paint at this scale to avoid quality loss.
-- At runtime, GPU sampling (linear filter) scales cleanly to any window size. Upscaling 1080p → 4K is acceptable; downscaling is always better quality.
-- Parallax layers scale transparently since offsets are in world space.
+**High-res sprites with Mipmapping (TODO)**
+- Sprites are created at 4K resolution (or scaled from Lightwave assets).
+- **Mipmaps (Pending)**: Every GPU texture should have calculated mip-levels and be generated via `SDL_GenerateMipmapsForGPUTexture` to prevent flickering/shimmering (aliasing) when downscaling 4K assets to 1080p.
+- **Filtering (Pending)**: Use `SDL_GPU_SAMPLERMIPMAPMODE_LINEAR` and Anisotropic filtering (e.g. 8x).
+- **Stability**: Currently, without mipmaps, downscaling to 1080p may cause shivering. Integer scaling or high-quality filtering is required.
 
-**Adaptive asset loading** (complex)
-- Load different sprite sheets per detected DPI or resolution bucket (e.g., 1080p set for 1080–1440p, 2K set for 1440–2160p).
-- Ensures sprites always sharp but requires managing multiple asset sets; practical only for very high-end productions.
-
-**Avoid**: Creating sprites at 1920×1080 fixed, then upscaling beyond that window size → blurry. Either create assets larger from the start or stick to integer-scale windows (if using nearest-neighbor).
+**Avoid**: Rendering without mipmaps when logical resolution is higher than physical resolution.
 
 ## Migration Notes from SDL2 / DeckerGame
 
@@ -373,6 +382,9 @@ When rendering at screen resolution, sprite quality depends on asset resolution:
 - Asset loading: implement loaders for pre-rendered sprites with normal maps (and optional highlights), build GPU textures and samplers, batch by atlas when possible.
 - Character rendering + movement: render the hero, add basic movement/animation state machine; verify input mapping via ppltk events.
 - Lighting: add a lit sprite pipeline (albedo + normal), start with ambient + 1–2 point lights; expose uniforms for light color/position.
+- **Visual Stability & PMA (TODO)**: 
+  - Re-implement Pre-multiplied Alpha (PMA) across the entire pipeline to fix dark blur borders.
+  - Implement Mipmapping (`SDL_GenerateMipmapsForGPUTexture`) and Anisotropic Filtering to stabilize 4K assets on 1080p targets.
 - Parallax: add multiple layers with per-layer parallax factors; order draw calls back-to-front.
 - Depth blur: render distant layers to an offscreen target and apply separable Gaussian blur (small kernel), then composite with sharp near layers.
 
