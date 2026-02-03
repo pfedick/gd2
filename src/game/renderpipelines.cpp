@@ -35,7 +35,6 @@ RenderPipelines::~RenderPipelines()
     releaseShader(blurVerticalShader);
 }
 
-
 void RenderPipelines::init(SDL_GPUDevice* gpu, SDL_Window* window)
 {
     gpu_device = gpu;
@@ -50,7 +49,12 @@ SDL_GPUDevice* RenderPipelines::getGPUDevice()
     return gpu_device;
 }
 
-SDL_GPUShader* RenderPipelines::loadShader(const ppl7::String& filename, SDL_GPUShaderStage stage, int num_samplers, int num_storage_textures, int num_storage_buffers, int num_uniform_buffers)
+SDL_GPUShader* RenderPipelines::loadShader(const ppl7::String& filename,
+                                           SDL_GPUShaderStage stage,
+                                           int num_samplers,
+                                           int num_storage_textures,
+                                           int num_storage_buffers,
+                                           int num_uniform_buffers)
 {
     if (!gpu_device) {
         ppl7::PrintDebug("GPU device is not initialized\n");
@@ -67,17 +71,15 @@ SDL_GPUShader* RenderPipelines::loadShader(const ppl7::String& filename, SDL_GPU
         throw SDLException("Failed to load shader file: %s", (const char*)filename);
     }
 
-    SDL_GPUShaderCreateInfo shaderInfo = {
-        .code_size = (size_t)buffer.size(),
-        .code = (const Uint8*)buffer.adr(),
-        .entrypoint = "main",
-        .format = SDL_GPU_SHADERFORMAT_SPIRV,
-        .stage = stage,
-        .num_samplers = (Uint32)num_samplers,
-        .num_storage_textures = (Uint32)num_storage_textures,
-        .num_storage_buffers = (Uint32)num_storage_buffers,
-        .num_uniform_buffers = (Uint32)num_uniform_buffers
-    };
+    SDL_GPUShaderCreateInfo shaderInfo = {.code_size = (size_t)buffer.size(),
+                                          .code = (const Uint8*)buffer.adr(),
+                                          .entrypoint = "main",
+                                          .format = SDL_GPU_SHADERFORMAT_SPIRV,
+                                          .stage = stage,
+                                          .num_samplers = (Uint32)num_samplers,
+                                          .num_storage_textures = (Uint32)num_storage_textures,
+                                          .num_storage_buffers = (Uint32)num_storage_buffers,
+                                          .num_uniform_buffers = (Uint32)num_uniform_buffers};
 
     SDL_GPUShader* shader = SDL_CreateGPUShader(gpu_device, &shaderInfo);
     if (!shader) {
@@ -94,7 +96,6 @@ void RenderPipelines::releaseShader(SDL_GPUShader* shader)
     }
 }
 
-
 void RenderPipelines::loadShaders()
 {
     vertexShader = loadShader("res/shaders/vulkan/ndc_textured.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 0);
@@ -103,13 +104,12 @@ void RenderPipelines::loadShaders()
     copyShader = loadShader("res/shaders/vulkan/copy.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 0);
 }
 
-
 void RenderPipelines::createPipelines()
 {
     // Zielformat definieren (muss zum Framebuffer/Texture passen, auf die gerendert wird)
     SDL_GPUColorTargetDescription targetDesc = {};
     targetDesc.format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM; // Standardformat angenommen
-    targetDesc.blend_state.enable_blend = false; // Blur ersetzt meist den Inhalt
+    targetDesc.blend_state.enable_blend = false;              // Blur ersetzt meist den Inhalt
     targetDesc.blend_state.color_write_mask = 0xF;
 
     SDL_GPUGraphicsPipelineCreateInfo pipelineInfo = {};
@@ -135,8 +135,8 @@ void RenderPipelines::createPipelines()
     }
 
     // Pipeline erstellen für Copy
-    //targetDesc.format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM; // Standardformat angenommen
-    targetDesc.format = SDL_GetGPUSwapchainTextureFormat(gpu_device,window);
+    // targetDesc.format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM; // Standardformat angenommen
+    targetDesc.format = SDL_GetGPUSwapchainTextureFormat(gpu_device, window);
     targetDesc.blend_state.enable_blend = false; // Blur ersetzt meist den Inhalt
     targetDesc.blend_state.color_write_mask = 0xF;
 
@@ -149,7 +149,7 @@ void RenderPipelines::createPipelines()
 
     // Pipeline für UI (Copy mit Blending)
     targetDesc.blend_state.enable_blend = true;
-    targetDesc.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
+    targetDesc.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
     targetDesc.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
     targetDesc.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
     targetDesc.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
@@ -179,4 +179,3 @@ void RenderPipelines::createSamplers()
         throw SDLException("Failed to create sampler: %s", SDL_GetError());
     }
 }
-   

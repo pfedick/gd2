@@ -127,10 +127,11 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
                 inst.offset_x = 0.0f;
                 inst.offset_y = 0.0f;
 
-                inst.color_r = (float)spriteCmd.color_modulation.red() / 255.0f;
-                inst.color_g = (float)spriteCmd.color_modulation.green() / 255.0f;
-                inst.color_b = (float)spriteCmd.color_modulation.blue() / 255.0f;
-                inst.color_a = (float)spriteCmd.color_modulation.alpha() / 255.0f;
+                float a = (float)spriteCmd.color_modulation.alpha() / 255.0f;
+                inst.color_r = ((float)spriteCmd.color_modulation.red() / 255.0f) * a;
+                inst.color_g = ((float)spriteCmd.color_modulation.green() / 255.0f) * a;
+                inst.color_b = ((float)spriteCmd.color_modulation.blue() / 255.0f) * a;
+                inst.color_a = a;
 
                 instanceData.push_back(inst);
             }
@@ -569,7 +570,7 @@ void GPUBatcher::createPipeline()
 
     // Color target description
     SDL_GPUColorTargetDescription colorTarget = {.format = swapchainFormat,
-                                                 .blend_state = {.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
+                                                 .blend_state = {.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE, // PMA output
                                                                  .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
                                                                  .color_blend_op = SDL_GPU_BLENDOP_ADD,
                                                                  .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,

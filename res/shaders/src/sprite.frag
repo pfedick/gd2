@@ -14,10 +14,13 @@ void main() {
     // Sample texture
     vec4 tex_color = texture(tex_sampler, frag_texcoord);
     
-    // Apply color modulation
+    // Convert to Pre-multiplied Alpha (Straight -> PMA)
+    tex_color.rgb *= tex_color.a;
+
+    // Apply color modulation (frag_color is already PMA from batcher)
     vec4 final_color = tex_color * frag_color;
 
-    if (final_color.a < 0.1) {
+    if (final_color.a < 0.01) {
         discard;
     }
 
