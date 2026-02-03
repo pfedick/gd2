@@ -9,6 +9,7 @@ class GameViewport
 private:
     ppl7::grafix::Size window_size;
     ppl7::grafix::Size render_size;
+    ppl7::grafix::Size logical_size;
     float aspect_ratio;
     SDL_FRect render_rect;
     float sprite_scale_factor;
@@ -19,9 +20,10 @@ private:
 
 public:
     GameViewport();
-    void setWindowSize(const ppl7::grafix::Size& size); // Die tatsächliche Fenstergröße
-    void setRenderSize(const ppl7::grafix::Size& size); // Die Größe des Render-Targets (4k)
-    void setAspectRatio(float aspect_ratio);            // Das gewünschte Seitenverhältnis (z.B. 16.0f/9.0f)
+    void setWindowSize(const ppl7::grafix::Size& size);  // Die tatsächliche Fenstergröße
+    void setRenderSize(const ppl7::grafix::Size& size);  // Die Größe des Render-Targets (2k)
+    void setLogicalSize(const ppl7::grafix::Size& size); // Die logische Größe, immer 4k
+    void setAspectRatio(float aspect_ratio);             // Das gewünschte Seitenverhältnis (z.B. 16.0f/9.0f)
     void setViewport(const ppl7::grafix::Rect&
                          rect); // Setzt den Renderbereich im Fenster. Ist identisch zur Fenstergröße, wenn kein UI-Bereich vorhanden ist
     const ppl7::grafix::Rect& getViewport() const;
@@ -32,6 +34,7 @@ public:
     const SDL_FRect& getRenderRect() const;
     const ppl7::grafix::Size& getWindowSize() const;
     const ppl7::grafix::Size& getRenderSize() const;
+    const ppl7::grafix::Size& getLogicalSize() const;
     float getSpriteScaleFactor() const;
     const ppl7::grafix::PointF& getGridSize() const;
     int width() const;              // returns width of render area

@@ -44,7 +44,10 @@ Game::Game(GPUContext& gpu)
     filedialog = NULL;
     last_frame_time = 0.0f;
     frame_rate_compensation = 1.0f;
-    game_viewport.setRenderSize(ppl7::grafix::Size(3840, 2160));
+    // game_viewport.setRenderSize(ppl7::grafix::Size(640, 360));
+    game_viewport.setRenderSize(ppl7::grafix::Size(1920, 1080)); // Rendering ist 1080p
+    // game_viewport.setRenderSize(ppl7::grafix::Size(3840, 2160)); // Rendering ist 1080p
+    game_viewport.setLogicalSize(ppl7::grafix::Size(3840, 2160));
     game_viewport.setAspectRatio(16.0f / 9.0f);
     player = new Player(this);
     player->setSavePoint(ppl7::grafix::PointF(1920.0f, 1080.0f));
@@ -83,7 +86,7 @@ void Game::init()
 
     renderPipelines.init(gpu.gpu, (SDL_Window*)getSDLWindow());
     // Initialize projection/view matrices for rendering
-    gpu_batcher.updateMatrices(1920, 1080);
+    gpu_batcher.updateMatrices(game_viewport.getLogicalSize());
     level.initialize(gpu, renderPipelines, gpu_batcher);
     initUi();
     initAudio();
@@ -349,7 +352,7 @@ void Game::run()
             player->update(start_time, layer, frame_rate_compensation);
         }
         WorldCoords.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
-        WorldCoords.setRenderSize(game_viewport.getRenderSize());
+        WorldCoords.setRenderSize(game_viewport.getLogicalSize());
         WorldCoords.update(start_time, frame_rate_compensation, player);
 
         gpu_batcher.clearQueues();
@@ -376,8 +379,8 @@ void Game::run()
         SDL_GetWindowSizeInPixels(sdl_window, &w, &h);
         game_viewport.setWindowSize(ppl7::grafix::Size(w, h));
         level.resizeRenderBuffer(game_viewport.getRenderSize());
-        gpu_batcher.updateMatrices(game_viewport.getRenderSize());
-        // createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
+        // gpu_batcher.updateMatrices(game_viewport.getRenderSize());
+        //  createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
 
         fps.update();
 

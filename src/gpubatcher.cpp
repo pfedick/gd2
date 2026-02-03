@@ -193,8 +193,12 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
         auto pushV = [&](float x, float y, const ppl7::grafix::Color& c) {
             float ndc_x = (x * 2.0f / screenWidth) - 1.0f;
             float ndc_y = 1.0f - (y * 2.0f / screenHeight);
-            primitives.push_back({ndc_x, ndc_y, 0.0f, (float)c.red() / 255.0f, (float)c.green() / 255.0f, (float)c.blue() / 255.0f,
-                                  (float)c.alpha() / 255.0f});
+            float a = (float)c.alpha() / 255.0f;
+            primitives.push_back({ndc_x, ndc_y, 0.0f,
+                                  (float)c.red() / 255.0f * a,   // Pre-multiplied Red
+                                  (float)c.green() / 255.0f * a, // Pre-multiplied Green
+                                  (float)c.blue() / 255.0f * a,  // Pre-multiplied Blue
+                                  a});
         };
 
         // Helper to add thick line as quad (2 triangles)
@@ -624,11 +628,11 @@ void GPUBatcher::createPipeline()
     SDL_GPUColorTargetDescription primitiveColorTargets[] = {
         {.format = SDL_GetGPUSwapchainTextureFormat(gpu->gpu, gpu->window),
          .blend_state = {
-             .src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,
-             .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+             .src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE,                 // Korrektur für Pre-multiplied
+             .dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, // Bleibt gleich
              .color_blend_op = SDL_GPU_BLENDOP_ADD,
-             .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA,           // src alpha
-             .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, // 1-src alpha
+             .src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE,                 // ONE für Coverage/Pre-multiplied
+             .dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, // Bleibt gleich
              .alpha_blend_op = SDL_GPU_BLENDOP_ADD,
              .enable_blend = true,
          }}};

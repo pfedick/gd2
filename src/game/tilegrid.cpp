@@ -314,7 +314,7 @@ void TileGrid::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl
     if (!palette) return;
     if (!bTilesVisible) return;
 
-    const ppl7::grafix::Size& render_target_size = viewport.getRenderSize();
+    const ppl7::grafix::Size& render_target_size = viewport.getLogicalSize();
     float scaled_tile_width = TILE_WIDTH * scale;
     float scaled_tile_height = TILE_HEIGHT * scale;
 

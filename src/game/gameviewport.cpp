@@ -46,7 +46,9 @@ GameViewport::GameViewport()
     sprite_scale_factor = 1.0f;
     grid_size.x = TILE_WIDTH;
     grid_size.y = TILE_HEIGHT;
-    render_size = ppl7::grafix::Size(1920, 1080);
+    // render_size = ppl7::grafix::Size(1920, 1080);
+    render_size = ppl7::grafix::Size(3840, 2160);
+    logical_size = ppl7::grafix::Size(3840, 2160);
 }
 
 /*!\brief Viewport aktualisieren
@@ -163,8 +165,8 @@ ppl7::grafix::PointF GameViewport::translate(const ppl7::grafix::PointF& coords)
 {
     ppl7::grafix::PointF p;
 
-    float scale_x = render_size.width / render_rect.w;
-    float scale_y = render_size.height / render_rect.h;
+    float scale_x = (float)logical_size.width / render_rect.w;
+    float scale_y = (float)logical_size.height / render_rect.h;
 
     // ppl7::PrintDebug("scale_x=%0.3f, scale_y=%0.3f\n", scale_x, scale_y);
 
@@ -193,12 +195,12 @@ const SDL_FRect& GameViewport::getRenderRect() const
 
 int GameViewport::width() const
 {
-    return render_size.width;
+    return logical_size.width;
 }
 
 int GameViewport::height() const
 {
-    return render_size.height;
+    return logical_size.height;
 }
 
 float GameViewport::scaledTileWidth() const
@@ -216,4 +218,14 @@ float GameViewport::tileWidth() const
 float GameViewport::tileHeight() const
 {
     return TILE_HEIGHT;
+}
+
+const ppl7::grafix::Size& GameViewport::getLogicalSize() const
+{
+    return logical_size;
+}
+
+void GameViewport::setLogicalSize(const ppl7::grafix::Size& size)
+{
+    logical_size = size;
 }

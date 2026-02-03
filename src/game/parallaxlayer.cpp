@@ -114,7 +114,8 @@ void ParallaxLayer::draw(RenderState& renderstate,
 
 void ParallaxLayer::drawTileGrid(RenderState& renderstate, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport)
 {
-    ppl7::grafix::Color grid_color(255, 255, 255, 64);
+    ppl7::grafix::Color grid_color(255, 255, 255, 128);
+    ppl7::grafix::Color grid_shadow(0, 0, 0, 128);
     float tile_width = viewport.tileWidth() * size_factor;
     float tile_height = viewport.tileHeight() * size_factor;
     // ppl7::PrintDebug("Drawing tile grid...\n");
@@ -132,10 +133,12 @@ void ParallaxLayer::drawTileGrid(RenderState& renderstate, const ppl7::grafix::P
     // renderstate.batcher->addFilledRect(400, 100, 50, 50, ppl7::grafix::Color(0, 0, 255, 255));
 
     for (float x = start_x; x < viewport.width(); x += tile_width) {
+        renderstate.batcher->addLine(x + 2, 0, x + 2, viewport.height(), grid_shadow, 2.0f);
         renderstate.batcher->addLine(x, 0, x, viewport.height(), grid_color, 2.0f);
     }
 
     for (float y = start_y; y < viewport.height(); y += tile_height) {
+        renderstate.batcher->addLine(0, y + 2, viewport.width(), y + 2, grid_shadow, 2.0f);
         renderstate.batcher->addLine(0, y, viewport.width(), y, grid_color, 2.0f);
     }
 }
@@ -154,7 +157,8 @@ void ParallaxLayer::blur(RenderState& renderstate, SDL_GPUTexture* target_textur
     SDL_GPUTextureSamplerBinding binding = {};
 
     BlurParams params;
-    params.blurStrength = blur_factor;
+    float scale = (float)renderstate.render_target_size.width / 3840.0f;
+    params.blurStrength = blur_factor * scale;
     params.padding = 0.0f;                                                   // Egal was hier steht
     params.texelSizeX = 1.0f / (float)renderstate.render_target_size.width;  // Breite der Textur
     params.texelSizeY = 1.0f / (float)renderstate.render_target_size.height; // Höhe der Textur
