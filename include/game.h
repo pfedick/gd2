@@ -113,11 +113,18 @@ private:
     float zoom_speed;
     float look_ahead_x;        // Der aktuelle gleitende Vorsprung
     float look_ahead_distance; // Maximaler Vorsprung
+    float acceleration;
+    float decceleration;
+    float player_offset_y;
     ppl7::grafix::PointF dead_zone;
     ppl7::grafix::PointF speed;
     ppl7::grafix::PointF player_position;
     ppl7::grafix::Size render_size;
     bool follow_player;
+
+    void stopMovement(float frame_rate_compensation);
+    bool isPlayerInDeadZone() const;
+    void aimTarget(const ppl7::grafix::PointF& target, float frame_rate_compensation);
 
 public:
     Camera();

@@ -56,6 +56,9 @@ Game::Game(GPUContext& gpu)
 
 Game::~Game()
 {
+    editor.closeAll();
+    deleteUi();
+    unloadLevel();
     if (world_widget) {
         this->removeChild(world_widget);
         delete world_widget;
@@ -65,7 +68,6 @@ Game::~Game()
         delete player;
         player = NULL;
     }
-    deleteUi();
 }
 
 ppltk::Window& Game::window()
