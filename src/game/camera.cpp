@@ -17,7 +17,7 @@ Camera::Camera()
     look_ahead_x = 0.0f;
     look_ahead_distance = 300.0f;
     acceleration = 0.3f;
-    decceleration = 0.4f;
+    decceleration = 0.8f;
     player_offset_y = 180.0f;
 }
 void Camera::setZoom(float zoom)
@@ -69,41 +69,87 @@ bool Camera::isPlayerInDeadZone() const
     return (fabs(diff_x) <= dead_zone.x && fabs(diff_y) <= dead_zone.y);
 }
 
-void Camera::aimTarget(const ppl7::grafix::PointF& target, float frame_rate_compensation)
+void Camera::aimTarget(const ppl7::grafix::PointF& target, float frame_rate_compensation, const Player* player)
 {
+    ppl7::grafix::PointF cam_center(x + (render_size.width / 2.0f), y + (render_size.height / 2.0f));
+    ppl7::PrintDebug("Player:=(%.2f, %.2f), Camera::aimTarget: target=(%.2f, %.2f), camera=(%.2f, %.2f), speed=(%.2f, %.2f)\n", player->x,
+                     player->y, target.x, target.y, cam_center.x, cam_center.y, speed.x, speed.y);
     const float ACCEL = acceleration * frame_rate_compensation;
+    float decel = decceleration * frame_rate_compensation;
     float distance = ppl7::grafix::Distance(*this, target);
-    float max_speed = distance * 0.1f;
-    // if (distance < 100.0f) max_speed = 10.0f;
-    if (target.x > x + (render_size.width / 2.0f)) {
+    float max_speed = 20.0f;
+    if (distance < 100.0f) max_speed = 10.0f;
+    if (target.x > cam_center.x) {
         if (speed.x < max_speed)
             speed.x += ACCEL;
         else if (speed.x > max_speed) {
-            speed.x -= ACCEL;
+            speed.x -= decel;
             if (speed.x < max_speed) speed.x = max_speed;
         }
 
-    } else if (target.x < x + (render_size.width / 2.0f)) {
+    } else if (target.x < cam_center.x) {
         if (speed.x > -max_speed)
             speed.x -= ACCEL;
         else if (speed.x < -max_speed) {
-            speed.x += ACCEL;
+            speed.x += decel;
             if (speed.x > -max_speed) speed.x = -max_speed;
         }
     }
-    if (target.y > y + (render_size.height / 2.0f)) {
+    if (target.y > cam_center.y) {
         speed.y += ACCEL;
-    } else if (target.y < y + (render_size.height / 2.0f)) {
+    } else if (target.y < cam_center.y) {
         speed.y -= ACCEL;
     }
+}
+
+ppl7::grafix::PointF Camera::getTarget(const ppl7::grafix::PointF& movement, const Player* player)
+{
+    float target_look_ahead = 0;
+    if (movement.x > 0.1f)
+        target_look_ahead = look_ahead_distance;
+    else if (movement.x < -0.1f)
+        target_look_ahead = -look_ahead_distance;
+    else {
+        if (player->orientation == Physic::Right)
+            target_look_ahead = look_ahead_distance * 0.5f;
+        else if (player->orientation == Physic::Left)
+            target_look_ahead = -look_ahead_distance * 0.5f;
+    }
+    return ppl7::grafix::PointF(player_position.x + target_look_ahead, player_position.y);
 }
 
 void Camera::update(double time, float frame_rate_compensation, const Player* player)
 {
     ppl7::grafix::PointF movement = player->position() - player_position;
-
     player_position = player->position();
     if (!follow_player) return;
+
+    float deltaTime = time - last_time;
+    last_time = time;
+    ppl7::grafix::PointF cam_center(x + (render_size.width / 2.0f), y + (render_size.height / 2.0f));
+    if (target_position.x == 0.0f && target_position.y == 0.0f) {
+        target_position = player->position();
+    }
+    float diffX = player->x - cam_center.x;
+    if (std::abs(diffX) > dead_zone.x) {
+        target_position.x = (diffX > 0) ? player->x - dead_zone.x : player->x + dead_zone.x;
+    }
+
+    float diffY = player->y - cam_center.y;
+    if (std::abs(diffY) > dead_zone.y) {
+        target_position.y = (diffY > 0) ? player->y - dead_zone.y : player->y + dead_zone.y;
+    }
+    float smoothing = 4.0f;  // Wie schnell sie folgt
+    float lookahead = 20.0f; // Wie weit sie vorausplant
+
+    float lookaheadX = movement.x * lookahead;
+    float finalTargetX = target_position.x + lookaheadX;
+
+    float interpolation = 1.0f - std::exp(-smoothing * deltaTime);
+    x += (finalTargetX - cam_center.x) * interpolation;
+    y += (target_position.y - cam_center.y) * interpolation;
+
+    return;
 
     float cam_center_x = x + (render_size.width / 2.0f);
     float cam_center_y = y + (render_size.height / 2.0f);
@@ -111,17 +157,14 @@ void Camera::update(double time, float frame_rate_compensation, const Player* pl
     if (speed.x == 0.0f && speed.y == 0.0f) {
         dead_zone.x = 200.0f;
         if (isPlayerInDeadZone()) {
+            y = player->y - (render_size.height / 2.0f) - player_offset_y; // Spieler etwas unter der Mitte platzieren
             return;
         }
     }
     // Falls sich der Spieler bewegt, berechnen wir die Target-Position
     if (movement.x != 0.0f) {
-        ppl7::grafix::PointF target = player_position;
-        if (movement.x > 0.1f)
-            target.x += look_ahead_distance;
-        else if (movement.x < 0.1f)
-            target.x -= look_ahead_distance;
-        aimTarget(player_position, frame_rate_compensation);
+        ppl7::grafix::PointF target = getTarget(movement, player);
+        aimTarget(target, frame_rate_compensation, player);
 
     } else {
         // Spieler steht, Kamera abbremsen
@@ -129,11 +172,11 @@ void Camera::update(double time, float frame_rate_compensation, const Player* pl
             stopMovement(frame_rate_compensation);
         else {
             // stopMovement(frame_rate_compensation);
-            aimTarget(player_position, frame_rate_compensation);
+            aimTarget(player_position, frame_rate_compensation, player);
         }
     }
     x += speed.x * frame_rate_compensation;
-    y += speed.y * frame_rate_compensation;
+    // y += speed.y * frame_rate_compensation;
     y = player->y - (render_size.height / 2.0f) - player_offset_y; // Spieler etwas unter der Mitte platzieren
 }
 

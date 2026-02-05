@@ -262,4 +262,6 @@ public:
     void addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color);
 };
 
+SDL_FColor toSDLFColor(const ppl7::grafix::Color& color);
+
 #endif // INCLUDE_GPU_H
