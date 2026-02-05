@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 #include <ppl7-grafix.h>
 #include "level.h"
+#include "gpu.h"
 
 RenderState::RenderState()
 {
@@ -681,7 +682,7 @@ void Level::clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf)
     // 1. Das interne 4K-Target (render_target) einmalig leeren
     SDL_GPUColorTargetInfo rtInfo = {0};
     rtInfo.texture = renderstate.render_target;
-    rtInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 1.0f}; // Schwarz
+    rtInfo.clear_color = toSDLFColor(runtimeParams.BackgroundColor);
     rtInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     rtInfo.store_op = SDL_GPU_STOREOP_STORE;
     rtInfo.cycle = false;
