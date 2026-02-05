@@ -306,8 +306,10 @@ void Game::showUi(bool enable)
         viewport.y2 = 1080;
         viewport.x2 = 1920;
         // editor.mainmenue->fitMetrics(viewport);
-        world_widget->setViewport(viewport);
+        // ppl7::PrintDebug("Game::showUi: Viewport set to x1=%d, y1=%d, x2=%d, y2=%d\n", viewport.x1, viewport.y1, viewport.x2,
+        // viewport.y2);
         game_viewport.setViewport(viewport);
+        world_widget->setViewport(viewport);
     }
     // hud->setViewport(viewport);
 }
@@ -798,9 +800,13 @@ void Game::resizeEvent(ppltk::ResizeEvent* event)
     resizeMenueAndStatusbar();
     if (world_widget == NULL) return;
     const ppl7::grafix::Size& desktop = clientSize();
-    viewport.y1 = 33;
-    viewport.y2 = desktop.height - 33;
+    viewport.y1 = 0;
+    viewport.y2 = desktop.height;
     viewport.x2 = desktop.width;
+    if (showui) {
+        viewport.y1 = 32;
+        viewport.y2 = desktop.height - 32;
+    }
     world_widget->setViewport(viewport);
     // const ppl7::grafix::Size& desktop=clientSize();
 }
