@@ -118,6 +118,7 @@ void Game::createWindow()
     setSize(config.ScreenResolution);
     wm->createWindow(*this);
     sdl_window = (SDL_Window*)getSDLWindow();
+    SDL_ShowWindow(sdl_window);
     sdl_renderer = (SDL_Renderer*)getRenderer();
     sdl.setRenderer(sdl_renderer);
     // setPos(0,0);
@@ -749,6 +750,38 @@ void Game::keyDownEvent(ppltk::KeyEvent* event)
 {
     if (event->key == ppltk::KeyEvent::KEY_F9) {
         showUi(!showui);
+    } else if (event->key == ppltk::KeyEvent::KEY_RETURN && (event->modifier & ppltk::KeyEvent::KEYMOD_ALT) > 0) {
+        // printf("toggle fullscreen or back\n");
+        ppltk::WindowManager_SDL3* sdl3wm = (ppltk::WindowManager_SDL3*)wm;
+        Window::WindowMode mode = sdl3wm->getWindowMode(*this);
+        if (mode == Window::WindowMode::Window) {
+            windowedSize.setSize(width(), height());
+            printf("Aktueller mode ist Window mit %d x %d\n", windowedSize.width, windowedSize.height);
+            ppl7::grafix::Size s = sdl.getDisplaySize(config.videoDevice);
+            printf("switche zu FullscreenDesktop %d x %d\n", s.width, s.height);
+            sdl3wm->changeWindowMode(*this, Window::WindowMode::FullscreenDesktop);
+            ppltk::Window::DisplayMode dmode;
+            dmode.format = rgbFormat();
+            dmode.width = s.width;
+            dmode.height = s.height;
+            dmode.refresh_rate = config.ScreenRefreshRate;
+            ppl7::PrintDebug("Set display mode %d x %d @ %d Hz\n", dmode.width, dmode.height, dmode.refresh_rate);
+            setWindowDisplayMode(dmode);
+            resizeEvent(NULL);
+        } else if (mode == Window::WindowMode::FullscreenDesktop) {
+            if (windowedSize.width == 0 || windowedSize.height == 0) windowedSize = config.ScreenResolution;
+            printf("Aktueller mode ist FullscreenDesktop, switche zu Fenster %d x %d\n", windowedSize.width, windowedSize.height);
+            sdl3wm->changeWindowMode(*this, Window::WindowMode::Window);
+            ppltk::Window::DisplayMode dmode;
+            dmode.format = rgbFormat();
+            dmode.width = windowedSize.width;
+            dmode.height = windowedSize.height;
+            dmode.refresh_rate = config.ScreenRefreshRate;
+            setWindowDisplayMode(dmode);
+            resizeEvent(NULL);
+        } else {
+            // printf("Aktueller mode ist Fullscreen\n");
+        }
     }
 }
 

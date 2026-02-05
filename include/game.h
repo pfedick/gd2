@@ -108,6 +108,7 @@ class FileDialog;
 class Camera : public ppl7::grafix::PointF
 {
 private:
+    double last_time;
     float zoom;
     float target_zoom;
     float zoom_speed;
@@ -119,12 +120,14 @@ private:
     ppl7::grafix::PointF dead_zone;
     ppl7::grafix::PointF speed;
     ppl7::grafix::PointF player_position;
+    ppl7::grafix::PointF target_position;
     ppl7::grafix::Size render_size;
     bool follow_player;
 
     void stopMovement(float frame_rate_compensation);
     bool isPlayerInDeadZone() const;
-    void aimTarget(const ppl7::grafix::PointF& target, float frame_rate_compensation);
+    void aimTarget(const ppl7::grafix::PointF& target, float frame_rate_compensation, const Player* player);
+    ppl7::grafix::PointF getTarget(const ppl7::grafix::PointF& movement, const Player* player);
 
 public:
     Camera();
@@ -221,6 +224,7 @@ private:
     FileDialog* filedialog;
 
     ppl7::grafix::Size render_target_size;
+    ppl7::grafix::Size windowedSize;
     ppl7::grafix::Rect viewport;
     GameViewport game_viewport;
     Camera WorldCoords;

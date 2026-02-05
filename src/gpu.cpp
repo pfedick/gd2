@@ -418,3 +418,9 @@ void GPUContext::downloadTexture(SDL_GPUTexture* texture, int width, int height,
     SDL_UnmapGPUTransferBuffer(gpu, downloadBuffer);
     SDL_ReleaseGPUTransferBuffer(gpu, downloadBuffer);
 }
+
+SDL_FColor toSDLFColor(const ppl7::grafix::Color& color)
+{
+    return SDL_FColor{(float)color.red() / 255.0f, (float)color.green() / 255.0f, (float)color.blue() / 255.0f,
+                      (float)color.alpha() / 255.0f};
+}
