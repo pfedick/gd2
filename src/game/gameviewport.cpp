@@ -79,10 +79,9 @@ void GameViewport::update()
     } else {
         render_rect.y = 0;
     }
-    /*
-    ppl7::PrintDebugTime("GameViewport::update: WindowSize=%d:%d, RenderRect=%0.1f:%0.1f,%0.1f:%0.1f\n", window_size.width,
-                         window_size.height, render_rect.x, render_rect.y, render_rect.w, render_rect.h);
-    */
+
+    // ppl7::PrintDebugTime("GameViewport::update: WindowSize=%d:%d, RenderRect=%0.1f:%0.1f,%0.1f:%0.1f\n", window_size.width,
+    //                      window_size.height, render_rect.x, render_rect.y, render_rect.w, render_rect.h);
 }
 
 /*!\brief Fenstergröße setzen

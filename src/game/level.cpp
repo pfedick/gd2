@@ -694,7 +694,7 @@ void Level::copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTex
 {
     SDL_GPUColorTargetInfo colorTargetInfo = {0};
     colorTargetInfo.texture = swapchainTexture;
-    colorTargetInfo.clear_color = (SDL_FColor){0.3f, 0.0f, 0.0f, 1.0f}; // Black background
+    colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 1.0f}; // Black background
     colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false;
@@ -747,8 +747,8 @@ void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
     // Copy final render target, which is 4k, into viewport on swapchain, which may be smaller or bigger
     SDL_FRect destRect = viewport.getRenderRect();
     const ppl7::grafix::Rect& v = viewport.getViewport();
-    destRect.y += v.y1;
-    destRect.x += v.x1;
+    // destRect.y += v.y1;
+    // destRect.x += v.x1;
 
     copyRenderTargetToSwapchain(cmdbuf, swapchainTexture, destRect);
 }
