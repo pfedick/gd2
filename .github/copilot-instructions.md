@@ -5,6 +5,7 @@ In this first step, an editor is implemented, which will be used to:
 - place information about the outlines and obstacles of a level into a grid. This grid is used internaly by the game mechanics, to simplyfy calculations of physic and collision detection, but is invisible to the player.
 - place actual graphic tiles into the grid, which are visible to the player
 - place additional sprites at any position, which can be outside the level grid
+- place objects into the level, which can be interacted with by the player (e.g. coins, power-ups, enemies, checkpoints, etc.)
 
 The game will use multiple parallax layers, which can be individually selected in the
 editor.
@@ -165,6 +166,13 @@ The engine separates Game Logic (SDL3 GPU) and UI (PPLTK, using SDL3 GPU).
 - **Implementation**: See the `GPUContext` class in [src/gpu.cpp](src/gpu.cpp) which wraps `SDL_CreateGPUDevice()` (Vulkan/SPIR-V preferred).
 - **Strategy**: Commit to GPU-first: Pipelines, Command Buffers, Bind Groups.
 
+**SDL3 Sources**: Include files can be found in tmp/SDL3
+Refer to `SDL_gpu.h` for API details. Key concepts:
+- `SDL_GPUDevice`: Main GPU context (Vulkan/DirectX/Metal).
+- `SDL_GPUTexture`: Explicit GPU textures (no more implicit `SDL_Texture`).
+- `SDL_GPUCommandBuffer`: Record draw calls and resource bindings.
+
+
 **Learning resources**: Excellent tutorials on SDL3 GPU API usage:
 - [Getting Started with SDL3_GPU](https://glusoft.com/sdl3-tutorials/getting-started-sdl3_gpu/) - Basic setup and initialization
 - [Display Triangle with SDL3_GPU](https://glusoft.com/sdl3-tutorials/display-triangle-sdl3_gpu/) - First rendering example
@@ -173,7 +181,6 @@ The engine separates Game Logic (SDL3 GPU) and UI (PPLTK, using SDL3 GPU).
 - [SDL3 GPU API Documentation](https://wiki.libsdl.org/SDL3/CategoryGPU) - Official API reference
 
 **Texture loading workflow**:
-- Load image files via `SDL_LoadBMP` or `IMG_Load` into CPU pixels.
 - Create GPU textures: `SDL_CreateGPUTexture()` with `SDL_TEXTUREUSAGE_SAMPLING`.
 - Upload via `SDL_UploadToGPUTexture()`.
 - Offscreen render targets (e.g., for blur passes) use `SDL_TEXTUREUSAGE_RENDERTARGET`.

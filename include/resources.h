@@ -54,6 +54,7 @@ public:
     SpriteTexture Font24;
 
     SpriteTexture Particles;
+    SpriteTexture ObjectsUi;
 
     ObjectSpritesets* object_spritesets;
 

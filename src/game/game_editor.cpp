@@ -4,6 +4,7 @@
 #include "ui/statusbar.h"
 #include "ui/menue.h"
 #include "ui/worldwidget.h"
+#include "ui/objectselection.h"
 #include "constants.h"
 
 GameEditor::History::History()
@@ -57,6 +58,14 @@ void GameEditor::closeAll()
         history.lastTileType = tiletype_selection->tileType();
         delete tiletype_selection;
         tiletype_selection = NULL;
+        mainmenue->setShowTileTypes(false);
+    }
+    if (object_selection) {
+        history.ObjectType = object_selection->selectedObjectType();
+        history.ObjectDifficulty = object_selection->getDifficulty();
+        history.ObjectLayer = object_selection->currentLayer();
+        delete object_selection;
+        object_selection = NULL;
     }
     game->viewport.x1 = 0;
     game->world_widget->setViewport(game->viewport);
@@ -102,12 +111,42 @@ void GameEditor::showTileTypeSelection()
 
     // hud->setViewport(viewport);
     mainmenue->setShowTileTypes(true);
-    mainmenue->setCurrentLayer(ParallaxLayerId::Player);
+    // mainmenue->setCurrentLayer(ParallaxLayerId::Player);
 }
 
 void GameEditor::showSpriteSelection()
 {
     closeAll();
+}
+
+void GameEditor::showObjectSelection()
+{
+    if (object_selection) {
+        closeAll();
+        return;
+    }
+    closeAll();
+    object_selection = new ObjectSelection(0, 32, 300, statusbar->y() - 32, game);
+    object_selection->setObjectType(history.ObjectType);
+    object_selection->setObjectDifficulty(history.ObjectDifficulty);
+    object_selection->setLayer(history.ObjectLayer);
+    object_selection->setSpriteSet(&game->resources.ObjectsUi);
+    game->addChild(object_selection);
+    game->viewport.x1 = 300;
+    game->world_widget->setViewport(game->viewport);
+    game->game_viewport.setViewport(game->viewport);
+}
+
+void GameEditor::updateDifficultyForSelectedObject(uint8_t dificulty)
+{
+}
+
+void GameEditor::updateObjectLayerForSelectedObject(int layer)
+{
+}
+
+void GameEditor::setSpriteModeToDraw()
+{
 }
 
 void GameEditor::handleMouseDrawInWorld(const ppltk::MouseState& mouse)

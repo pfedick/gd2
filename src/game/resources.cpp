@@ -42,6 +42,7 @@ void Resources::load(GPUContext& gpu)
         Font24.load(gpu, "res/fonts/scp_24.tex", SpriteBuffer::GPU);
         object_spritesets->setFontTexture(&Font24);
         object_spritesets->loadAll(gpu);
+        ObjectsUi.load(gpu, "res/ui/objects.tex", SpriteBuffer::Memory);
     }
     catch (const ppl7::Exception& exp) {
         exp.print();

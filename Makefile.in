@@ -78,7 +78,8 @@ UI=compile/ui/menue.o \
 	compile/ui/hud.o \
 	compile/ui/tilesframe.o \
 	compile/ui/tiletypeselection.o \
-	compile/ui/leveldialog.o
+	compile/ui/leveldialog.o \
+	compile/ui/objectselection.o \
 
 
 WIDGETS = compile/widgets/colorsliderwidget.o \
@@ -171,12 +172,13 @@ sprites_hud:
 sprites_ui:
 	texmaker -s res/fonts/scp/ -t res/fonts/scp_24.tex -w 256 -h 256 -pd fixed -px 2 -py 2 -i -x tmp/scp_24
 	texmaker -s lightwave/Render/Tiles/ui/ -t res/ui/tiles.tex -w 512 -h 512 -pd fixed -px 0 -py 0 -i
+	texmaker -s lightwave/Render/objects_ui/ -t res/ui/objects.tex -w 512 -h 512 -pd fixed -px 0 -py 0 -i
 
 sprites: sprites_hud sprites_ui
 	texmaker -s lightwave/Render/particles/ -t res/particles.tex -w 1024 -h 1024 -px 128 -py 128 -x tmp/particles
 	texmaker -s lightwave/Render/Tiles/ -t res/tiles.tex -w 1024 -h 1024  -pd fixed -px 0 -py 512 -x tmp/tiles
 	texmaker -s lightwave/Render/TileTypes/ -t res/tiletypes.tex -w 512 -h 512 -pd fixed -px 0 -py 0 -x tmp/tiles
-
+	texmaker -s lightwave/Render/objects/ -t res/objects/generic.tex -w 1024 -h 1024  -pd fixed -px 255 -py 358 -i -x tmp/objects
 
 fonts:
 	- rm -rf res/*.fnt6

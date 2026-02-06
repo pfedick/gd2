@@ -100,6 +100,8 @@ class MainMenue;
 class StatusBar;
 class TilesSelection;
 class TileTypeSelection;
+class ObjectSelection;
+class SpriteSelection;
 class Game;
 class Player;
 class WorldWidget;
@@ -173,6 +175,9 @@ private:
         int lastTileColor;
         int lastTileLayer;
         int lastTileType = 1;
+        int ObjectType = 0;
+        int ObjectDifficulty = 0xff;
+        int ObjectLayer = 0;
         History();
         void clear();
     };
@@ -180,12 +185,12 @@ private:
     History history;
     Game* game;
 
-    void* selected_object;
+    Objects::Object* selected_object;
 
     TilesSelection* tiles_selection;
     TileTypeSelection* tiletype_selection;
-    void* sprite_selection;
-    void* object_selection;
+    SpriteSelection* sprite_selection;
+    ObjectSelection* object_selection;
     void* lights_selection;
     void* waynet_edit;
 
@@ -200,8 +205,13 @@ public:
     void showTilesSelection();
     void showTileTypeSelection();
     void showSpriteSelection();
+    void showObjectSelection();
 
     void handleMouseDrawInWorld(const ppltk::MouseState& mouse);
+
+    void updateDifficultyForSelectedObject(uint8_t dificulty);
+    void updateObjectLayerForSelectedObject(int layer);
+    void setSpriteModeToDraw();
 };
 
 class Game : private ppltk::Window

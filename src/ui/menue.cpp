@@ -223,6 +223,8 @@ void MainMenue::mouseDownEvent(ppltk::MouseEvent* event)
         game->editor.showTileTypeSelection();
     } else if (event->widget() == edit_sprites_button) {
         game->editor.showSpriteSelection();
+    } else if (event->widget() == edit_objects_button) {
+        game->editor.showObjectSelection();
     } else if (event->widget() == edit_level_button) {
         openLevelDialog(false);
     } else if (event->widget() == save_button) {
