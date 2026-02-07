@@ -41,6 +41,11 @@ void Camera::setRenderSize(const ppl7::grafix::Size& size)
     render_size = size;
 }
 
+void Camera::draw(GPUBatcher& batcher, const GameViewport& viewport) const
+{
+    // Hier könnte man z.B. eine Debug-Ansicht der Kamera zeichnen, z.B. die Dead-Zone oder die Zielposition
+}
+
 void Camera::stopMovement(float frame_rate_compensation)
 {
     float decel = decceleration * frame_rate_compensation;
@@ -140,7 +145,7 @@ void Camera::update(double time, float frame_rate_compensation, const Player* pl
         target_position.y = (diffY > 0) ? player->y - dead_zone.y : player->y + dead_zone.y;
     }
     float smoothing = 4.0f;  // Wie schnell sie folgt
-    float lookahead = 20.0f; // Wie weit sie vorausplant
+    float lookahead = 40.0f; // Wie weit sie vorausplant
 
     float lookaheadX = movement.x * lookahead;
     float finalTargetX = target_position.x + lookaheadX;

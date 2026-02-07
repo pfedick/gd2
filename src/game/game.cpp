@@ -349,16 +349,16 @@ void Game::run()
         updateUi(mouse);
         if (filedialog) checkFileDialog();
 
-        player->WorldCoords = WorldCoords;
+        player->WorldCoords = WorldCamera;
         player->Viewport = game_viewport;
         if (this->controlsEnabled || player->isAutoWalk()) {
             ParallaxLayerId player_layer = player->getParallaxLayer();
             ParallaxLayer& layer = level.layer(player_layer);
             player->update(start_time, layer, frame_rate_compensation);
         }
-        WorldCoords.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
-        WorldCoords.setRenderSize(game_viewport.getLogicalSize());
-        WorldCoords.update(start_time, frame_rate_compensation, player);
+        WorldCamera.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
+        WorldCamera.setRenderSize(game_viewport.getLogicalSize());
+        WorldCamera.update(start_time, frame_rate_compensation, player);
 
         gpu_batcher.clearQueues();
 
@@ -427,11 +427,11 @@ void Game::updateUi(const ppltk::MouseState& mouse)
 {
     // if (mouse.p.inside(game_viewport)) {
     moveWorldOnMouseClick(mouse);
-    editor.statusbar->setWorldCoords(WorldCoords);
+    editor.statusbar->setWorldCoords(WorldCamera);
     ParallaxLayerId current_layer = editor.mainmenue->currentLayer();
     // ppl7::PrintDebug("Current Layer: %d\n", static_cast<int>(current_layer));
     level.setEditLayer(current_layer);
-    WorldCoords.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
+    WorldCamera.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
 
     // Update visibility settings
     level.setShowTileGrid(editor.mainmenue->visibility_grid);
@@ -503,8 +503,8 @@ struct BlurParams
 
 void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
-    level.updateVisibleObjects(WorldCoords, game_viewport.getWindowSize());
-    level.draw(cmdbuf, swapchainTexture, WorldCoords, game_viewport, player);
+    level.updateVisibleObjects(WorldCamera, game_viewport.getWindowSize());
+    level.draw(cmdbuf, swapchainTexture, WorldCamera, game_viewport, player);
 
 #ifdef OLDCODE
     //  Start render pass (resets z-order counter)
@@ -682,12 +682,12 @@ void Game::moveWorld(float offset_x, float offset_y)
 {
     if (offset_x == 0 && offset_y == 0) return;
     ParallaxLayer& layer = level.editLayer();
-    WorldCoords.x += (offset_x / layer.speed_factor / layer.size_factor);
-    WorldCoords.y += (offset_y / layer.speed_factor / layer.size_factor);
-    if (WorldCoords.x < 0) WorldCoords.x = 0;
-    if (WorldCoords.x > 62000) WorldCoords.x = 62000;
-    if (WorldCoords.y < 0) WorldCoords.y = 0;
-    if (WorldCoords.y > 62000) WorldCoords.y = 62000;
+    WorldCamera.x += (offset_x / layer.speed_factor / layer.size_factor);
+    WorldCamera.y += (offset_y / layer.speed_factor / layer.size_factor);
+    if (WorldCamera.x < 0) WorldCamera.x = 0;
+    if (WorldCamera.x > 62000) WorldCamera.x = 62000;
+    if (WorldCamera.y < 0) WorldCamera.y = 0;
+    if (WorldCamera.y > 62000) WorldCamera.y = 62000;
 }
 
 void Game::moveWorldOnMouseClick(const ppltk::MouseState& mouse)

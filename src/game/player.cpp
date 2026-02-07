@@ -490,21 +490,28 @@ void Player::addFlashlightToLightSystem(LightSystem& lights)
 }
 */
 
-void Player::drawCollision(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const
+void Player::drawCollision(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords) const
 {
-    ppl7::grafix::Point p(x + viewport.x1 - worldcoords.x, y + viewport.y1 - worldcoords.y);
+    ppl7::grafix::Point p(x - worldcoords.x, y - worldcoords.y);
+    ppl7::grafix::Color nocol(255, 255, 255, 64);
+    ppl7::grafix::Color white(255, 266, 255, 255);
     if (tiletype_resource) {
         for (int cy = 0; cy < 6; cy++) {
             for (int cx = 0; cx < 6; cx++) {
-                tiletype_resource->draw(batcher, p.x - (TILE_WIDTH * 3) + (cx * TILE_WIDTH), p.y - (5 * TILE_HEIGHT) + (cy * TILE_HEIGHT),
-                                        collision_matrix[cx][cy]);
-                // ppl7::PrintDebugTime("cx:cy %d:%d = %d\n", cx, cy, collision_matrix[cx][cy]);
+                if (collision_matrix[cx][cy] == 0) {
+                    batcher.addSprite(*tiletype_resource, collision_matrix[cx][cy], p.x - (TILE_WIDTH * 3) + (cx * TILE_WIDTH),
+                                      p.y - (5 * TILE_HEIGHT) + (cy * TILE_HEIGHT), 1.0f, 1.0f, 0.0f, nocol);
+
+                } else {
+                    batcher.addSprite(*tiletype_resource, collision_matrix[cx][cy], p.x - (TILE_WIDTH * 3) + (cx * TILE_WIDTH),
+                                      p.y - (5 * TILE_HEIGHT) + (cy * TILE_HEIGHT), 1.0f, 1.0f, 0.0f, white);
+                }
             }
         }
     }
-    tiletype_resource->draw(batcher, p.x + 100, p.y - 32, collision_at_pivoty[0]);
-    tiletype_resource->draw(batcher, p.x + 100, p.y, collision_at_pivoty[1]);
-    tiletype_resource->draw(batcher, p.x + 100, p.y + 32, collision_at_pivoty[2]);
+    tiletype_resource->draw(batcher, p.x + 4 * TILE_WIDTH, p.y - TILE_HEIGHT, collision_at_pivoty[0]);
+    tiletype_resource->draw(batcher, p.x + 4 * TILE_WIDTH, p.y, collision_at_pivoty[1]);
+    tiletype_resource->draw(batcher, p.x + 4 * TILE_WIDTH, p.y + TILE_HEIGHT, collision_at_pivoty[2]);
 }
 
 void Player::turn(PlayerOrientation target)

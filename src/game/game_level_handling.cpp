@@ -58,7 +58,7 @@ void Game::createNewLevel(const LevelParameter& params)
     editor.history.clear();
     enableControls(false);
     if (editor.mainmenue) editor.mainmenue->setWorldFollowsPlayer(false);
-    WorldCoords.setPoint(0, 0);
+    WorldCamera.setPoint(0, 0);
     level.create(params.width, params.height);
     level.params = params;
     if (player) {

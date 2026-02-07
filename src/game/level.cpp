@@ -5,6 +5,7 @@
 #include <ppl7-grafix.h>
 #include "level.h"
 #include "gpu.h"
+#include "player.h"
 
 RenderState::RenderState()
 {
@@ -721,11 +722,8 @@ void Level::copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTex
     SDL_EndGPURenderPass(renderPass);
 }
 
-void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
-                 SDL_GPUTexture* swapchainTexture,
-                 const ppl7::grafix::PointF& worldcoords,
-                 const GameViewport& viewport,
-                 Player* player)
+void Level::draw(
+    SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const Camera& worldcoords, const GameViewport& viewport, Player* player)
 {
     renderstate.cmdbuf = cmdbuf;
     parallax_layers[static_cast<int>(ParallaxLayerId::Player)].setPlayer(player);
@@ -744,6 +742,7 @@ void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
     parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
     parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
 
+    drawDebug(worldcoords, viewport, player);
     // Copy final render target, which is 4k, into viewport on swapchain, which may be smaller or bigger
     SDL_FRect destRect = viewport.getRenderRect();
     const ppl7::grafix::Rect& v = viewport.getViewport();
@@ -755,6 +754,38 @@ void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
     }
 
     copyRenderTargetToSwapchain(cmdbuf, swapchainTexture, destRect);
+}
+
+void Level::drawDebug(const Camera& camera, const GameViewport& viewport, const Player* player)
+{
+    renderstate.batcher->startRenderPass();
+    if (player) player->drawCollision(*renderstate.batcher, viewport, camera);
+    camera.draw(*renderstate.batcher, viewport);
+
+    renderstate.batcher->prepareInstanceData(renderstate.cmdbuf);
+    SDL_GPUColorTargetInfo colorTargetInfo = {0};
+    colorTargetInfo.texture = renderstate.render_target;
+    colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 0.0f}; // Black background
+    colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+    colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
+
+    SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
+    depthTargetInfo.texture = renderstate.depth_buffer;
+    depthTargetInfo.clear_depth = 1.0f;
+    depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+    depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
+    depthTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
+    depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
+    depthTargetInfo.cycle = false;
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
+    // SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
+
+    renderstate.batcher->endRenderPass(renderstate.cmdbuf, renderPass);
+    SDL_EndGPURenderPass(renderPass);
 }
 
 ppl7::grafix::Image Level::getScreenshot(int width, int height)

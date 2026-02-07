@@ -13,6 +13,7 @@
 #include "translate.h"
 #include "audio.h"
 #include "audiopool.h"
+#include "camera.h"
 
 #define APP_COMPANY "Patrick F.-Productions"
 #define APP_NAME "The Magican"
@@ -107,43 +108,6 @@ class Player;
 class WorldWidget;
 class FileDialog;
 
-class Camera : public ppl7::grafix::PointF
-{
-private:
-    double last_time;
-    float zoom;
-    float target_zoom;
-    float zoom_speed;
-    float look_ahead_x;        // Der aktuelle gleitende Vorsprung
-    float look_ahead_distance; // Maximaler Vorsprung
-    float acceleration;
-    float decceleration;
-    float player_offset_y;
-    ppl7::grafix::PointF dead_zone;
-    ppl7::grafix::PointF speed;
-    ppl7::grafix::PointF player_position;
-    ppl7::grafix::PointF target_position;
-    ppl7::grafix::Size render_size;
-    bool follow_player;
-
-    void stopMovement(float frame_rate_compensation);
-    bool isPlayerInDeadZone() const;
-    void aimTarget(const ppl7::grafix::PointF& target, float frame_rate_compensation, const Player* player);
-    ppl7::grafix::PointF getTarget(const ppl7::grafix::PointF& movement, const Player* player);
-
-public:
-    Camera();
-    void setZoom(float zoom);
-    float getZoom() const;
-    void setTargetZoom(float zoom, float speed);
-    void setRenderSize(const ppl7::grafix::Size& size);
-    void update(double time, float frame_rate_compensation, const Player* player);
-    void setPosition(const ppl7::grafix::PointF& pos);
-    void setDeadZone(float x, float y);
-    void setFollowPlayer(bool enable);
-    bool isFollowingPlayer() const;
-};
-
 class Soundtrack
 {
 private:
@@ -237,7 +201,7 @@ private:
     ppl7::grafix::Size windowedSize;
     ppl7::grafix::Rect viewport;
     GameViewport game_viewport;
-    Camera WorldCoords;
+    Camera WorldCamera;
     double last_frame_time;
     float frame_rate_compensation;
 

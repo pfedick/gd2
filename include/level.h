@@ -12,6 +12,7 @@
 #include "tiletypes.h"
 #include "objectsystem.h"
 #include "gameviewport.h"
+#include "camera.h"
 
 class ModifiableParameter
 {
@@ -225,6 +226,8 @@ private:
     void copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const SDL_FRect& destRect);
     void updateVisibility();
 
+    void drawDebug(const Camera& camera, const GameViewport& viewport, const Player* player);
+
 public:
     Level();
     ~Level();
@@ -244,7 +247,7 @@ public:
     void resizeRenderBuffer(const ppl7::grafix::Size& size);
     void draw(SDL_GPUCommandBuffer* cmdbuf,
               SDL_GPUTexture* swapchainTexture,
-              const ppl7::grafix::PointF& worldcoords,
+              const Camera& worldcoords,
               const GameViewport& viewport,
               Player* player = NULL);
 

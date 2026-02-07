@@ -159,7 +159,7 @@ void GameEditor::handleMouseDrawInWorld(const ppltk::MouseState& mouse)
 
         ParallaxLayerId currentLayer = mainmenue->currentLayer();
         ParallaxLayer& layer = game->level.layer(currentLayer);
-        ppl7::grafix::Point coords = game->WorldCoords * layer.speed_factor * layer.size_factor;
+        ppl7::grafix::Point coords = game->WorldCamera * layer.speed_factor * layer.size_factor;
 
         int x = (mouse.p.x + coords.x) / (TILE_WIDTH * layer.size_factor);
         int y = (mouse.p.y + coords.y) / (TILE_HEIGHT * layer.size_factor);
@@ -173,7 +173,7 @@ void GameEditor::handleMouseDrawInWorld(const ppltk::MouseState& mouse)
     } else if (tiles_selection) {
         ParallaxLayerId currentLayer = mainmenue->currentLayer();
         ParallaxLayer& layer = game->level.layer(currentLayer);
-        ppl7::grafix::Point coords = game->WorldCoords * layer.speed_factor * layer.size_factor;
+        ppl7::grafix::Point coords = game->WorldCamera * layer.speed_factor * layer.size_factor;
         int x = (mouse.p.x + coords.x) / (TILE_WIDTH * layer.size_factor);
         int y = (mouse.p.y + coords.y) / (TILE_HEIGHT * layer.size_factor);
 

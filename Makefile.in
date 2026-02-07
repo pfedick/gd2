@@ -226,7 +226,7 @@ compile/soundtrack.o: src/game/soundtrack.cpp Makefile include/game.h include/au
 	$(CXX) -o compile/soundtrack.o -c src/game/soundtrack.cpp $(CFLAGS)
 
 compile/game.o: src/game/game.cpp Makefile include/game.h include/version.h \
-	include/renderpipelines.h include/translate.h include/gameviewport.h
+	include/renderpipelines.h include/translate.h include/gameviewport.h include/camera.h
 	- @mkdir -p compile
 	$(CXX) -o compile/game.o -c src/game/game.cpp $(CFLAGS)
 
@@ -246,7 +246,7 @@ compile/gameviewport.o: src/game/gameviewport.cpp Makefile include/gameviewport.
 	- @mkdir -p compile
 	$(CXX) -o compile/gameviewport.o -c src/game/gameviewport.cpp $(CFLAGS)
 
-compile/camera.o: src/game/camera.cpp Makefile include/game.h
+compile/camera.o: src/game/camera.cpp Makefile include/camera.h include/gpu.h
 	- @mkdir -p compile
 	$(CXX) -o compile/camera.o -c src/game/camera.cpp $(CFLAGS)	
 
@@ -255,7 +255,7 @@ compile/config.o: src/game/config.cpp Makefile include/game.h
 	$(CXX) -o compile/config.o -c src/game/config.cpp $(CFLAGS)
 
 compile/level.o: src/game/level.cpp Makefile include/game.h include/level.h \
-	include/gameviewport.h
+	include/gameviewport.h include/camera.h
 	- @mkdir -p compile
 	$(CXX) -o compile/level.o -c src/game/level.cpp $(CFLAGS)
 
