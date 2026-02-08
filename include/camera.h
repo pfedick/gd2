@@ -5,11 +5,11 @@
 
 class Player;
 class GPUBatcher;
+class GameClock;
 
 class Camera : public ppl7::grafix::PointF
 {
 private:
-    double last_time;
     float zoom;
     float target_zoom;
     float zoom_speed;
@@ -36,7 +36,7 @@ public:
     float getZoom() const;
     void setTargetZoom(float zoom, float speed);
     void setRenderSize(const ppl7::grafix::Size& size);
-    void update(double time, float frame_rate_compensation, const Player* player);
+    void update(const GameClock& clock, const Player* player);
     void setPosition(const ppl7::grafix::PointF& pos);
     void setDeadZone(float x, float y);
     void setFollowPlayer(bool enable);

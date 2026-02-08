@@ -41,7 +41,6 @@ void Game::unloadLevel()
 
 void Game::load()
 {
-    last_frame_time = 0.0f;
     editor.closeAll();
     editor.selected_object = NULL;
     editor.history.clear();
@@ -52,7 +51,6 @@ void Game::load()
 
 void Game::createNewLevel(const LevelParameter& params)
 {
-    last_frame_time = 0.0f;
     editor.closeAll();
     editor.selected_object = NULL;
     editor.history.clear();
@@ -250,7 +248,6 @@ void Game::startLevel(const ppl7::String& filename)
     background.setImage(level.params.BackgroundImage);
     background.setLevelDimension(level.getOccupiedAreaFromTileTypePlane(ParallaxLayerId::Player));
     // gameState = GameState::Running;
-    last_frame_time = 0.0f;
     if (filename == "level/start.lvl") {
         player->setAutoWalk(true);
         enableControls(false);

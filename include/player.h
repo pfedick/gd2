@@ -14,6 +14,7 @@ class SpriteTexture;
 
 class TileTypePlane;
 class Game;
+class GameClock;
 namespace Objects
 {
 class Object;
@@ -197,8 +198,8 @@ public:
     bool isAutoWalk() const;
     void startEmittingParticles(double endtime, ParticleReason reason);
     void startHacking(Objects::Object* object);
-    void update(double time, ParallaxLayer& layer, float frame_rate_compensation);
-    void update(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation);
+    void update(const GameClock& clock, ParallaxLayer& layer);
+    void update(const GameClock& clock, const TileTypePlane& world, ObjectSystem* objects);
 
     /*
     void speak(VoiceGeorge::Id id,

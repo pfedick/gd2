@@ -42,8 +42,6 @@ Game::Game(GPUContext& gpu)
     controlsEnabled = true;
     world_widget = NULL;
     filedialog = NULL;
-    last_frame_time = 0.0f;
-    frame_rate_compensation = 1.0f;
     // game_viewport.setRenderSize(ppl7::grafix::Size(640, 360));
     game_viewport.setRenderSize(ppl7::grafix::Size(1920, 1080)); // Rendering ist 1080p
     // game_viewport.setRenderSize(ppl7::grafix::Size(3840, 2160)); // Rendering ist 1080p
@@ -328,22 +326,37 @@ void Game::run()
     level.setShowTileGrid(true);
     level.setShowTileTypes(true);
     sdl.setCursor(resources.Cursor.getDrawable(10), resources.Cursor.getPivot(10));
+    clock.update();
+    double frame_time_accumulator = 0.0f;
+    double idle_time_accumulator = 0.0f;
     ppl7::ppl_time_t last_second = ppl7::GetTime();
     quitGame = false;
     while (!quitGame) {
-        double start_time = ppl7::GetMicrotime();
-
-        ppl7::ppl_time_t current_second = ppl7::GetTime();
-        if (current_second > last_second) {
-            last_second = current_second;
+        double idle_start_time = ppl7::GetMicrotime();
+        SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
+        if (cmdbuf == NULL) {
+            SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
+            continue;
+        }
+        SDL_GPUTexture* swapchainTexture;
+        if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, sdl_window, &swapchainTexture, NULL, NULL)) {
+            SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
+            SDL_SubmitGPUCommandBuffer(cmdbuf);
+            continue;
+        }
+        if (swapchainTexture == NULL) {
+            // Das kann passieren, wenn das Fenster minimiert ist
+            SDL_SubmitGPUCommandBuffer(cmdbuf);
+            continue;
+        }
+        clock.update();
+        clock.gpu_wait_fsync_time = clock.time - idle_start_time;
+        idle_time_accumulator += clock.gpu_wait_fsync_time;
+        if (clock.current_second > last_second) {
+            last_second = clock.current_second;
             // TODO: Update Metrics
         }
-        frame_rate_compensation = 1.0f;
-        if (last_frame_time > 0.0f) {
-            float frametime = start_time - last_frame_time;
-            frame_rate_compensation = frametime / (1.0f / 60.0f);
-        }
-        last_frame_time = start_time;
+
         wm->handleEvents();
         ppltk::MouseState mouse = wm->getMouseState();
         updateUi(mouse);
@@ -354,29 +367,14 @@ void Game::run()
         if (this->controlsEnabled || player->isAutoWalk()) {
             ParallaxLayerId player_layer = player->getParallaxLayer();
             ParallaxLayer& layer = level.layer(player_layer);
-            player->update(start_time, layer, frame_rate_compensation);
+            player->update(clock, layer);
         }
         WorldCamera.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
         WorldCamera.setRenderSize(game_viewport.getLogicalSize());
-        WorldCamera.update(start_time, frame_rate_compensation, player);
+        WorldCamera.update(clock, player);
 
         gpu_batcher.clearQueues();
 
-        SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
-        if (cmdbuf == NULL) {
-            SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
-            continue;
-        }
-        SDL_GPUTexture* swapchainTexture;
-        if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, sdl_window, &swapchainTexture, NULL, NULL)) {
-            SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
-            continue;
-        }
-        if (swapchainTexture == NULL) {
-            // Das kann passieren, wenn das Fenster minimiert ist
-            SDL_SubmitGPUCommandBuffer(cmdbuf);
-            continue;
-        }
         // clearScreen(cmdbuf, swapchainTexture);
 
         // Ensure Depth Buffer matches window size
@@ -387,8 +385,6 @@ void Game::run()
         // gpu_batcher.updateMatrices(game_viewport.getRenderSize());
         //  createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
 
-        fps.update();
-
         drawWorld(cmdbuf, swapchainTexture);
         // HUD
         drawHUD(cmdbuf, swapchainTexture);
@@ -396,16 +392,31 @@ void Game::run()
         // Ui and Mouse if enabled
         drawUi(cmdbuf, swapchainTexture, mouse);
 
+        // TODO: Alle Berechnungen sollten hier passieren
+        level.updateVisibleObjects(WorldCamera, game_viewport.getWindowSize());
+
         // Frame done
         SDL_SubmitGPUCommandBuffer(cmdbuf);
-        double frame_time = ppl7::GetMicrotime() - start_time;
-        frame_count++;
-        time_accumulator += frame_time;
-        if ((frame_count % 60) == 0) {
+
+        // Hinweis: SDL_WaitForGPUFences blockiert die CPU nicht nur, bis die GPU fertig mit dem CommandBuffer ist,
+        // sondern wartet auch die VSync ab
+        /*
+        SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdbuf);
+        SDL_WaitForGPUFences(gpu.gpu, true, &fence, 1);
+        SDL_ReleaseGPUFence(gpu.gpu, fence);
+        */
+
+        double frame_time = ppl7::GetMicrotime() - clock.time;
+
+        frame_time_accumulator += frame_time;
+        if ((clock.frame_count % 60) == 0) {
             // ppl7::PrintDebug("Frametime: %0.3f ms\n", 1000.0 * (frame_time / frame_count));
-            editor.statusbar->setFrameTime(1000.0 * (frame_time / frame_count));
-            frame_count = 0;
-            time_accumulator = 0.0f;
+            editor.statusbar->setFrameTime(1000.0 * (frame_time_accumulator / 60.0f));
+            editor.statusbar->setLoad(frame_time_accumulator / idle_time_accumulator * 100.0f);
+            // editor.statusbar->setFrameTime(1000.0 * (clock.gpu_wait_fsync_time));
+            editor.statusbar->setFps(clock.fps);
+            frame_time_accumulator = 0.0f;
+            idle_time_accumulator = 0.0f;
         }
     }
 }
@@ -451,7 +462,6 @@ void Game::updateUi(const ppltk::MouseState& mouse)
 void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
 {
     if (!showui) return;
-    editor.statusbar->setFps(fps.getFPS());
 
     // 1. Draw widgets into PPLTK internal texture
     this->drawWidgets();
@@ -503,7 +513,7 @@ struct BlurParams
 
 void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
-    level.updateVisibleObjects(WorldCamera, game_viewport.getWindowSize());
+
     level.draw(cmdbuf, swapchainTexture, WorldCamera, game_viewport, player);
 
 #ifdef OLDCODE

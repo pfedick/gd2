@@ -54,8 +54,8 @@ void StatusBar::setupUi()
     this->addChild(load_label);
     x += 65;
 
-    this->addChild(new ppltk::Label(x, 0, 80, 32, "FrameTime:"));
-    x += 80;
+    this->addChild(new ppltk::Label(x, 0, 84, 32, "FrameTime:"));
+    x += 84;
     frametime_label = new ppltk::Label(x, 0, 80, 32, "?", ppltk::Frame::Inset);
     frametime_label->setFont(font_bold);
     this->addChild(frametime_label);

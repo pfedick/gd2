@@ -123,15 +123,21 @@ ppl7::grafix::PointF Camera::getTarget(const ppl7::grafix::PointF& movement, con
     return ppl7::grafix::PointF(player_position.x + target_look_ahead, player_position.y);
 }
 
-void Camera::update(double time, float frame_rate_compensation, const Player* player)
+void Camera::update(const GameClock& clock, const Player* player)
 {
     ppl7::grafix::PointF movement = player->position() - player_position;
     player_position = player->position();
     if (!follow_player) return;
+    /*
+    x = player_position.x - (render_size.width / 2.0f);
+    y = player_position.y - (render_size.height / 2.0f) - player_offset_y; // Spieler etwas unter der Mitte platzieren
+    return;
+    */
 
-    float deltaTime = time - last_time;
-    last_time = time;
+    float deltaTime = clock.delta_time;
+
     ppl7::grafix::PointF cam_center(x + (render_size.width / 2.0f), y + (render_size.height / 2.0f));
+
     if (target_position.x == 0.0f && target_position.y == 0.0f) {
         target_position = player->position();
     }
@@ -144,8 +150,8 @@ void Camera::update(double time, float frame_rate_compensation, const Player* pl
     if (std::abs(diffY) > dead_zone.y) {
         target_position.y = (diffY > 0) ? player->y - dead_zone.y : player->y + dead_zone.y;
     }
-    float smoothing = 4.0f;  // Wie schnell sie folgt
-    float lookahead = 40.0f; // Wie weit sie vorausplant
+    float smoothing = 2.0f;  // Wie schnell sie folgt
+    float lookahead = 20.0f; // Wie weit sie vorausplant
 
     float lookaheadX = movement.x * lookahead;
     float finalTargetX = target_position.x + lookaheadX;
@@ -169,18 +175,18 @@ void Camera::update(double time, float frame_rate_compensation, const Player* pl
     // Falls sich der Spieler bewegt, berechnen wir die Target-Position
     if (movement.x != 0.0f) {
         ppl7::grafix::PointF target = getTarget(movement, player);
-        aimTarget(target, frame_rate_compensation, player);
+        aimTarget(target, clock.frame_rate_compensation, player);
 
     } else {
         // Spieler steht, Kamera abbremsen
         if (isPlayerInDeadZone())
-            stopMovement(frame_rate_compensation);
+            stopMovement(clock.frame_rate_compensation);
         else {
             // stopMovement(frame_rate_compensation);
-            aimTarget(player_position, frame_rate_compensation, player);
+            aimTarget(player_position, clock.frame_rate_compensation, player);
         }
     }
-    x += speed.x * frame_rate_compensation;
+    x += speed.x * clock.frame_rate_compensation;
     // y += speed.y * frame_rate_compensation;
     y = player->y - (render_size.height / 2.0f) - player_offset_y; // Spieler etwas unter der Mitte platzieren
 }

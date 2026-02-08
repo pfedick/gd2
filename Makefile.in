@@ -36,7 +36,7 @@ OBJECTS=compile/main.o \
 	compile/sdl.o \
 	compile/gpu.o \
 	compile/gpubatcher.o \
-	compile/fps.o \
+	compile/gameclock.o \
 	compile/animation.o \
 	compile/config.o \
 	compile/spritetexture.o \
@@ -307,9 +307,9 @@ compile/spritesystem.o: src/game/spritesystem.cpp Makefile include/game.h includ
 	- @mkdir -p compile
 	$(CXX) -o compile/spritesystem.o -c src/game/spritesystem.cpp $(CFLAGS)
 
-compile/fps.o: src/game/fps.cpp Makefile include/game.h
+compile/gameclock.o: src/game/gameclock.cpp Makefile include/game.h
 	- @mkdir -p compile
-	$(CXX) -o compile/fps.o -c src/game/fps.cpp $(CFLAGS)
+	$(CXX) -o compile/gameclock.o -c src/game/gameclock.cpp $(CFLAGS)
 
 compile/colorpalette.o: src/game/colorpalette.cpp Makefile include/colorpalette.h
 	- @mkdir -p compile

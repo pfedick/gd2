@@ -906,16 +906,16 @@ void Player::playSoundOnAnimationSprite()
     if (movement == ClimbDown && (sprite == 101 || sprite == 96)) play_ladder(ap);
 }
 
-void Player::update(double time, ParallaxLayer& layer, float frame_rate_compensation)
+void Player::update(const GameClock& clock, ParallaxLayer& layer)
 {
-    update(time, layer.TileTypeMatrix, &layer.objects, frame_rate_compensation);
+    update(clock, layer.TileTypeMatrix, &layer.objects);
 }
 
-void Player::update(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation)
+void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSystem* objects)
 {
     if (particle_reason != ParticleReason::None && particle_end_time > time) emmitParticles(time);
-    this->time = time;
-    this->frame_rate_compensation = frame_rate_compensation;
+    time = clock.time;
+    frame_rate_compensation = clock.frame_rate_compensation;
     if (time > next_animation) {
         next_animation = time + animation.speed();
         animation.update();

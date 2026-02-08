@@ -82,19 +82,21 @@ public:
     void save();
 };
 
-class FPS
+class GameClock
 {
 private:
-    ppl7::ppl_time_t fps_start_time;
-    int fps_frame_count;
-    int fps;
-    bool debug;
+    uint64_t fps_frame_count = 0;
+    uint64_t fps_start_time = 0;
 
 public:
-    FPS();
-    int getFPS() const;
     void update();
-    void enableDebug(bool enable);
+    uint64_t frame_count = 0;
+    uint64_t current_second = 0;
+    double time = 0.0f;
+    float frame_rate_compensation = 0.0f;
+    float delta_time = 0.0f;
+    float gpu_wait_fsync_time = 0.0f;
+    int fps = 0;
 };
 
 class MainMenue;
@@ -202,8 +204,6 @@ private:
     ppl7::grafix::Rect viewport;
     GameViewport game_viewport;
     Camera WorldCamera;
-    double last_frame_time;
-    float frame_rate_compensation;
 
     void createWindow();
     // void createRenderTargetsIfRequired(const ppl7::grafix::Size& size);
@@ -227,9 +227,6 @@ private:
     void drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
     void drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
 
-    uint64_t frame_count = 0;
-    double time_accumulator = 0.0f;
-
     ppl7::grafix::PointF WorldMoveStart;
     bool worldIsMoving;
 
@@ -250,7 +247,7 @@ public:
     AudioPool audiopool;
     AudioSystem audiosystem;
     Config config;
-    FPS fps;
+    GameClock clock;
     Game(GPUContext& gpu);
     ~Game();
 
