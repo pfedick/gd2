@@ -58,6 +58,25 @@ public:
     void toggledEvent(ppltk::Event* event, bool checked) override;
 };
 
+class MetricsSubMenu : public ppltk::Frame
+{
+private:
+    MainMenue* menue;
+    Metrics metrics;
+    ppl7::grafix::Font font;
+    void drawMillisecondMetric(ppl7::grafix::Drawable& draw, int c1, int c2, int y, const ppl7::String& text, double value);
+    void drawDoubleMetric(ppl7::grafix::Drawable& draw, int c1, int c2, int y, const ppl7::String& text, double value);
+    void drawIntMetric(ppl7::grafix::Drawable& draw, int c1, int c2, int y, const ppl7::String& text, uint64_t value);
+    void drawCountMetric(
+        ppl7::grafix::Drawable& draw, int c1, int c2, int c3, int y, const ppl7::String& text, uint64_t value1, uint64_t value2);
+
+public:
+    MetricsSubMenu(int x, int y, MainMenue* menue);
+    void update(const Metrics& metrics);
+
+    virtual void paint(ppl7::grafix::Drawable& draw);
+};
+
 class MainMenue : public ppltk::Frame
 {
 private:
@@ -91,6 +110,7 @@ private:
 
     VisibilitySubMenu* visibility;
     DebugSubMenu* debug_submenu;
+    MetricsSubMenu* metrics;
 
     LevelDialog* level_dialog;
     bool controlsEnabled;
@@ -128,6 +148,10 @@ public:
     void setGodMode(bool enable);
     void setShowTileTypes(bool show);
     void openLevelDialog(bool new_flag);
+
+    void updateMetrics(const Metrics& last_metrics);
+    void fitMetrics(const ppl7::grafix::Rect& viewport);
+    void showMetrics();
 };
 
 #endif /* INCLUDE_UI_MENUE_H_ */

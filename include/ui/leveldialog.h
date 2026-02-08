@@ -6,6 +6,8 @@
 #include <ppltk.h>
 #include "widgets.h"
 
+class LevelParameter;
+
 class LevelDialog : public Dialog
 {
 public:

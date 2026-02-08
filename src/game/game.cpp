@@ -289,9 +289,8 @@ void Game::showUi(bool enable)
         viewport.x2 = 1920;
         world_widget->setViewport(viewport);
         game_viewport.setViewport(viewport);
-
         editor.mainmenue->setVisible(true);
-        // editor.mainmenue->fitMetrics(viewport);
+        editor.mainmenue->fitMetrics(viewport);
         editor.statusbar->setVisible(true);
     } else {
         editor.closeAll();
@@ -304,7 +303,7 @@ void Game::showUi(bool enable)
         viewport.x1 = 0;
         viewport.y2 = 1080;
         viewport.x2 = 1920;
-        // editor.mainmenue->fitMetrics(viewport);
+        editor.mainmenue->fitMetrics(viewport);
         // ppl7::PrintDebug("Game::showUi: Viewport set to x1=%d, y1=%d, x2=%d, y2=%d\n", viewport.x1, viewport.y1, viewport.x2,
         // viewport.y2);
         game_viewport.setViewport(viewport);
@@ -334,7 +333,7 @@ void Game::run()
     Metrics last_metrics;
     metrics.clear();
 
-    ppl7::ppl_time_t last_second = ppl7::GetTime();
+    uint64_t last_second = clock.current_second;
     quitGame = false;
     while (!quitGame) {
         double idle_start_time = ppl7::GetMicrotime();
@@ -362,6 +361,7 @@ void Game::run()
             last_second = clock.current_second;
             last_metrics = metrics.getAverage();
             metrics.clear();
+            editor.mainmenue->updateMetrics(last_metrics);
         }
         metrics.newFrame();
         metrics.time_frame.start();
@@ -636,6 +636,9 @@ void Game::keyDownEvent(ppltk::KeyEvent* event)
 {
     if (event->key == ppltk::KeyEvent::KEY_F9) {
         showUi(!showui);
+    } else if (event->key == ppltk::KeyEvent::KEY_F10) {
+        editor.mainmenue->showMetrics();
+        editor.mainmenue->fitMetrics(viewport);
     } else if (event->key == ppltk::KeyEvent::KEY_RETURN && (event->modifier & ppltk::KeyEvent::KEYMOD_ALT) > 0) {
         // printf("toggle fullscreen or back\n");
         ppltk::WindowManager_SDL3* sdl3wm = (ppltk::WindowManager_SDL3*)wm;

@@ -77,6 +77,7 @@ UI=compile/ui/menue.o \
 	compile/ui/spriteselection.o \
 	compile/ui/worldwidget.o \
 	compile/ui/hud.o \
+	compile/ui/metrics.o \
 	compile/ui/tilesframe.o \
 	compile/ui/tiletypeselection.o \
 	compile/ui/leveldialog.o \

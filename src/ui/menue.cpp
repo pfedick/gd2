@@ -10,6 +10,7 @@ MainMenue::MainMenue(int x, int y, int width, int height, Game* game)
     visibility = NULL;
     debug_submenu = NULL;
     level_dialog = NULL;
+    metrics = NULL;
     for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
         layer_visibility[i] = true;
     }
@@ -188,6 +189,28 @@ void MainMenue::setGodMode(bool enabled)
     game->getPlayer()->setGodMode(enabled);
 }
 
+void MainMenue::showMetrics()
+{
+    if (metrics) {
+        delete metrics;
+        metrics = NULL;
+    } else {
+        ppltk::Widget* top = show_metrics_submenu_button->getTopmostParent();
+        // ppl7::grafix::Point p=show_metrics_submenu_button->absolutePosition();
+        metrics = new MetricsSubMenu(top->width() - 450, height(), this);
+        top->addChild(metrics);
+    }
+}
+void MainMenue::updateMetrics(const Metrics& last_metrics)
+{
+    if (metrics) metrics->update(last_metrics);
+}
+
+void MainMenue::fitMetrics(const ppl7::grafix::Rect& viewport)
+{
+    if (metrics) metrics->setPos(viewport.right() - metrics->width(), viewport.top());
+}
+
 void MainMenue::openLevelDialog(bool new_flag)
 {
     controlsEnabled = game->getControlsEnabled();
@@ -265,6 +288,8 @@ void MainMenue::mouseDownEvent(ppltk::MouseEvent* event)
             top->addChild(debug_submenu);
             ppltk::GetWindowManager()->setMouseFocus(debug_submenu);
         }
+    } else if (event->widget() == show_metrics_submenu_button) {
+        showMetrics();
     }
 }
 
