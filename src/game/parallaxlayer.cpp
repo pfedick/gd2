@@ -72,8 +72,8 @@ void ParallaxLayer::draw(RenderState& renderstate,
 {
     if (!isVisible) return;
     ppl7::grafix::PointF parallax_worldcoords = worldcoords * speed_factor * size_factor;
-    if (hasVisibleGrafix()) {
-    }
+    if (!hasVisibleGrafix()) return;
+
     // renderstate.batcher->startRenderPass();
     renderstate.batcher->startRenderPass();
     tiles.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
@@ -98,6 +98,11 @@ void ParallaxLayer::draw(RenderState& renderstate,
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
 
+    if (!bBlurEnabled || blur_factor <= 0.0f) {
+        colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+        colorTargetInfo.texture = render_target;
+    }
+
     SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
     depthTargetInfo.texture = renderstate.depth_buffer;
     depthTargetInfo.clear_depth = 1.0f;
@@ -118,8 +123,8 @@ void ParallaxLayer::draw(RenderState& renderstate,
     // Post-Processing: Blur
     if (blur_factor > 0.0f && bBlurEnabled) {
         blur(renderstate, renderstate.render_layer);
+        copyLayerToTarget(renderstate, renderstate.render_layer, render_target);
     }
-    copyLayerToTarget(renderstate, renderstate.render_layer, render_target);
 }
 
 void ParallaxLayer::drawTileGrid(RenderState& renderstate, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport)
