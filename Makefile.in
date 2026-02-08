@@ -37,6 +37,7 @@ OBJECTS=compile/main.o \
 	compile/gpu.o \
 	compile/gpubatcher.o \
 	compile/gameclock.o \
+	compile/metrics.o \
 	compile/animation.o \
 	compile/config.o \
 	compile/spritetexture.o \

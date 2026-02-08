@@ -1,7 +1,6 @@
 #include <ppl7.h>
-#include "decker.h"
+#include "metrics.h"
 #include <SDL3/SDL.h>
-
 
 Metrics::Timer::Timer()
 {
@@ -12,17 +11,15 @@ Metrics::Timer::Timer()
 
 void Metrics::Timer::start()
 {
-    //start_time=ppl7::GetMicrotime();
+    // start_time=ppl7::GetMicrotime();
     s = SDL_GetPerformanceCounter();
-
 }
 
 void Metrics::Timer::stop()
 {
     uint64_t d = (SDL_GetPerformanceCounter() - s);
     duration += (double)d / (double)f;
-    //duration+=(ppl7::GetMicrotime() - start_time);
-
+    // duration+=(ppl7::GetMicrotime() - start_time);
 }
 
 void Metrics::Timer::clear()
@@ -41,13 +38,11 @@ void Metrics::Timer::addDuration(double d)
     duration += d;
 }
 
-Metrics::Timer& Metrics::Timer::operator +=(const Metrics::Timer& other)
+Metrics::Timer& Metrics::Timer::operator+=(const Metrics::Timer& other)
 {
     duration += other.duration;
     return *this;
 }
-
-
 
 Metrics::Metrics()
 {
@@ -154,7 +149,6 @@ Metrics Metrics::getAverage() const
     return m;
 }
 
-
 Metrics& Metrics::operator+=(const Metrics& other)
 {
     framecount += other.framecount;
@@ -189,7 +183,6 @@ Metrics& Metrics::operator+=(const Metrics& other)
     frametime += other.frametime;
     return *this;
 }
-
 
 void Metrics::print() const
 {
