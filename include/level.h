@@ -13,6 +13,7 @@
 #include "objectsystem.h"
 #include "gameviewport.h"
 #include "camera.h"
+#include "metrics.h"
 
 class ModifiableParameter
 {
@@ -119,7 +120,7 @@ public:
     float blur_factor = 0.0f;
     float speed_factor = 1.0f;
     float size_factor = 1.0f;
-    ParallaxLayerId layerType;
+    ParallaxLayerId myParallaxLayer;
     bool isVisible;
     bool bShowGrid;
     bool bShowTileTypes;
@@ -143,7 +144,11 @@ public:
     void init(ParallaxLayerId layerType, float blur, float speed, float size);
     void setPlayer(Player* p);
     void clear();
-    void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
+    void updateSprites(const GameClock& clock, const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
+    void updateObjects(const GameClock& clock, const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
+    void updateParticles(const GameClock& clock, const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
+    void updateLights(const GameClock& clock, const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
+
     void draw(RenderState& renderstate,
               SDL_GPUTexture* swapchainTexture,
               const ppl7::grafix::PointF& worldcoords,
@@ -184,6 +189,7 @@ private:
     bool bShowGrid;
     bool bShowTileTypes;
     ParallaxLayerId editlayer;
+    Player* player;
 
     void clear();
 
@@ -225,12 +231,12 @@ private:
     void clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf);
     void copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const SDL_FRect& destRect);
     void updateVisibility();
-
     void drawDebug(const Camera& camera, const GameViewport& viewport, const Player* player);
 
 public:
     Level();
     ~Level();
+    void setPlayer(Player* player);
     void setEditmode(bool enabled);
     void setShowSprites(bool enabled);
     void setShowObjects(bool enabled);
@@ -245,13 +251,13 @@ public:
     void backup(const ppl7::String& Filename);
     void initialize(GPUContext& gpu, RenderPipelines& renderpipelines, GPUBatcher& batcher);
     void resizeRenderBuffer(const ppl7::grafix::Size& size);
-    void draw(SDL_GPUCommandBuffer* cmdbuf,
-              SDL_GPUTexture* swapchainTexture,
-              const Camera& worldcoords,
-              const GameViewport& viewport,
-              Player* player = NULL);
+    void draw(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const Camera& worldcoords, const GameViewport& viewport);
 
-    void updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
+    void update(const GameClock& clock,
+                Metrics& metrics,
+                const ppl7::grafix::PointF& worldcoords,
+                const ppl7::grafix::Size& render_target_size);
+
     void setEditLayer(ParallaxLayerId layer);
     void setShowTileGrid(bool enable);
     void setShowTileTypes(bool enable);

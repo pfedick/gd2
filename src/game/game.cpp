@@ -320,6 +320,7 @@ void Game::run()
     world_widget->setEnabled(true);
     wm->setKeyboardFocus(world_widget);
     wm->setGameControllerFocus(this);
+    level.setPlayer(player);
 
     showUi(true);
     SDL_ShowCursor();
@@ -329,6 +330,9 @@ void Game::run()
     clock.update();
     double frame_time_accumulator = 0.0f;
     double idle_time_accumulator = 0.0f;
+    Metrics last_metrics;
+    metrics.clear();
+
     ppl7::ppl_time_t last_second = ppl7::GetTime();
     quitGame = false;
     while (!quitGame) {
@@ -353,14 +357,22 @@ void Game::run()
         clock.gpu_wait_fsync_time = clock.time - idle_start_time;
         idle_time_accumulator += clock.gpu_wait_fsync_time;
         if (clock.current_second > last_second) {
+            // Update Metrics
             last_second = clock.current_second;
-            // TODO: Update Metrics
+            last_metrics = metrics.getAverage();
+            metrics.clear();
         }
+        metrics.newFrame();
+        metrics.time_frame.start();
+        metrics.time_total.start();
+
+        metrics.time_events.start();
 
         wm->handleEvents();
         ppltk::MouseState mouse = wm->getMouseState();
-        updateUi(mouse);
+        updateUi(mouse, last_metrics);
         if (filedialog) checkFileDialog();
+        metrics.time_events.stop();
 
         player->WorldCoords = WorldCamera;
         player->Viewport = game_viewport;
@@ -369,21 +381,18 @@ void Game::run()
             ParallaxLayer& layer = level.layer(player_layer);
             player->update(clock, layer);
         }
+
         WorldCamera.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
         WorldCamera.setRenderSize(game_viewport.getLogicalSize());
         WorldCamera.update(clock, player);
 
         gpu_batcher.clearQueues();
 
-        // clearScreen(cmdbuf, swapchainTexture);
-
-        // Ensure Depth Buffer matches window size
+        // Ensure Buffers matches window size
         int w, h;
         SDL_GetWindowSizeInPixels(sdl_window, &w, &h);
         game_viewport.setWindowSize(ppl7::grafix::Size(w, h));
         level.resizeRenderBuffer(game_viewport.getRenderSize());
-        // gpu_batcher.updateMatrices(game_viewport.getRenderSize());
-        //  createRenderTargetsIfRequired(ppl7::grafix::Size(w, h));
 
         drawWorld(cmdbuf, swapchainTexture);
         // HUD
@@ -393,7 +402,7 @@ void Game::run()
         drawUi(cmdbuf, swapchainTexture, mouse);
 
         // TODO: Alle Berechnungen sollten hier passieren
-        level.updateVisibleObjects(WorldCamera, game_viewport.getWindowSize());
+        level.update(clock, metrics, WorldCamera, game_viewport.getWindowSize());
 
         // Frame done
         SDL_SubmitGPUCommandBuffer(cmdbuf);
@@ -405,7 +414,8 @@ void Game::run()
         SDL_WaitForGPUFences(gpu.gpu, true, &fence, 1);
         SDL_ReleaseGPUFence(gpu.gpu, fence);
         */
-
+        metrics.time_frame.stop();
+        metrics.time_total.stop();
         double frame_time = ppl7::GetMicrotime() - clock.time;
 
         frame_time_accumulator += frame_time;
@@ -434,7 +444,7 @@ void Game::clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTe
     SDL_EndGPURenderPass(renderPass);
 }
 
-void Game::updateUi(const ppltk::MouseState& mouse)
+void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& metrics)
 {
     // if (mouse.p.inside(game_viewport)) {
     moveWorldOnMouseClick(mouse);
@@ -513,163 +523,23 @@ struct BlurParams
 
 void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
-
-    level.draw(cmdbuf, swapchainTexture, WorldCamera, game_viewport, player);
-
-#ifdef OLDCODE
-    //  Start render pass (resets z-order counter)
-    gpu_batcher.startRenderPass();
-
-    // Collect all sprites to batch
-
-    int x = 100, y = 200;
-    for (int i = 0; i < 100; i++) {
-        gpu_batcher.addSprite(resources.Player, i, x, y);
-        x += 100;
-        if (x >= 1800) {
-            x = 100;
-            y += 200;
-        }
-    }
-
-    /*
-    for (int i = 0; i < 100; i++) {
-        gpu_batcher.addSprite(resources.Player, ppl7::rand(0, 200), ppl7::rand(0, 1920), ppl7::rand(0,
-    1080), 1.0f, 1.0f, 0.0f);
-    }
-    */
-
-    gpu_batcher.addSprite(resources.Player, 27, 100, 200, 1.0f, 1.0f, 0.0f);
-
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 0.0f, ppl7::grafix::Color(255, 0, 0, 255));
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 90.0f, ppl7::grafix::Color(0, 255, 0, 255));
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 180.0f, ppl7::grafix::Color(0, 0, 255, 255));
-    gpu_batcher.addSprite(resources.Player, 27, 1920 / 2, 1080 / 2, 1.0f, 1.0f, 270.0f);
-
-    // Example Usage
-    gpu_batcher.addLine(100, 100, 200, 200, ppl7::grafix::Color(255, 0, 0, 255), 10.0f);
-    gpu_batcher.addRect(300, 100, 50, 50, ppl7::grafix::Color(0, 255, 0, 255), 10.0f);
-    gpu_batcher.addFilledRect(400, 100, 50, 50, ppl7::grafix::Color(0, 0, 255, 255));
-
-    // Upload instance data to GPU (must be BEFORE BeginGPURenderPass)
-    gpu_batcher.prepareInstanceData(cmdbuf);
-
-    SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.texture = render_target_layer;
-    colorTargetInfo.clear_color = (SDL_FColor){0.3f, 0.0f, 0.0f, 1.0f}; // Black background
-    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
-
-    SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
-    depthTargetInfo.texture = depthTexture;
-    depthTargetInfo.clear_depth = 1.0f;
-    depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
-    depthTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
-    depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
-    depthTargetInfo.cycle = false;
-
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
-
-    // Set viewport and scissor
-    SDL_GPUViewport sviewport = {0.0f, 0.0f, 1920.0f, 1080.0f, 0.0f, 1.0f};
-    SDL_Rect scissor = {0, 0, 1920, 1080};
-    SDL_SetGPUViewport(renderPass, NULL);
-    SDL_SetGPUScissor(renderPass, NULL);
-
-    // Draw all batched sprites
-    // gpu_batcher.prepareInstanceData(cmdbuf);
-    gpu_batcher.endRenderPass(cmdbuf, renderPass);
-    SDL_EndGPURenderPass(renderPass);
-
-    SDL_GPUColorTargetInfo targetInfo = {};
-    SDL_GPUTextureSamplerBinding binding = {};
-
-    // *******************************************************
-    // Postprocessing passes would go here...
-
-    BlurParams params;
-    params.blurStrength = 0.5f;
-    params.padding = 0.0f;                                       // Egal was hier steht
-    params.texelSizeX = 1.0f / (float)render_target_size.width;  // Breite der Textur
-    params.texelSizeY = 1.0f / (float)render_target_size.height; // Höhe der Textur
-
-    // Slot Index 0 (passend zu binding = 0 im Shader, Set 3 ist implizit für Fragment Uniforms)
-    SDL_PushGPUFragmentUniformData(cmdbuf, 0, &params, sizeof(BlurParams));
-
-    targetInfo.texture = render_target_tmp1; // Ziel: Temp Textur
-    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE;
-    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
-
-    renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
-    SDL_SetGPUViewport(renderPass, &sviewport);
-    SDL_SetGPUScissor(renderPass, &scissor);
-
-    SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.blurHorizontalPipeline);
-    binding.texture = render_target_layer;
-    binding.sampler = renderPipelines.samplerClamp; // Einen Clamp-Sampler benutzen!
-    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
-
-    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
-    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
-
-    SDL_EndGPURenderPass(renderPass);
-
-    targetInfo.texture = render_target_tmp2;
-    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE; // Wir überschreiben alles
-    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
-
-    renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
-    SDL_SetGPUViewport(renderPass, &sviewport);
-    SDL_SetGPUScissor(renderPass, &scissor);
-
-    SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.blurVerticalPipeline);
-
-    // Eingabe-Textur binden (das Bild aus Pass 2)
-    binding.texture = render_target_tmp1;
-    binding.sampler = renderPipelines.samplerClamp;
-    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
-
-    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
-    SDL_EndGPURenderPass(renderPass);
-
-    // Copy to swapchain
-    targetInfo.texture = swapchainTexture;
-    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE;
-    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
-
-    renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
-    SDL_SetGPUViewport(renderPass, NULL);
-    SDL_SetGPUScissor(renderPass, NULL);
-
-    SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.copyPipeline);
-    binding.texture = render_target_tmp2;
-    binding.sampler = renderPipelines.samplerClamp; // Einen Clamp-Sampler benutzen!
-    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
-
-    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
-    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
-
-    SDL_EndGPURenderPass(renderPass);
-#endif
-
-    // #endif
+    level.draw(cmdbuf, swapchainTexture, WorldCamera, game_viewport);
 }
 
 void Game::drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
+    // TODO
 }
 
 void Game::quitEvent(ppltk::Event* event)
 {
-    ppl7::PrintDebug("Quit event received\n");
+    // ppl7::PrintDebug("Quit event received\n");
     quitGame = true;
 }
 
 void Game::closeEvent(ppltk::Event* event)
 {
-    ppl7::PrintDebug("Close event received\n");
+    // ppl7::PrintDebug("Close event received\n");
     quitGame = true;
 }
 

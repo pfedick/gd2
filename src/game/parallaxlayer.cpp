@@ -19,12 +19,13 @@ ParallaxLayer::~ParallaxLayer()
 {
 }
 
-void ParallaxLayer::init(ParallaxLayerId layerType, float blur, float speed, float size)
+void ParallaxLayer::init(ParallaxLayerId parallaxLayer, float blur, float speed, float size)
 {
-    this->layerType = layerType;
+    this->myParallaxLayer = parallaxLayer;
     blur_factor = blur;
     speed_factor = speed;
     size_factor = size;
+    objects.init(parallaxLayer);
 }
 
 void ParallaxLayer::clear()
@@ -34,10 +35,31 @@ void ParallaxLayer::clear()
     tiles.clear();
 }
 
-void ParallaxLayer::updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size)
+void ParallaxLayer::updateSprites(const GameClock& clock,
+                                  const ppl7::grafix::PointF& worldcoords,
+                                  const ppl7::grafix::Size& render_target_size)
 {
     background_sprites.updateVisibleSpriteList(worldcoords, render_target_size);
     front_sprites.updateVisibleSpriteList(worldcoords, render_target_size);
+}
+
+void ParallaxLayer::updateObjects(const GameClock& clock,
+                                  const ppl7::grafix::PointF& worldcoords,
+                                  const ppl7::grafix::Size& render_target_size)
+{
+    objects.updateVisibleObjectList(worldcoords, render_target_size);
+    if (player) objects.update(clock, TileTypeMatrix, *player);
+}
+void ParallaxLayer::updateParticles(const GameClock& clock,
+                                    const ppl7::grafix::PointF& worldcoords,
+                                    const ppl7::grafix::Size& render_target_size)
+{
+    // particles.update(clock, worldcoords, render_target_size);
+}
+void ParallaxLayer::updateLights(const GameClock& clock,
+                                 const ppl7::grafix::PointF& worldcoords,
+                                 const ppl7::grafix::Size& render_target_size)
+{
 }
 
 bool ParallaxLayer::hasVisibleGrafix() const
@@ -68,7 +90,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     renderstate.batcher->startRenderPass();
     tiles.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
 
-    if (layerType == ParallaxLayerId::Player && player != NULL) {
+    if (myParallaxLayer == ParallaxLayerId::Player && player != NULL) {
         player->draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
     }
 

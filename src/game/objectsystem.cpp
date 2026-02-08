@@ -31,6 +31,11 @@ ObjectSystem::~ObjectSystem()
     clear();
 }
 
+void ObjectSystem::init(ParallaxLayerId parallaxLayer)
+{
+    this->myParallaxLayer = parallaxLayer;
+}
+
 void ObjectSystem::setSpritesetResources(ObjectSpritesets& spritesets)
 {
     this->spritesets = &spritesets;
@@ -77,13 +82,13 @@ void ObjectSystem::deleteObject(int id)
     }
 }
 
-void ObjectSystem::updateVisibleObjectList(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport)
+void ObjectSystem::updateVisibleObjectList(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size)
 {
     visible_object_map.clear();
     std::map<uint32_t, Objects::Object*>::iterator it;
     std::list<uint32_t> deleteme;
-    int width = viewport.width();
-    int height = viewport.height();
+    int width = render_target_size.width;
+    int height = render_target_size.height;
 
     for (it = object_list.begin(); it != object_list.end(); ++it) {
         Objects::Object* object = it->second;
@@ -118,14 +123,14 @@ void ObjectSystem::updateVisibleObjectList(const ppl7::grafix::Point& worldcoord
     }
 }
 
-void ObjectSystem::update(double time, TileTypePlane& ttplane, Player& player, float frame_rate_compensation)
+void ObjectSystem::update(const GameClock& clock, TileTypePlane& ttplane, Player& player)
 {
     std::map<uint32_t, Objects::Object*>::iterator it;
     uint8_t dm = getDifficultyMatrix();
     for (it = object_list.begin(); it != object_list.end(); ++it) {
         Objects::Object* object = it->second;
         if (object->difficulty_matrix & dm) {
-            if (object->alwaysUpdate || object->isInViewport) object->update(time, ttplane, player, frame_rate_compensation);
+            if (object->alwaysUpdate || object->isInViewport) object->update(clock, ttplane, player);
         }
     }
 }

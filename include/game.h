@@ -6,6 +6,7 @@
 #include "renderpipelines.h"
 #include "resources.h"
 #include "sdl.h"
+#include "metrics.h"
 #include "level.h"
 #include "gamecontroller.h"
 #include "gameviewport.h"
@@ -248,6 +249,7 @@ public:
     AudioSystem audiosystem;
     Config config;
     GameClock clock;
+    Metrics metrics;
     Game(GPUContext& gpu);
     ~Game();
 
@@ -257,7 +259,7 @@ public:
     void init_grafix();
 
     void run();
-    void updateUi(const ppltk::MouseState& mouse);
+    void updateUi(const ppltk::MouseState& mouse, const Metrics& metrics);
 
     void showUi(bool enable);
     void updateSpriteFromUi();

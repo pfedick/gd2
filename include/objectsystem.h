@@ -26,6 +26,7 @@ class Widget;
 
 class AudioInstance;
 class Glimmer;
+class GameClock;
 
 enum class ParallaxLayerId;
 
@@ -181,7 +182,7 @@ public:
     ppl7::String typeName() const;
     void updateBoundary();
     void updateSpriteset(SpritesetId spriteset);
-    virtual void update(double time, TileTypePlane& ttplane, Player& player, float frame_rate_compensation);
+    virtual void update(const GameClock& clock, TileTypePlane& ttplane, Player& player);
     virtual size_t save(unsigned char* buffer, size_t size) const;
     virtual size_t load(const unsigned char* buffer, size_t size);
     virtual size_t saveSize() const;
@@ -230,6 +231,7 @@ private:
     uint32_t nextid;
     uint32_t next_spawn_id;
     int player_start;
+    ParallaxLayerId myParallaxLayer;
     std::map<uint32_t, Objects::Object*> object_list;
     std::map<uint64_t, Objects::Object*> visible_object_map;
     ObjectSpritesets* spritesets;
@@ -243,14 +245,15 @@ private:
 public:
     ObjectSystem();
     ~ObjectSystem();
+    void init(ParallaxLayerId parallaxLayer);
     void setSpritesetResources(ObjectSpritesets& spritesets);
     void clear();
     // void setWaynet(Waynet* waynet);
     // void loadSpritesets(SDL& sdl);   // TODO: Wir brauchen globale Spritesets, die jedem ObjectSystem zur Verfügung stehen
     void addObject(Objects::Object* object);
     Objects::Object* getInstance(int object_type) const;
-    void update(double time, TileTypePlane& ttplane, Player& player, float frame_rate_compensation);
-    void updateVisibleObjectList(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Rect& viewport);
+    void update(const GameClock& clock, TileTypePlane& ttplane, Player& player);
+    void updateVisibleObjectList(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
     void draw(GPUBatcher& batcher,
               const ppl7::grafix::Rect& viewport,
               const ppl7::grafix::Point& worldcoords,

@@ -32,6 +32,7 @@ Level::Level()
     showObjects = true;
     showParticles = true;
     lightsEnabled = true;
+    player = NULL;
     editlayer = ParallaxLayerId::Player;
     SetGlobalColorPalette(palette);
     parallax_layers[static_cast<int>(ParallaxLayerId::Near)].init(ParallaxLayerId::Near, 2.0f, 1.4f, 1.6f);
@@ -722,11 +723,17 @@ void Level::copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTex
     SDL_EndGPURenderPass(renderPass);
 }
 
-void Level::draw(
-    SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const Camera& worldcoords, const GameViewport& viewport, Player* player)
+void Level::setPlayer(Player* player)
+{
+    this->player = player;
+    for (auto& layer : parallax_layers) {
+        layer.setPlayer(player);
+    }
+}
+
+void Level::draw(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const Camera& worldcoords, const GameViewport& viewport)
 {
     renderstate.cmdbuf = cmdbuf;
-    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].setPlayer(player);
     // Step 1: Clear internal render target
     clearRenderTarget(cmdbuf);
 
@@ -823,13 +830,38 @@ ppl7::grafix::Image Level::getScreenshot(int width, int height)
     return img;
 }
 
-void Level::updateVisibleObjects(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size)
+void Level::update(const GameClock& clock,
+                   Metrics& metrics,
+                   const ppl7::grafix::PointF& worldcoords,
+                   const ppl7::grafix::Size& render_target_size)
 {
-    // TODO: für die berechnung brauchen wir keinen Viewport, sondern nur dessen
-    // Größe und die Weltkoordinaten
+    // Objects
+    metrics.time_objects.start();
     for (auto& layer : parallax_layers) {
-        layer.updateVisibleObjects(worldcoords / layer.size_factor, render_target_size / layer.size_factor);
+        layer.updateObjects(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
     }
+    metrics.time_objects.stop();
+
+    // Sprites
+    metrics.time_update_sprites.start();
+    for (auto& layer : parallax_layers) {
+        layer.updateSprites(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
+    }
+    metrics.time_update_sprites.stop();
+
+    // Particles
+    metrics.time_update_particles.start();
+    for (auto& layer : parallax_layers) {
+        layer.updateParticles(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
+    }
+    metrics.time_update_particles.stop();
+
+    // Lights
+    metrics.time_update_lights.start();
+    for (auto& layer : parallax_layers) {
+        layer.updateLights(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
+    }
+    metrics.time_update_lights.stop();
 }
 
 /*
