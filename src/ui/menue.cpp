@@ -299,7 +299,7 @@ void MainMenue::closeEvent(ppltk::Event* event)
 }
 
 VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
-    : ppltk::Frame(x, y, 140, 410)
+    : ppltk::Frame(x, y, 140, 460)
 {
     this->menue = menue;
     int y1 = 0;
