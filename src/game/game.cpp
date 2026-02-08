@@ -476,6 +476,7 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& metrics)
 void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
 {
     if (!showui) return;
+    metrics.time_draw_ui.start();
 
     // 1. Draw widgets into PPLTK internal texture
     this->drawWidgets();
@@ -510,6 +511,7 @@ void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture
     } else {
         ppl7::PrintDebug("ERROR: Could not get GPU Texture from PPLTK UI Surface!\n");
     }
+    metrics.time_draw_ui.stop();
 }
 
 Player* Game::getPlayer()
@@ -527,12 +529,16 @@ struct BlurParams
 
 void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
-    level.draw(cmdbuf, swapchainTexture, WorldCamera, game_viewport);
+    metrics.time_draw_world.start();
+    level.draw(cmdbuf, swapchainTexture, WorldCamera, game_viewport, metrics);
+    metrics.time_draw_world.stop();
 }
 
 void Game::drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
 {
+    metrics.time_draw_ui.start();
     // TODO
+    metrics.time_draw_ui.stop();
 }
 
 void Game::quitEvent(ppltk::Event* event)

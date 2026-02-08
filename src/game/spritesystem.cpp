@@ -140,15 +140,15 @@ size_t SpriteSystem::countVisible() const
     return visible_sprite_map.size();
 }
 
-void SpriteSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords) const
+void SpriteSystem::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords, float scale) const
 {
     if (!bSpritesVisible) return;
     std::map<uint64_t, const SpriteSystem::Item&>::const_iterator it;
     for (it = visible_sprite_map.begin(); it != visible_sprite_map.end(); ++it) {
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
-            batcher.addSprite(*item.texture, item.sprite_no, item.x + viewport.x1 - worldcoords.x, item.y + viewport.y1 - worldcoords.y,
-                              item.scale, item.scale, item.rotation, palette->getColor(item.color_index));
+            batcher.addSprite(*item.texture, item.sprite_no, item.x - worldcoords.x, item.y + worldcoords.y, item.scale * scale,
+                              item.scale * scale, item.rotation, palette->getColor(item.color_index));
             /*
             item.texture->drawScaledWithAngle(renderer, item.x + viewport.x1 - worldcoords.x, item.y + viewport.y1 - worldcoords.y,
                                               item.sprite_no, item.scale, item.scale, item.rotation, palette.getColor(item.color_index));

@@ -95,7 +95,7 @@ void Metrics::clear()
     time_sprites.clear();
     time_objects.clear();
     time_draw_particles.clear();
-    time_plane.clear();
+    time_tiles.clear();
     time_misc.clear();
     time_lights.clear();
     time_audioengine.clear();
@@ -127,7 +127,7 @@ Metrics Metrics::getAverage() const
         m.time_lights.duration = time_lights.get() / framecount;
         m.time_objects.duration = time_objects.get() / framecount;
         m.time_draw_particles.duration = time_draw_particles.get() / framecount;
-        m.time_plane.duration = time_plane.get() / framecount;
+        m.time_tiles.duration = time_tiles.get() / framecount;
         m.time_misc.duration = time_misc.get() / framecount;
         m.time_audioengine.duration = time_audioengine.get() / framecount;
 
@@ -176,7 +176,7 @@ Metrics& Metrics::operator+=(const Metrics& other)
     time_sprites += other.time_sprites;
     time_objects += other.time_objects;
     time_draw_particles += other.time_draw_particles;
-    time_plane += other.time_plane;
+    time_tiles += other.time_tiles;
     time_misc += other.time_misc;
     time_audioengine += other.time_audioengine;
     frame_rate_compensation += other.frame_rate_compensation;
@@ -204,7 +204,7 @@ void Metrics::print() const
     printf("    update objects:       %6.3f ms\n", avg.time_update_objects.get() * 1000.0f);
     printf("    update particles:     %6.3f ms\n", avg.time_update_particles.get() * 1000.0f);
     printf("    draw background:      %6.3f ms\n", avg.time_draw_background.get() * 1000.0f);
-    printf("    draw tiles:           %6.3f ms\n", avg.time_plane.get() * 1000.0f);
+    printf("    draw tiles:           %6.3f ms\n", avg.time_tiles.get() * 1000.0f);
     printf("    draw sprites:         %6.3f ms\n", avg.time_sprites.get() * 1000.0f);
     printf("    draw objects:         %6.3f ms\n", avg.time_objects.get() * 1000.0f);
     printf("    draw particles:       %6.3f ms\n", avg.time_draw_particles.get() * 1000.0f);

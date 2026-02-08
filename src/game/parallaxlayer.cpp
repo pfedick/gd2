@@ -68,7 +68,8 @@ void ParallaxLayer::setPlayer(Player* p)
 void ParallaxLayer::draw(RenderState& renderstate,
                          SDL_GPUTexture* render_target,
                          const ppl7::grafix::PointF& worldcoords,
-                         const GameViewport& viewport)
+                         const GameViewport& viewport,
+                         Metrics& metrics)
 {
     if (!isVisible) return;
     ppl7::grafix::PointF parallax_worldcoords = worldcoords * speed_factor * size_factor;
@@ -76,7 +77,19 @@ void ParallaxLayer::draw(RenderState& renderstate,
 
     // renderstate.batcher->startRenderPass();
     renderstate.batcher->startRenderPass();
+    metrics.time_draw_tsop.start();
+
+    metrics.time_sprites.start();
+    background_sprites.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+    metrics.time_sprites.stop();
+
+    metrics.time_tiles.start();
     tiles.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+    metrics.time_tiles.stop();
+
+    metrics.time_sprites.start();
+    front_sprites.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+    metrics.time_sprites.stop();
 
     if (myParallaxLayer == ParallaxLayerId::Player && player != NULL) {
         player->draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
@@ -125,6 +138,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
         blur(renderstate, renderstate.render_layer);
         copyLayerToTarget(renderstate, renderstate.render_layer, render_target);
     }
+    metrics.time_draw_tsop.stop();
 }
 
 void ParallaxLayer::drawTileGrid(RenderState& renderstate, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport)

@@ -157,7 +157,8 @@ public:
     void draw(RenderState& renderstate,
               SDL_GPUTexture* swapchainTexture,
               const ppl7::grafix::PointF& worldcoords,
-              const GameViewport& viewport);
+              const GameViewport& viewport,
+              Metrics& metrics);
 };
 
 class Level
@@ -252,7 +253,11 @@ public:
     void backup(const ppl7::String& Filename);
     void initialize(GPUContext& gpu, RenderPipelines& renderpipelines, GPUBatcher& batcher);
     void resizeRenderBuffer(const ppl7::grafix::Size& size);
-    void draw(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const Camera& worldcoords, const GameViewport& viewport);
+    void draw(SDL_GPUCommandBuffer* cmdbuf,
+              SDL_GPUTexture* swapchainTexture,
+              const Camera& worldcoords,
+              const GameViewport& viewport,
+              Metrics& metrics);
 
     void update(const GameClock& clock,
                 Metrics& metrics,

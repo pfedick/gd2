@@ -709,23 +709,28 @@ void Level::setPlayer(Player* player)
     }
 }
 
-void Level::draw(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const Camera& worldcoords, const GameViewport& viewport)
+void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
+                 SDL_GPUTexture* swapchainTexture,
+                 const Camera& worldcoords,
+                 const GameViewport& viewport,
+                 Metrics& metrics)
 {
     renderstate.cmdbuf = cmdbuf;
     // Step 1: Clear internal render target
     clearRenderTarget(cmdbuf);
 
     // Step 2: Draw all parallax layers in correct order to internal render target
-    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(renderstate, renderstate.render_target, worldcoords, viewport);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].draw(renderstate, renderstate.render_target, worldcoords, viewport,
+                                                                     metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
 
     drawDebug(worldcoords, viewport, player);
     // Copy final render target, which is 4k, into viewport on swapchain, which may be smaller or bigger

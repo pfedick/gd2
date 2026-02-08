@@ -7,11 +7,12 @@ class Metrics
 {
 private:
     int framecount;
-public:
 
+public:
     class Timer
     {
         friend class Metrics;
+
     private:
         double start_time;
         double duration;
@@ -26,14 +27,14 @@ public:
         double get() const;
         void addDuration(double d);
 
-        Timer& operator +=(const Timer& other);
+        Timer& operator+=(const Timer& other);
     };
     Metrics();
     void clear();
     void newFrame();
     void print() const;
     Metrics getAverage() const;
-    Metrics& operator +=(const Metrics& other);
+    Metrics& operator+=(const Metrics& other);
 
     Timer time_frame;
     Timer time_total;
@@ -51,10 +52,9 @@ public:
     Timer time_lights;
     Timer time_objects;
     Timer time_draw_particles;
-    Timer time_plane;
+    Timer time_tiles;
     Timer time_misc;
     Timer time_audioengine;
-
 
     int fps;
     size_t total_sprites;
@@ -69,8 +69,6 @@ public:
     size_t visible_lights;
     double frame_rate_compensation;
     float frametime;
-
 };
-
 
 #endif

@@ -138,7 +138,7 @@ void MetricsSubMenu::paint(ppl7::grafix::Drawable& draw)
     y += line;
     // drawDoubleMetric(draw, c1 + 20, c2, y, "time_draw_tsop", metrics.time_draw_tsop.get());
     // y+=line;
-    drawMillisecondMetric(draw, c1 + 20, c2, y, "draw tiles:", metrics.time_plane.get());
+    drawMillisecondMetric(draw, c1 + 20, c2, y, "draw tiles:", metrics.time_tiles.get());
     y += line;
     drawMillisecondMetric(draw, c1 + 20, c2, y, "draw sprites:", metrics.time_sprites.get());
     y += line;
