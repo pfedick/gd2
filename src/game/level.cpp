@@ -110,6 +110,11 @@ void Level::setShowTileTypes(bool enable)
     updateVisibility();
 }
 
+void Level::setShowCollisions(bool enable)
+{
+    bShowCollisions = enable;
+}
+
 void Level::setTileTypeSpriteset(SpriteTexture* tileset)
 {
     for (auto& layer : parallax_layers) {
@@ -313,20 +318,12 @@ void Level::backup(const ppl7::String& Filename)
     }
 }
 
-void Level::updateObjects(double time)
-{
-    for (auto& layer : parallax_layers) {
-        // layer.objects.update(time);
-    }
-}
-
 void Level::updateParticles(double time)
 {
     for (auto& layer : parallax_layers) {
         // layer.particles.update(time);
     }
 }
-
 #ifdef OLDCODE
 
 void Level::drawPlane(SDL_Renderer* renderer, const Plane& plane, const ppl7::grafix::Point& worldcoords) const
@@ -747,7 +744,7 @@ void Level::draw(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture,
 void Level::drawDebug(const Camera& camera, const GameViewport& viewport, const Player* player)
 {
     renderstate.batcher->startRenderPass();
-    if (player) player->drawCollision(*renderstate.batcher, viewport, camera);
+    if (player && bShowCollisions) player->drawCollision(*renderstate.batcher, viewport, camera);
     camera.draw(*renderstate.batcher, viewport);
 
     renderstate.batcher->prepareInstanceData(renderstate.cmdbuf);

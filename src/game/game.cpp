@@ -458,6 +458,7 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& metrics)
     // Update visibility settings
     level.setShowTileGrid(editor.mainmenue->visibility_grid);
     level.setShowTileTypes(editor.mainmenue->visibility_tiletypes);
+    level.setShowCollisions(editor.mainmenue->visibility_collision);
     for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
         auto& layer = level.layer(static_cast<ParallaxLayerId>(i));
         layer.isVisible = editor.mainmenue->layer_visibility[i];

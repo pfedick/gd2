@@ -192,6 +192,7 @@ private:
 
     bool bShowGrid;
     bool bShowTileTypes;
+    bool bShowCollisions;
     ParallaxLayerId editlayer;
     Player* player;
 
@@ -261,6 +262,7 @@ public:
     void setEditLayer(ParallaxLayerId layer);
     void setShowTileGrid(bool enable);
     void setShowTileTypes(bool enable);
+    void setShowCollisions(bool enable);
 
     ParallaxLayer& layer(ParallaxLayerId id);
     ParallaxLayer& editLayer();
@@ -286,7 +288,6 @@ public:
     size_t tileCount() const;
     // ppl7::grafix::Rect getOccupiedArea() const;
     ppl7::grafix::Rect getOccupiedAreaFromTileTypePlane(ParallaxLayerId layer) const;
-    void updateObjects(double time);
     void updateParticles(double time); // Wird vom ParticleUpdateThread aufgerufen!
 
     ppl7::grafix::Image getScreenshot(int width, int height);
