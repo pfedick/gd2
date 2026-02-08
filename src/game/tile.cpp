@@ -13,6 +13,7 @@ Tile::Tile()
         tileLayers[z].origin_y = 0;
         tileLayers[z].occupation = Occupation::None;
         tileLayers[z].showStuds = true;
+        tileLayers[z].color_index = 0;
     }
     this->block_background = false;
 }

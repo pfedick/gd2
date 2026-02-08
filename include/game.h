@@ -213,8 +213,6 @@ private:
     bool showui = true;
     bool controlsEnabled = true;
 
-    Soundtrack soundtrack = Soundtrack(audiosystem, level.params);
-
     void initUi();
     void initAudio();
     void initGameController();
@@ -237,7 +235,7 @@ private:
 
     ppl7::String LevelFile;
     ppl7::String nextLevelFile;
-    Background background = Background(gpu);
+    Background background;
 
 public:
     GameEditor editor;
@@ -250,6 +248,11 @@ public:
     Config config;
     GameClock clock;
     Metrics metrics;
+
+private:
+    Soundtrack soundtrack = Soundtrack(audiosystem, level.params);
+
+public:
     Game(GPUContext& gpu);
     ~Game();
 

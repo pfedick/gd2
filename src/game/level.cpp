@@ -32,6 +32,7 @@ Level::Level()
     showObjects = true;
     showParticles = true;
     lightsEnabled = true;
+    blurEnabled = true;
     player = NULL;
     editlayer = ParallaxLayerId::Player;
     SetGlobalColorPalette(palette);
@@ -79,26 +80,6 @@ void Level::clear()
 void Level::setEditmode(bool enabled)
 {
     editMode = enabled;
-}
-
-void Level::setShowSprites(bool enabled)
-{
-    showSprites = enabled;
-}
-
-void Level::setShowObjects(bool enabled)
-{
-    showObjects = enabled;
-}
-
-void Level::setShowParticles(bool enabled)
-{
-    showParticles = enabled;
-}
-
-void Level::setLightingEnabled(bool enabled)
-{
-    lightsEnabled = enabled;
 }
 
 void Level::updateVisibility()

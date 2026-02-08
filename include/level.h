@@ -114,16 +114,21 @@ private:
 
     void blur(RenderState& renderstate, SDL_GPUTexture* texture);
     void copyLayerToTarget(RenderState& renderstate, SDL_GPUTexture* source, SDL_GPUTexture* target);
-    Player* player;
+    Player* player = NULL;
 
 public:
     float blur_factor = 0.0f;
     float speed_factor = 1.0f;
     float size_factor = 1.0f;
     ParallaxLayerId myParallaxLayer;
-    bool isVisible;
-    bool bShowGrid;
-    bool bShowTileTypes;
+    bool isVisible = true;
+    bool bShowGrid = false;
+    bool bShowTileTypes = false;
+    bool bBlurEnabled = true;
+    bool bLightningEnabled = true;
+    bool bShowSprites = true;
+    bool bShowObjects = true;
+    bool bShowParticles = true;
 
     TileGrid tiles;
     enum class SpritePosition
@@ -153,8 +158,6 @@ public:
               SDL_GPUTexture* swapchainTexture,
               const ppl7::grafix::PointF& worldcoords,
               const GameViewport& viewport);
-
-    void setVisible(bool visible);
 };
 
 class Level
@@ -185,6 +188,7 @@ private:
     bool showObjects;
     bool showParticles;
     bool lightsEnabled;
+    bool blurEnabled;
 
     bool bShowGrid;
     bool bShowTileTypes;
@@ -238,10 +242,6 @@ public:
     ~Level();
     void setPlayer(Player* player);
     void setEditmode(bool enabled);
-    void setShowSprites(bool enabled);
-    void setShowObjects(bool enabled);
-    void setShowParticles(bool enabled);
-    void setLightingEnabled(bool enabled);
     void setTileset(int no, SpriteTexture* tileset);
     void setSpriteset(int no, SpriteTexture* spriteset);
     void setTileTypeSpriteset(SpriteTexture* spriteset);

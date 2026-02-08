@@ -50,6 +50,7 @@ Game::Game(GPUContext& gpu)
     player = new Player(this);
     player->setSavePoint(ppl7::grafix::PointF(1920.0f, 1080.0f));
     player->move(1920.0f, 1080.0f);
+    background.init(gpu);
 }
 
 Game::~Game()
@@ -457,12 +458,14 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& metrics)
     // Update visibility settings
     level.setShowTileGrid(editor.mainmenue->visibility_grid);
     level.setShowTileTypes(editor.mainmenue->visibility_tiletypes);
-    level.setShowSprites(editor.mainmenue->visibility_sprites);
-    level.setShowObjects(editor.mainmenue->visibility_objects);
-    level.setShowParticles(editor.mainmenue->visibility_particles);
-    level.setLightingEnabled(editor.mainmenue->visibility_lighting);
     for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
-        level.layer(static_cast<ParallaxLayerId>(i)).setVisible(editor.mainmenue->layer_visibility[i]);
+        auto& layer = level.layer(static_cast<ParallaxLayerId>(i));
+        layer.isVisible = editor.mainmenue->layer_visibility[i];
+        layer.bBlurEnabled = editor.mainmenue->visibility_blur;
+        layer.bLightningEnabled = editor.mainmenue->visibility_lighting;
+        layer.bShowSprites = editor.mainmenue->visibility_sprites;
+        layer.bShowObjects = editor.mainmenue->visibility_objects;
+        layer.bShowParticles = editor.mainmenue->visibility_particles;
     }
 
     if (player) editor.statusbar->setPlayerCoords(ppl7::grafix::Point(player->x, player->y));

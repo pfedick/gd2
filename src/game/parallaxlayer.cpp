@@ -6,13 +6,6 @@
 
 ParallaxLayer::ParallaxLayer()
 {
-    blur_factor = 0.0f;
-    speed_factor = 1.0f;
-    size_factor = 1.0f;
-    isVisible = true;
-    bShowGrid = false;
-    bShowTileTypes = false;
-    player = NULL;
 }
 
 ParallaxLayer::~ParallaxLayer()
@@ -65,11 +58,6 @@ void ParallaxLayer::updateLights(const GameClock& clock,
 bool ParallaxLayer::hasVisibleGrafix() const
 {
     return true;
-}
-
-void ParallaxLayer::setVisible(bool visible)
-{
-    isVisible = visible;
 }
 
 void ParallaxLayer::setPlayer(Player* p)
@@ -128,7 +116,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     SDL_EndGPURenderPass(renderPass);
 
     // Post-Processing: Blur
-    if (blur_factor > 0.0f) {
+    if (blur_factor > 0.0f && bBlurEnabled) {
         blur(renderstate, renderstate.render_layer);
     }
     copyLayerToTarget(renderstate, renderstate.render_layer, render_target);

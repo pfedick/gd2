@@ -16,6 +16,7 @@ class VisibilitySubMenu : public ppltk::Frame
 private:
     MainMenue* menue;
     ppltk::CheckBox* lighting_checkbox;
+    ppltk::CheckBox* blur_checkbox;
     ppltk::CheckBox* show_grid_checkbox;
     ppltk::CheckBox* show_tiletypes_checkbox;
     ppltk::CheckBox* show_collision_checkbox;
@@ -24,12 +25,6 @@ private:
     ppltk::CheckBox* show_particles_checkbox;
     ppltk::CheckBox* show_hud_checkbox;
     ppltk::CheckBox* visible_layer_checkbox[static_cast<int>(ParallaxLayerId::MaxLayerId)];
-    ppltk::CheckBox* visible_plane_front_checkbox;
-    ppltk::CheckBox* visible_plane_far_checkbox;
-    ppltk::CheckBox* visible_plane_back_checkbox;
-    ppltk::CheckBox* visible_plane_middle_checkbox;
-    ppltk::CheckBox* visible_plane_horizon_checkbox;
-    ppltk::CheckBox* visible_plane_near_checkbox;
 
     void addVisibilityCheckbox(int& y1, ParallaxLayerId layerId, const ppl7::String& label, bool initialState);
 
@@ -111,6 +106,7 @@ public:
     bool visibility_tiletypes;
     bool visibility_collision;
     bool visibility_lighting;
+    bool visibility_blur;
     bool visibility_hud;
 
     MainMenue(int x, int y, int width, int height, Game* game);

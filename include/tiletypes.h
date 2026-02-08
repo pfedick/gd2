@@ -61,6 +61,8 @@ private:
 
 public:
     TileTypePlane();
+    TileTypePlane(const TileTypePlane&) = delete;
+    TileTypePlane& operator=(const TileTypePlane&) = delete;
     ~TileTypePlane();
     void clear();
     void create(int width, int height);

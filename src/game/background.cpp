@@ -7,12 +7,17 @@
 #include "gpu.h"
 #include "constants.h"
 
-Background::Background(GPUContext& gpu)
-    : gpu(gpu)
+Background::Background()
 {
+    gpu = NULL;
     tex_sky = NULL;
     fade_target_tex = NULL;
     fade_progress = 0.0f;
+}
+
+void Background::init(GPUContext& gpu)
+{
+    this->gpu = &gpu;
 }
 
 void Background::clear()

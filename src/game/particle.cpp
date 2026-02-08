@@ -292,7 +292,7 @@ bool emitterInPlayerRange(int plane, const ppl7::grafix::PointF& emitter, const 
     // player.WorldCoords.y);
 
     ppl7::grafix::PointF pos = emitter;
-    ParallaxLayer layer = GetGame().level.layer(static_cast<ParallaxLayerId>(plane));
+    ParallaxLayer& layer = GetGame().level.layer(static_cast<ParallaxLayerId>(plane));
 
     ppl7::grafix::PointF coords = player.WorldCoords * layer.speed_factor * layer.size_factor;
     ppl7::grafix::PointF pp = emitter - coords + player.WorldCoords;

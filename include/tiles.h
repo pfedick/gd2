@@ -102,6 +102,8 @@ private:
 
 public:
     TileGrid();
+    TileGrid(const TileGrid&) = delete;
+    TileGrid& operator=(const TileGrid&) = delete;
     ~TileGrid();
     void clear();
     void create(int width, int height);

@@ -21,6 +21,7 @@ MainMenue::MainMenue(int x, int y, int width, int height, Game* game)
     visibility_collision = false;
     visibility_lighting = true;
     visibility_hud = true;
+    visibility_blur = true;
     controlsEnabled = true;
 }
 
@@ -298,7 +299,7 @@ void MainMenue::closeEvent(ppltk::Event* event)
 }
 
 VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
-    : ppltk::Frame(x, y, 140, 450)
+    : ppltk::Frame(x, y, 140, 410)
 {
     this->menue = menue;
     int y1 = 0;
@@ -308,6 +309,11 @@ VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
     lighting_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Lighting", menue->visibility_lighting);
     lighting_checkbox->setEventHandler(this);
     this->addChild(lighting_checkbox);
+    y1 += 20;
+
+    blur_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Blur", menue->visibility_blur);
+    blur_checkbox->setEventHandler(this);
+    this->addChild(blur_checkbox);
     y1 += 20;
 
     show_grid_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Grid", menue->visibility_grid);
@@ -349,21 +355,6 @@ VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
     this->addChild(new ppltk::Label(0, y1, 100, 20, "visible Planes:"));
     y1 += 20;
 
-    /*
-    active_plane_combobox = new ppltk::ComboBox(1009, 0, 150, s.height);
-    active_plane_combobox->add("Near", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Near)));
-    active_plane_combobox->add("Close", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Close)));
-    active_plane_combobox->add("Front", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Front)));
-    active_plane_combobox->add("Player", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Player)));
-    active_plane_combobox->add("Back", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Back)));
-    active_plane_combobox->add("Behind", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Behind)));
-    active_plane_combobox->add("Middle", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Middle)));
-    active_plane_combobox->add("Far", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Far)));
-    active_plane_combobox->add("Horizon", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Horizon)));
-    active_plane_combobox->add("Sky", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Sky)));
-    active_plane_combobox->setCurrentIdentifier(ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Player)));
-    this->addChild(active_plane_combobox);
-    */
     addVisibilityCheckbox(y1, ParallaxLayerId::Near, "Near", menue->layer_visibility[static_cast<int>(ParallaxLayerId::Near)]);
     addVisibilityCheckbox(y1, ParallaxLayerId::Close, "Close", menue->layer_visibility[static_cast<int>(ParallaxLayerId::Close)]);
     addVisibilityCheckbox(y1, ParallaxLayerId::Front, "Front", menue->layer_visibility[static_cast<int>(ParallaxLayerId::Front)]);
@@ -395,6 +386,8 @@ void VisibilitySubMenu::toggledEvent(ppltk::Event* event, bool checked)
     ppltk::Widget* widget = event->widget();
     if (widget == lighting_checkbox) {
         menue->visibility_lighting = checked;
+    } else if (widget == blur_checkbox) {
+        menue->visibility_blur = checked;
     } else if (widget == show_hud_checkbox) {
         menue->visibility_hud = checked;
     } else if (widget == show_grid_checkbox) {
