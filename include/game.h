@@ -299,6 +299,9 @@ public:
     void keyDownEvent(ppltk::KeyEvent* event);
     void mouseMoveEvent(ppltk::MouseEvent* event);
     void resizeEvent(ppltk::ResizeEvent* event);
+    void gameControllerButtonDownEvent(ppltk::GameControllerButtonEvent* event);
+    void gameControllerDeviceAdded(ppltk::GameControllerEvent* event);
+    void gameControllerDeviceRemoved(ppltk::GameControllerEvent* event);
 };
 
 Game& GetGame();

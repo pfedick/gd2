@@ -703,3 +703,33 @@ void Game::resizeEvent(ppltk::ResizeEvent* event)
     world_widget->setViewport(viewport);
     // const ppl7::grafix::Size& desktop=clientSize();
 }
+
+void Game::gameControllerButtonDownEvent(ppltk::GameControllerButtonEvent* event)
+{
+    GameControllerMapping::Button b = controller.mapping.getButton(event);
+    // ppl7::PrintDebugTime("gameControllerButtonDownEvent b=%d\n", (int)b);
+    /* TODO:
+    if (b == GameControllerMapping::Button::Menu) {
+        if (settings_screen) {
+            delete settings_screen;
+            settings_screen = NULL;
+            enableControls(true);
+            wm->setKeyboardFocus(world_widget);
+            wm->setGameControllerFocus(this);
+        } else
+            openSettingsScreen();
+    }
+    */
+}
+
+void Game::gameControllerDeviceAdded(ppltk::GameControllerEvent* event)
+{
+    // ppl7::PrintDebugTime("gameControllerDeviceAdded: %d\n", event->which);
+    controller.open(event->which);
+}
+
+void Game::gameControllerDeviceRemoved(ppltk::GameControllerEvent* event)
+{
+    // ppl7::PrintDebugTime("gameControllerDeviceRemoved: %d\n", event->which);
+    controller.close();
+}
