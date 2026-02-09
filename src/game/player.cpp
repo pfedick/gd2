@@ -913,7 +913,7 @@ void Player::update(const GameClock& clock, ParallaxLayer& layer)
 
 void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSystem* objects)
 {
-    if (particle_reason != ParticleReason::None && particle_end_time > time) emmitParticles(time);
+    if (particle_reason != ParticleReason::None && particle_end_time > time) emmitParticles(clock.time);
     time = clock.time;
     frame_rate_compensation = clock.frame_rate_compensation;
     if (time > next_animation) {

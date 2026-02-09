@@ -22,6 +22,27 @@ class Representation;
 } // namespace Objects
 class ObjectSystem;
 
+class PlayerKeys
+{
+public:
+    enum
+    {
+        Left = 1,
+        Right = 2,
+        Up = 4,
+        Down = 8,
+        Shift = 16,
+        Action = 32,
+        Flashlight = 64,
+        Crouch = 128,
+        Jump = 256,
+        JumpLeft = Left | Jump,
+        JumpRight = Right | Jump,
+    };
+};
+
+PlayerKeys getPlayerKeys();
+
 class Player : public Physic
 {
 private:
