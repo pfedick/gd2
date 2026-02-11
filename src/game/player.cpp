@@ -995,9 +995,9 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
         if (orientation == Front)
             animation.setStaticFrame(50);
         else if (orientation == Left)
-            animation.setStaticFrame(48);
+            animation.setStaticFrame(52);
         else if (orientation == Right)
-            animation.setStaticFrame(49);
+            animation.setStaticFrame(51);
         else
             animation.setStaticFrame(50);
 
