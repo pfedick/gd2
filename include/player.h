@@ -21,23 +21,20 @@ class Representation;
 } // namespace Objects
 class ObjectSystem;
 
-class PlayerKeys
+enum class PlayerKeys
 {
-public:
-    enum
-    {
-        Left = 1,
-        Right,
-        Up,
-        Down,
-        Action,
-        Crouch,
-        Jump,
-        Dash,
-        Block,
-        Inventory,
-        Map
-    };
+    Left = 1,
+    Right,
+    Up,
+    Down,
+    Action,
+    Crouch,
+    Jump,
+    Dash,
+    Block,
+    Inventory,
+    Map,
+    Light
 };
 
 class KeyState
@@ -45,8 +42,10 @@ class KeyState
 private:
     std::map<PlayerKeys, double> key_timestamps;
     Game* game;
+    double time;
 
 public:
+    KeyState(Game* game);
     bool left = false;
     bool right = false;
     bool up = false;
@@ -56,12 +55,18 @@ public:
     bool dash = false;
     bool crouch = false;
     bool jump = false;
-
-    KeyState(Game* game);
+    bool light = false;
+    bool inventory = false;
+    bool map = false;
 
     void update(double time);
     void queueKeyEvent(PlayerKeys key, double time); // TODO: mapping von SDL-Events zu PlayerKeys in GameController
-    bool isQueued(PlayerKeys key, double time) const;
+
+    bool jumpLeft();
+    bool jumpRight();
+    bool jumpUp();
+    bool runLeft();
+    bool runRight();
 };
 
 class Player : public Physic
@@ -207,7 +212,6 @@ public:
     ParallaxLayerId getParallaxLayer() const;
     void stand();
     void jumpExpression();
-    Keys getKeyboardMatrix(const bool* state = NULL);
     void resetState();
     void resetLevelObjects();
     void setZeroVelocity();

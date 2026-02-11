@@ -241,7 +241,6 @@ GameControllerMapping::GameControllerMapping()
 {
     player_axis_x = SDL_GAMEPAD_AXIS_LEFTX;
     player_axis_y = SDL_GAMEPAD_AXIS_LEFTY;
-    player_axis_crouch = SDL_GAMEPAD_AXIS_LEFT_TRIGGER;
 
     menu_button_up = SDL_GAMEPAD_BUTTON_DPAD_UP;
     menu_button_down = SDL_GAMEPAD_BUTTON_DPAD_DOWN;
@@ -252,8 +251,13 @@ GameControllerMapping::GameControllerMapping()
     action_button = SDL_GAMEPAD_BUTTON_WEST;
     back_button = SDL_GAMEPAD_BUTTON_EAST;
     jump_button = SDL_GAMEPAD_BUTTON_SOUTH;
-    flashlight_button = SDL_GAMEPAD_BUTTON_NORTH;
+    light_button = SDL_GAMEPAD_BUTTON_DPAD_UP;
     crouch_button = SDL_GAMEPAD_BUTTON_LEFT_SHOULDER;
+    dash_button = SDL_GAMEPAD_BUTTON_NORTH;
+    inventory_button = SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER;
+    map_button = SDL_GAMEPAD_BUTTON_GUIDE;
+    block_button = SDL_GAMEPAD_BUTTON_EAST;
+
     updateMapping();
 }
 
@@ -265,8 +269,7 @@ void GameControllerMapping::updateMapping()
     axis_mapping_rev.clear();
 
     axis_mapping.insert(std::pair<int, Axis>(player_axis_x, Axis::Walk));
-    axis_mapping.insert(std::pair<int, Axis>(player_axis_y, Axis::Jump));
-    axis_mapping.insert(std::pair<int, Axis>(player_axis_crouch, Axis::Crouch));
+    axis_mapping.insert(std::pair<int, Axis>(player_axis_y, Axis::UpDown));
     button_mapping.insert(std::pair<int, Button>(menu_button_up, Button::MenuUp));
     button_mapping.insert(std::pair<int, Button>(menu_button_down, Button::MenuDown));
     button_mapping.insert(std::pair<int, Button>(menu_button_left, Button::MenuLeft));
@@ -275,12 +278,15 @@ void GameControllerMapping::updateMapping()
     button_mapping.insert(std::pair<int, Button>(action_button, Button::Action));
     button_mapping.insert(std::pair<int, Button>(jump_button, Button::Jump));
     button_mapping.insert(std::pair<int, Button>(back_button, Button::Back));
-    button_mapping.insert(std::pair<int, Button>(flashlight_button, Button::Flashlight));
+    button_mapping.insert(std::pair<int, Button>(light_button, Button::Light));
     button_mapping.insert(std::pair<int, Button>(crouch_button, Button::Crouch));
+    button_mapping.insert(std::pair<int, Button>(dash_button, Button::Dash));
+    button_mapping.insert(std::pair<int, Button>(inventory_button, Button::Inventory));
+    button_mapping.insert(std::pair<int, Button>(map_button, Button::Map));
+    button_mapping.insert(std::pair<int, Button>(block_button, Button::Block));
 
     axis_mapping_rev.insert(std::pair<Axis, int>(Axis::Walk, player_axis_x));
-    axis_mapping_rev.insert(std::pair<Axis, int>(Axis::Jump, player_axis_y));
-    axis_mapping_rev.insert(std::pair<Axis, int>(Axis::Crouch, player_axis_crouch));
+    axis_mapping_rev.insert(std::pair<Axis, int>(Axis::UpDown, player_axis_y));
     button_mapping_rev.insert(std::pair<Button, int>(Button::MenuUp, menu_button_up));
     button_mapping_rev.insert(std::pair<Button, int>(Button::MenuDown, menu_button_down));
     button_mapping_rev.insert(std::pair<Button, int>(Button::MenuLeft, menu_button_left));
@@ -289,8 +295,12 @@ void GameControllerMapping::updateMapping()
     button_mapping_rev.insert(std::pair<Button, int>(Button::Action, action_button));
     button_mapping_rev.insert(std::pair<Button, int>(Button::Jump, back_button));
     button_mapping_rev.insert(std::pair<Button, int>(Button::Back, jump_button));
-    button_mapping_rev.insert(std::pair<Button, int>(Button::Flashlight, flashlight_button));
+    button_mapping_rev.insert(std::pair<Button, int>(Button::Light, light_button));
     button_mapping_rev.insert(std::pair<Button, int>(Button::Crouch, crouch_button));
+    button_mapping_rev.insert(std::pair<Button, int>(Button::Dash, dash_button));
+    button_mapping_rev.insert(std::pair<Button, int>(Button::Inventory, inventory_button));
+    button_mapping_rev.insert(std::pair<Button, int>(Button::Map, map_button));
+    button_mapping_rev.insert(std::pair<Button, int>(Button::Block, block_button));
 }
 
 GameControllerMapping::Button GameControllerMapping::getButton(const ppltk::GameControllerButtonEvent* event) const
@@ -331,11 +341,8 @@ void GameControllerMapping::setMappingAxis(const Axis a, int id)
     case Axis::Walk:
         player_axis_x = id;
         break;
-    case Axis::Jump:
+    case Axis::UpDown:
         player_axis_y = id;
-        break;
-    case Axis::Crouch:
-        player_axis_crouch = id;
         break;
     default:
         break;
@@ -363,8 +370,8 @@ void GameControllerMapping::setMappingButton(const Button a, int id)
     case Button::Action:
         action_button = id;
         break;
-    case Button::Flashlight:
-        flashlight_button = id;
+    case Button::Light:
+        light_button = id;
         break;
     case Button::Jump:
         jump_button = id;
@@ -375,6 +382,19 @@ void GameControllerMapping::setMappingButton(const Button a, int id)
     case Button::Crouch:
         crouch_button = id;
         break;
+    case Button::Dash:
+        dash_button = id;
+        break;
+    case Button::Inventory:
+        inventory_button = id;
+        break;
+    case Button::Map:
+        map_button = id;
+        break;
+    case Button::Block:
+        block_button = id;
+        break;
+
     default:
         break;
     }

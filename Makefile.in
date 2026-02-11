@@ -56,6 +56,7 @@ OBJECTS=compile/main.o \
 	compile/levelparameter.o \
 	compile/physic.o \
 	compile/player.o \
+	compile/player_keystate.o \
 	compile/particle.o \
 	compile/particlesystem.o \
 	compile/particleupdatethread.o \
@@ -181,6 +182,7 @@ sprites: sprites_hud sprites_ui
 	texmaker -s lightwave/Render/Tiles/ -t res/tiles.tex -w 1024 -h 1024  -pd fixed -px 0 -py 512 -x tmp/tiles
 	texmaker -s lightwave/Render/TileTypes/ -t res/tiletypes.tex -w 512 -h 512 -pd fixed -px 0 -py 0 -x tmp/tiles
 	texmaker -s lightwave/Render/objects/ -t res/objects/generic.tex -w 1024 -h 1024  -pd fixed -px 255 -py 358 -i -x tmp/objects
+	texmaker -s lightwave/Render/Player1/ -t res/player1.tex -w 2048 -h 2048  -pd fixed -px 512 -py 482 -i -x tmp/player1
 
 fonts:
 	- rm -rf res/*.fnt6
@@ -295,6 +297,10 @@ compile/particleupdatethread.o: src/game/particleupdatethread.cpp Makefile
 compile/player.o: src/game/player.cpp Makefile
 	- @mkdir -p compile
 	$(CXX) -o compile/player.o -c src/game/player.cpp $(CFLAGS)
+
+compile/player_keystate.o: src/game/player_keystate.cpp Makefile
+	- @mkdir -p compile
+	$(CXX) -o compile/player_keystate.o -c src/game/player_keystate.cpp $(CFLAGS)
 
 compile/spritesystem.o: src/game/spritesystem.cpp Makefile
 	- @mkdir -p compile

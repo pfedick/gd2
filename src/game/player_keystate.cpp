@@ -10,7 +10,7 @@ KeyState::KeyState(Game* game)
 
 void KeyState::update(double time)
 {
-    const bool* state = SDL_GetKeyboardState(NULL);
+    this->time = time;
     left = false;
     right = false;
     up = false;
@@ -20,6 +20,7 @@ void KeyState::update(double time)
     dash = false;
     crouch = false;
     jump = false;
+    const bool* state = SDL_GetKeyboardState(NULL);
     if (state[SDL_SCANCODE_LEFT] || state[SDL_SCANCODE_A]) left = true;
     if (state[SDL_SCANCODE_RIGHT] || state[SDL_SCANCODE_D]) right = true;
     if (state[SDL_SCANCODE_UP] || state[SDL_SCANCODE_W]) up = true;
@@ -27,8 +28,7 @@ void KeyState::update(double time)
     if (state[SDL_SCANCODE_LSHIFT] || state[SDL_SCANCODE_RSHIFT]) dash = true;
     if (state[SDL_SCANCODE_E]) action = true;
     if (state[SDL_SCANCODE_LCTRL]) crouch = true;
-
-    // ppl7::PrintDebugTime("keys: %4d, velocity x: %5d, velocity y: %5d --- ", k.matrix, k.velocity_x, k.velocity_y);
+    if (state[SDL_SCANCODE_SPACE]) jump = true;
 
     if (game->controller.isOpen()) {
         GameController& gc = game->controller;
@@ -37,7 +37,7 @@ void KeyState::update(double time)
         int velocity_y = gc.getAxisState(gc.mapping.getSDLAxis(GameControllerMapping::Axis::UpDown));
 
         if (velocity_x > 1000) right = true;
-        if (velocity_x < 1000) left = true;
+        if (velocity_x < -1000) left = true;
 
         if (velocity_y > 10000) down = true;
         if (velocity_y < -10000) up = true;
@@ -48,4 +48,42 @@ void KeyState::update(double time)
         if (gc.getButtonState(gc.mapping.getSDLButton(GameControllerMapping::Button::Jump))) jump = true;
         if (gc.getButtonState(gc.mapping.getSDLButton(GameControllerMapping::Button::Dash))) dash = true;
     }
+    for (const auto& [key, timestamp] : key_timestamps) {
+        if (timestamp > time - 0.2f) {
+            if (key == PlayerKeys::Jump)
+                jump = true;
+            else if (key == PlayerKeys::Dash)
+                dash = true;
+        }
+    }
+}
+
+void KeyState::queueKeyEvent(PlayerKeys key, double time)
+{
+    key_timestamps[key] = time;
+}
+
+bool KeyState::jumpLeft()
+{
+    return left && jump;
+}
+
+bool KeyState::jumpRight()
+{
+    return right && jump;
+}
+
+bool KeyState::jumpUp()
+{
+    return (!left && !right && jump);
+}
+
+bool KeyState::runLeft()
+{
+    return (left && !jump);
+}
+
+bool KeyState::runRight()
+{
+    return (right && !jump);
 }

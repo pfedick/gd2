@@ -22,7 +22,7 @@ public:
         MenuRight,
         Menu,
         Action,
-        Flashlight,
+        Light,
         Jump,
         Back,
         Crouch,
@@ -41,7 +41,6 @@ public:
 private:
     int player_axis_x;
     int player_axis_y;
-    int player_axis_crouch;
 
     int menu_button_up;
     int menu_button_down;
@@ -55,7 +54,7 @@ private:
     int inventory_button;
     int map_button;
     int jump_button;
-    int flashlight_button;
+    int light_button;
     int crouch_button;
     std::map<int, Button> button_mapping;
     std::map<int, Axis> axis_mapping;

@@ -71,7 +71,7 @@ bool Physic::updatePhysics(const TileTypePlane& world, float frame_rate_compensa
         if (collision_matrix[2][5] == TileType::NonBlocking && collision_matrix[3][5] == TileType::NonBlocking) {
             if (!player_stands_on_object) {
                 // printf ("gravity\n");
-                if (acceleration_gravity < 12.0f) acceleration_gravity += 0.1f * frame_rate_compensation;
+                if (acceleration_gravity < 12.0f) acceleration_gravity += 0.2f * frame_rate_compensation;
                 if (acceleration_gravity > 12.0f) acceleration_gravity = 12.0f;
                 match = true;
             }
@@ -614,7 +614,7 @@ void Physic::updateMovement(float frame_rate_compensation)
     } else if (movement == Falling) {
         if (velocity_move.y < -0.2f) velocity_move.y -= (velocity_move.y / 6.0f) * frame_rate_compensation;
         if (velocity_move.y > -0.2f) velocity_move.y = 0;
-        // printf ("Player::updateMovement, velocity_move.y=%0.3f\n",velocity_move.y);
+        ppl7::PrintDebug("Player::updateMovement, velocity_move.y=%0.3f\n", velocity_move.y);
     } else if (movement == Crawling) {
         if (orientation == Left) {
             velocity_move.x = -speed_walk * frame_rate_compensation;

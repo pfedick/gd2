@@ -45,7 +45,7 @@ Config::Controller::Controller()
     button_menu = gm.getSDLButton(GameControllerMapping::Button::Menu);
     button_back = gm.getSDLButton(GameControllerMapping::Button::Back);
     button_jump = gm.getSDLButton(GameControllerMapping::Button::Jump);
-    button_light = gm.getSDLButton(GameControllerMapping::Button::Flashlight);
+    button_light = gm.getSDLButton(GameControllerMapping::Button::Light);
     button_crouch = gm.getSDLButton(GameControllerMapping::Button::Crouch);
     button_dash = gm.getSDLButton(GameControllerMapping::Button::Dash);
     button_inventory = gm.getSDLButton(GameControllerMapping::Button::Inventory);

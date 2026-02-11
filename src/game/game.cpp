@@ -236,7 +236,7 @@ void Game::updateGameControllerMapping()
 {
     controller.setDeadzone(config.controller.deadzone);
     controller.mapping.setMappingAxis(GameControllerMapping::Axis::Walk, config.controller.axis_walk);
-    controller.mapping.setMappingAxis(GameControllerMapping::Axis::Jump, config.controller.axis_jump);
+    controller.mapping.setMappingAxis(GameControllerMapping::Axis::UpDown, config.controller.axis_updown);
     controller.mapping.setMappingButton(GameControllerMapping::Button::MenuUp, config.controller.button_up);
     controller.mapping.setMappingButton(GameControllerMapping::Button::MenuDown, config.controller.button_down);
     controller.mapping.setMappingButton(GameControllerMapping::Button::MenuLeft, config.controller.button_left);
@@ -245,6 +245,13 @@ void Game::updateGameControllerMapping()
     controller.mapping.setMappingButton(GameControllerMapping::Button::Action, config.controller.button_action);
     controller.mapping.setMappingButton(GameControllerMapping::Button::Jump, config.controller.button_jump);
     controller.mapping.setMappingButton(GameControllerMapping::Button::Back, config.controller.button_back);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Crouch, config.controller.button_crouch);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Light, config.controller.button_light);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Dash, config.controller.button_dash);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Inventory, config.controller.button_inventory);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Map, config.controller.button_map);
+    controller.mapping.setMappingButton(GameControllerMapping::Button::Block, config.controller.button_block);
+
     controller.mapping.updateMapping();
 }
 
