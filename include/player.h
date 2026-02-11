@@ -41,7 +41,26 @@ public:
     };
 };
 
-PlayerKeys getPlayerKeys();
+class KeyState
+{
+private:
+    std::map<PlayerKeys, double> key_timestamps;
+
+public:
+    bool left = false;
+    bool right = false;
+    bool up = false;
+    bool down = false;
+    bool shift = false;
+    bool action = false;
+    bool flashlight = false;
+    bool crouch = false;
+    bool jump = false;
+
+    void update(double time);
+    void queueKeyEvent(PlayerKeys key, double time); // TODO: mapping von SDL-Events zu PlayerKeys in GameController
+    bool isQueued(PlayerKeys key, double time) const;
+};
 
 class Player : public Physic
 {
