@@ -10,3 +10,4 @@ tmp/
 configure.ac~
 genscpfonts
 level/backup
+compile_flags.txt

@@ -61,7 +61,7 @@ public:
     public:
         int deadzone;
         int axis_walk;
-        int axis_jump;
+        int axis_updown;
         int button_up;
         int button_down;
         int button_left;
@@ -71,7 +71,11 @@ public:
         int button_action;
         int button_jump;
         int button_crouch;
-        int button_flashlight;
+        int button_light;
+        int button_dash;
+        int button_inventory;
+        int button_map;
+        int button_block;
         bool use_rumble;
         Controller();
     };

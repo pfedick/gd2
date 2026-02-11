@@ -1,7 +1,6 @@
 #include "game.h"
 #include "gamecontroller.h"
 
-
 const int CONFIG_VERSION = 3;
 
 Config::Config()
@@ -29,13 +28,15 @@ Config::Config()
     try {
         load();
     }
-    catch (...) {}
+    catch (...) {
+    }
 }
 
-Config::Controller::Controller() {
+Config::Controller::Controller()
+{
     GameControllerMapping gm;
     axis_walk = gm.getSDLAxis(GameControllerMapping::Axis::Walk);
-    axis_jump = gm.getSDLAxis(GameControllerMapping::Axis::Jump);
+    axis_updown = gm.getSDLAxis(GameControllerMapping::Axis::UpDown);
     button_up = gm.getSDLButton(GameControllerMapping::Button::MenuUp);
     button_down = gm.getSDLButton(GameControllerMapping::Button::MenuDown);
     button_left = gm.getSDLButton(GameControllerMapping::Button::MenuLeft);
@@ -44,8 +45,13 @@ Config::Controller::Controller() {
     button_menu = gm.getSDLButton(GameControllerMapping::Button::Menu);
     button_back = gm.getSDLButton(GameControllerMapping::Button::Back);
     button_jump = gm.getSDLButton(GameControllerMapping::Button::Jump);
-    button_flashlight = gm.getSDLButton(GameControllerMapping::Button::Flashlight);
+    button_light = gm.getSDLButton(GameControllerMapping::Button::Flashlight);
     button_crouch = gm.getSDLButton(GameControllerMapping::Button::Crouch);
+    button_dash = gm.getSDLButton(GameControllerMapping::Button::Dash);
+    button_inventory = gm.getSDLButton(GameControllerMapping::Button::Inventory);
+    button_map = gm.getSDLButton(GameControllerMapping::Button::Map);
+    button_block = gm.getSDLButton(GameControllerMapping::Button::Block);
+
     GameController gc;
     deadzone = gc.deadzone();
     use_rumble = true;
@@ -53,7 +59,6 @@ Config::Controller::Controller() {
 
 Config::~Config()
 {
-
 }
 
 void Config::load()
@@ -76,7 +81,6 @@ void Config::load()
     noBlood = conf.getBool("noBlood", false);
     difficulty = static_cast<DifficultyLevel>(conf.getInt("difficulty", static_cast<int>(DifficultyLevel::normal)));
 
-
     // Video
     conf.setSection("video");
     ScreenResolution.width = conf.getInt("ScreenResolution.width", ScreenResolution.width);
@@ -92,14 +96,14 @@ void Config::load()
     volumeAmbience = conf.get("volumeAmbience", ppl7::ToString("%0.3f", volumeAmbience)).toFloat();
     volumeEffects = conf.get("volumeEffects", ppl7::ToString("%0.3f", volumeEffects)).toFloat();
     volumeSpeech = conf.get("volumeSpeech", ppl7::ToString("%0.3f", volumeSpeech)).toFloat();
-    //if (volumeMusic > 0.5f) volumeMusic=0.5f;
+    // if (volumeMusic > 0.5f) volumeMusic=0.5f;
 
     // Controller
     conf.setSection("controller");
     controller.deadzone = conf.getInt("deadzone", controller.deadzone);
     controller.use_rumble = conf.getBool("use_rumble", controller.use_rumble);
     controller.axis_walk = conf.getInt("axis_walk", controller.axis_walk);
-    controller.axis_jump = conf.getInt("axis_jump", controller.axis_jump);
+    controller.axis_updown = conf.getInt("axis_updown", controller.axis_updown);
     controller.button_up = conf.getInt("button_up", controller.button_up);
     controller.button_down = conf.getInt("button_down", controller.button_down);
     controller.button_left = conf.getInt("button_left", controller.button_left);
@@ -109,7 +113,11 @@ void Config::load()
     controller.button_action = conf.getInt("button_action", controller.button_action);
     controller.button_jump = conf.getInt("button_jump", controller.button_jump);
     controller.button_crouch = conf.getInt("button_crouch", controller.button_crouch);
-    controller.button_flashlight = conf.getInt("button_flashlight", controller.button_flashlight);
+    controller.button_light = conf.getInt("button_flashlight", controller.button_light);
+    controller.button_dash = conf.getInt("button_dash", controller.button_dash);
+    controller.button_inventory = conf.getInt("button_inventory", controller.button_inventory);
+    controller.button_map = conf.getInt("button_map", controller.button_map);
+    controller.button_block = conf.getInt("button_block", controller.button_block);
 }
 
 void Config::save()
@@ -149,13 +157,12 @@ void Config::save()
     conf.add("skipIntro", skipIntro);
     conf.add("noBlood", noBlood);
     conf.add("difficulty", static_cast<int>(difficulty));
-    conf.save(ConfigFile);
 
     // Controller
     conf.add("deadzone", controller.deadzone);
     conf.add("use_rumble", controller.use_rumble);
     conf.add("axis_walk", controller.axis_walk);
-    conf.add("axis_jump", controller.axis_jump);
+    conf.add("axis_updown", controller.axis_updown);
     conf.add("button_up", controller.button_up);
     conf.add("button_down", controller.button_down);
     conf.add("button_left", controller.button_left);
@@ -165,5 +172,10 @@ void Config::save()
     conf.add("button_action", controller.button_action);
     conf.add("button_jump", controller.button_jump);
     conf.add("button_crouch", controller.button_crouch);
-    conf.add("button_flashlight", controller.button_flashlight);
+    conf.add("button_light", controller.button_light);
+    conf.add("button_dash", controller.button_dash);
+    conf.add("button_inventory", controller.button_inventory);
+    conf.add("button_map", controller.button_map);
+    conf.add("button_block", controller.button_block);
+    conf.save(ConfigFile);
 }

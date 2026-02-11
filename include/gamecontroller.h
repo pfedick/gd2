@@ -13,7 +13,8 @@
 class GameControllerMapping
 {
 public:
-    enum class Button {
+    enum class Button
+    {
         Unknown = 0,
         MenuUp = 1,
         MenuDown,
@@ -24,13 +25,17 @@ public:
         Flashlight,
         Jump,
         Back,
-        Crouch
+        Crouch,
+        Dash,
+        Inventory,
+        Map,
+        Block
     };
-    enum class Axis {
+    enum class Axis
+    {
         Unknown = 0,
         Walk = 1,
-        Jump,
-        Crouch
+        UpDown,
     };
 
 private:
@@ -44,7 +49,11 @@ private:
     int menu_button_right;
     int menu_button;
     int action_button;
+    int dash_button;
     int back_button;
+    int block_button;
+    int inventory_button;
+    int map_button;
     int jump_button;
     int flashlight_button;
     int crouch_button;
@@ -55,7 +64,6 @@ private:
     std::map<Axis, int> axis_mapping_rev;
 
 public:
-
     GameControllerMapping();
     void updateMapping();
 
@@ -66,10 +74,10 @@ public:
 
     void setMappingAxis(const Axis a, int id);
     void setMappingButton(const Button a, int id);
-
 };
 
-class GameController {
+class GameController
+{
 private:
     SDL_Gamepad* gc;
     bool has_axis_leftx = false;
@@ -86,15 +94,15 @@ private:
     bool has_rumble_triggers = false;
     int axis_deadzone;
 
-
-
 public:
-    class Device {
+    class Device
+    {
     public:
         SDL_JoystickID id;
         ppl7::String name;
     };
-    enum class Axis {
+    enum class Axis
+    {
         leftx = 0x0001,
         lefty = 0x0002,
         rightx = 0x0004,
@@ -103,7 +111,8 @@ public:
         triggery = 0x0020
     };
 
-    enum class Button {
+    enum class Button
+    {
         a = 0x00000001,
         b = 0x00000002,
         x = 0x00000004,
@@ -143,14 +152,12 @@ public:
     int getButtonState(int button) const;
     int getAxisState(int axis) const;
 
-
     void rumbleTrigger(uint16_t left, uint16_t right, uint32_t duration_ms);
     void rumble(uint16_t low, uint16_t high, uint32_t duration_ms);
 
     static std::list<Device> enumerate();
     static ppl7::String getAxisName(int axis);
     static ppl7::String getButtonName(int button);
-
 };
 
 #endif

@@ -60,6 +60,7 @@ Player::FlashLightPivot::FlashLightPivot(int x, int y, float angle)
 }
 
 Player::Player(Game* game)
+    : keys(game)
 {
     x = y = 0;
     currentLayer = ParallaxLayerId::Player;

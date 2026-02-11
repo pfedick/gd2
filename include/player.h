@@ -6,7 +6,6 @@ class SpriteTexture;
 #include "gpu.h"
 #include "animation.h"
 #include "physic.h"
-#include "translate.h"
 #include "audio.h"
 #include "audiopool.h"
 #include "level.h"
@@ -28,16 +27,16 @@ public:
     enum
     {
         Left = 1,
-        Right = 2,
-        Up = 4,
-        Down = 8,
-        Shift = 16,
-        Action = 32,
-        Flashlight = 64,
-        Crouch = 128,
-        Jump = 256,
-        JumpLeft = Left | Jump,
-        JumpRight = Right | Jump,
+        Right,
+        Up,
+        Down,
+        Action,
+        Crouch,
+        Jump,
+        Dash,
+        Block,
+        Inventory,
+        Map
     };
 };
 
@@ -45,17 +44,20 @@ class KeyState
 {
 private:
     std::map<PlayerKeys, double> key_timestamps;
+    Game* game;
 
 public:
     bool left = false;
     bool right = false;
     bool up = false;
     bool down = false;
-    bool shift = false;
     bool action = false;
-    bool flashlight = false;
+    bool block = false;
+    bool dash = false;
     bool crouch = false;
     bool jump = false;
+
+    KeyState(Game* game);
 
     void update(double time);
     void queueKeyEvent(PlayerKeys key, double time); // TODO: mapping von SDL-Events zu PlayerKeys in GameController
@@ -196,6 +198,7 @@ public:
     // is updated every frame
     ppl7::grafix::PointF WorldCoords;
     GameViewport Viewport;
+    KeyState keys;
 
     explicit Player(Game* game);
     ~Player();
