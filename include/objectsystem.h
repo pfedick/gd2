@@ -60,6 +60,7 @@ public:
         LevelModificator = 19,
         GlimmerNode = 20,
         ItemTaker = 21,
+        CameraControl = 22,
     };
     static ppl7::String name(Type::ObjectType type);
 };

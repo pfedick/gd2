@@ -8,8 +8,15 @@
 #include "audiopool.h"
 #include "animation.h"
 
-static AnimationDefinition RunCycleLeft(30, 47, true, 47, 0.01666f);
-static AnimationDefinition RunCycleRight(13, 29, true, 29, 0.01666f);
+static AnimationDefinition RunCycleLeft(36, 51, true, 51, 0.01666f);
+static AnimationDefinition RunCycleRight(16, 31, true, 31, 0.01666f);
+static AnimationDefinition JumpUp(53, 58, false, 58, 0.01666f);
+static AnimationDefinition JumpRightUp(60, 65, false, 65, 0.01666f);
+static AnimationDefinition JumpRightDown(66, 71, false, 71, 0.01666f);
+static AnimationDefinition JumpRightLand(72, 77, false, 0, 0.01666f);
+static AnimationDefinition JumpLeftUp(78, 84, false, 84, 0.01666f);
+static AnimationDefinition JumpLeftDown(85, 90, false, 90, 0.01666f);
+static AnimationDefinition JumpLeftLand(91, 96, false, 6, 0.01666f);
 
 static float getMaxAirFromDifficultyLevel(Config::DifficultyLevel level)
 {
@@ -994,13 +1001,13 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
         acceleration_jump = 2.0f * frame_rate_compensation;
         acceleration_jump_sideways = 0;
         if (orientation == Front)
-            animation.setStaticFrame(50);
+            animation.start(JumpUp);
         else if (orientation == Left)
-            animation.setStaticFrame(52);
+            animation.start(JumpLeftUp);
         else if (orientation == Right)
-            animation.setStaticFrame(51);
+            animation.start(JumpRightUp);
         else
-            animation.setStaticFrame(50);
+            animation.setStaticFrame(0);
 
     } else if (keys.jumpLeft() && movement != Falling && movement != Jump) {
         movement = Jump;
@@ -1011,7 +1018,7 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
         acceleration_jump_sideways = -speed_run;
 
         velocity_move.x = acceleration_jump_sideways * frame_rate_compensation;
-        animation.setStaticFrame(48);
+        animation.start(JumpLeftUp);
 
     } else if (keys.jumpRight() && movement != Falling && movement != Jump) {
         movement = Jump;
@@ -1021,7 +1028,7 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
         acceleration_jump_sideways = speed_run;
         velocity_move.x = 8 * frame_rate_compensation;
         velocity_move.x = acceleration_jump_sideways * frame_rate_compensation;
-        animation.setStaticFrame(49);
+        animation.start(JumpRightUp);
 
 #ifdef TODO
     } else if (keys.matrix == KeyboardKeys::Down || keys.matrix == (KeyboardKeys::Down | KeyboardKeys::Shift)) {
@@ -1086,13 +1093,14 @@ void Player::handleKeyboardWhileJumpOrFalling(double time, const TileTypePlane& 
             velocity_move.x = acceleration_jump_sideways * frame_rate_compensation;
             if (acceleration_jump_sideways > -9.0f) acceleration_jump_sideways -= (0.2f * frame_rate_compensation);
             orientation = Left;
-            animation.setStaticFrame(48);
+            animation.setStaticFrame(84);
+
         } else if ((keys.right) && velocity_move.x == 0) {
             if (acceleration_jump_sideways < 6.0f) acceleration_jump_sideways = 6.0f;
             velocity_move.x = acceleration_jump_sideways * frame_rate_compensation;
             if (acceleration_jump_sideways < 9.0f) acceleration_jump_sideways += (0.2f * frame_rate_compensation);
             orientation = Right;
-            animation.setStaticFrame(49);
+            animation.setStaticFrame(65);
         }
     } else {
         if (keys.left) {
@@ -1100,13 +1108,13 @@ void Player::handleKeyboardWhileJumpOrFalling(double time, const TileTypePlane& 
             velocity_move.x = acceleration_jump_sideways * frame_rate_compensation;
             if (acceleration_jump_sideways > -9.0f) acceleration_jump_sideways -= (0.2f * frame_rate_compensation);
             orientation = Left;
-            animation.setStaticFrame(48);
+            animation.setStaticFrame(84);
         } else if (keys.right) {
             if (acceleration_jump_sideways < 6.0f) acceleration_jump_sideways = 6.0f;
             velocity_move.x = acceleration_jump_sideways * frame_rate_compensation;
             if (acceleration_jump_sideways < 9.0f) acceleration_jump_sideways += (0.2f * frame_rate_compensation);
             orientation = Right;
-            animation.setStaticFrame(49);
+            animation.setStaticFrame(65);
         }
     }
 

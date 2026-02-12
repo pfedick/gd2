@@ -53,6 +53,7 @@ void ObjectsFrame::showPlayerPlaneObjects()
     addObject(Objects::Type::LightTrigger, "Light Trigger", 10);
     addObject(Objects::Type::PlayerTrigger, "Player Trigger", 7);
     addObject(Objects::Type::LevelModificator, "Level Modificator", 8);
+    addObject(Objects::Type::CameraControl, "Camera Control", 17);
     scrollbar->setPosition(0);
     scrollbar->setSize(object_map.size() / 2);
     scrollbar->setVisibleItems((height() - 44) / 160 / 2);
