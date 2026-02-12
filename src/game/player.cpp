@@ -6,6 +6,10 @@
 #include "gamecontroller.h"
 #include "audio.h"
 #include "audiopool.h"
+#include "animation.h"
+
+static AnimationDefinition RunCycleLeft(30, 47, true, 47, 0.01666f);
+static AnimationDefinition RunCycleRight(13, 29, true, 29, 0.01666f);
 
 static float getMaxAirFromDifficultyLevel(Config::DifficultyLevel level)
 {
@@ -39,7 +43,6 @@ Player::Player(Game* game)
     sprite_resource = NULL;
     tiletype_resource = NULL;
     next_keycheck = 0.0f;
-    next_animation = 0.0f;
     idle_timeout = 0.0f;
     animation.setStaticFrame(3);
     points = 0;
@@ -816,9 +819,7 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
     if (particle_reason != ParticleReason::None && particle_end_time > time) emmitParticles(clock.time);
     time = clock.time;
     frame_rate_compensation = clock.frame_rate_compensation;
-    if (time > next_animation) {
-        next_animation = time + animation.speed();
-        animation.update();
+    if (animation.update(clock.time)) {
         if (phonetics.notEmpty()) playPhonetics();
     }
     playSoundOnAnimationSprite();
@@ -917,8 +918,8 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
     // ppl7::PrintDebugTime("gravity: %0.3f, velocity_move x: %0.3f, y: %0.3f, acceleration_jump: %0.3f\n",
     //	gravity, velocity_move.x, velocity_move.y, acceleration_jump);
 
-    x += velocity_move.x;
-    y += velocity_move.y + gravity;
+    x += velocity_move.x * frame_rate_compensation;
+    y += (velocity_move.y * frame_rate_compensation) + gravity;
 
     if (petrified) return;
     if (!controlEnabled && player_autowalk.enabled() == false) return;
@@ -975,7 +976,7 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
         if (movement != Run || orientation != Left) {
             movement = Run;
             orientation = Left;
-            animation.startSequence(31, 47, true, 47);
+            animation.start(RunCycleLeft);
         }
     } else if (keys.runRight()) {
         if (orientation != Right) {
@@ -985,7 +986,7 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
         if (movement != Run || orientation != Right) {
             movement = Run;
             orientation = Right;
-            animation.startSequence(14, 29, true, 29);
+            animation.start(RunCycleRight);
         }
     } else if (keys.jumpUp() && movement != Falling && movement != Jump) {
         movement = Jump;

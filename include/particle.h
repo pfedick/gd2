@@ -110,7 +110,6 @@ public:
     };
 
 private:
-    double next_animation;
     float life_time;
     float age;
     bool visible;

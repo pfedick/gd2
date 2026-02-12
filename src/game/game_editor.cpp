@@ -68,7 +68,7 @@ void GameEditor::closeAll()
         object_selection = NULL;
     }
     game->viewport.x1 = 0;
-    game->world_widget->setViewport(game->viewport);
+    if (game->world_widget) game->world_widget->setViewport(game->viewport);
     game->game_viewport.setViewport(game->viewport);
 }
 

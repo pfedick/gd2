@@ -564,17 +564,21 @@ bool Physic::isOnGround() const
 void Physic::updateMovement(float frame_rate_compensation)
 {
     if (movement == Slide || movement == Dead) return;
-    if (movement == Walk) {
-        if (orientation == Left) {
-            velocity_move.x = -speed_walk * frame_rate_compensation;
-        } else if (orientation == Right) {
-            velocity_move.x = speed_walk * frame_rate_compensation;
-        }
-    } else if (movement == Run) {
-        if (orientation == Left) {
-            velocity_move.x = -speed_run * frame_rate_compensation;
-        } else if (orientation == Right) {
-            velocity_move.x = speed_run * frame_rate_compensation;
+    if (movement == Walk || movement == Run) {
+        float target_velocity = 0.0f;
+        if (movement == Walk)
+            target_velocity = speed_walk;
+        else if (movement == Run)
+            target_velocity = speed_run;
+        if (orientation == Left) target_velocity = -target_velocity;
+        float acc_step = 0.8f * frame_rate_compensation;
+
+        if (velocity_move.x < target_velocity) {
+            velocity_move.x += acc_step;
+            if (velocity_move.x > target_velocity) velocity_move.x = target_velocity;
+        } else if (velocity_move.x > target_velocity) {
+            velocity_move.x -= acc_step;
+            if (velocity_move.x < target_velocity) velocity_move.x = target_velocity;
         }
     } else if (movement == ClimbUp) {
         velocity_move.y = -8 * frame_rate_compensation;

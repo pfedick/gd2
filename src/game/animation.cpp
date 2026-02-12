@@ -2,155 +2,186 @@
 #include <ppl7.h>
 #include "animation.h"
 
-AnimationCycle::AnimationCycle()
+AnimationDefinition::AnimationDefinition(int start, int end, bool loop, int endframe, float speed)
 {
-	index=0;
-	cycle=NULL;
-	size=1;
-	loop=false;
-	endframe=0;
-	finished=true;
-	seq_start=0;
-	seq_end=0;
-	default_animation_speed=0.056f;
-	current_animation_speed=default_animation_speed;
+    this->seq_start = start;
+    this->seq_end = end;
+    this->loop = loop;
+    this->endframe = endframe;
+    this->default_animation_speed = speed;
+    if (seq_end > seq_start)
+        size = seq_end - seq_start + 1;
+    else
+        size = -(seq_start - seq_end + 1);
+    cycle = NULL;
+}
+
+void AnimationCycle::start(const AnimationDefinition& animation)
+{
+    index = 0;
+    current_animation_speed = animation.default_animation_speed;
+    default_animation_speed = animation.default_animation_speed;
+    cycle = animation.cycle;
+    this->size = animation.size;
+    this->endframe = animation.endframe;
+    this->seq_start = animation.seq_start;
+    this->seq_end = animation.seq_end;
+    this->loop = animation.loop;
+    finished = false;
+}
+
+void AnimationCycle::startRandom(const AnimationDefinition& animation)
+{
+    start(animation);
+    index = ppl7::rand(0, size);
+
+    if (seq_end > seq_start) {
+        index = ppl7::rand(0, size);
+        // if (index >= size) index = 0;
+    } else {
+        index = -ppl7::rand(0, -size);
+    }
 }
 
 void AnimationCycle::start(int* cycle_array, int size, bool loop, int endframe)
 {
-	//printf("start\n");
-	current_animation_speed=default_animation_speed;
-	cycle=cycle_array;
-	this->size=size;
-	this->loop=loop;
-	this->endframe=endframe;
-	finished=false;
-	index=0;
+    // printf("start\n");
+    current_animation_speed = default_animation_speed;
+    cycle = cycle_array;
+    this->size = size;
+    this->loop = loop;
+    this->endframe = endframe;
+    finished = false;
+    index = 0;
 }
 
 void AnimationCycle::start(const AnimationCycle& other)
 {
-	current_animation_speed=default_animation_speed;
-	cycle=other.cycle;
-	index=other.index;
-	size=other.size;
-	endframe=other.endframe;
-	seq_start=other.seq_start;
-	seq_end=other.seq_end;
-	loop=other.loop;
-	finished=other.finished;
+    current_animation_speed = default_animation_speed;
+    cycle = other.cycle;
+    index = other.index;
+    size = other.size;
+    endframe = other.endframe;
+    seq_start = other.seq_start;
+    seq_end = other.seq_end;
+    loop = other.loop;
+    finished = other.finished;
 }
 
 void AnimationCycle::startRandom(int* cycle_array, int size, bool loop, int endframe)
 {
-	start(cycle_array, size, loop, endframe);
-	index=ppl7::rand(0, size);
-	if (index >= size) index=0;
+    start(cycle_array, size, loop, endframe);
+    index = ppl7::rand(0, size);
+    if (index >= size) index = 0;
 }
 
 void AnimationCycle::setStaticFrame(int nr)
 {
-	cycle=NULL;
-	seq_start=0;
-	seq_end=0;
-	index=0;
-	loop=false;
-	finished=true;
-	endframe=nr;
+    cycle = NULL;
+    seq_start = 0;
+    seq_end = 0;
+    index = 0;
+    loop = false;
+    finished = true;
+    endframe = nr;
 }
 
 void AnimationCycle::startSequence(int start, int end, bool loop, int endframe)
 {
-	current_animation_speed=default_animation_speed;
-	cycle=NULL;
-	seq_start=start;
-	seq_end=end;
-	index=0;
-	if (seq_end > seq_start)
-		size=seq_end - seq_start + 1;
-	else
-		size=-(seq_start - seq_end + 1);
-	this->loop=loop;
-	finished=false;
-	this->endframe=endframe;
+    current_animation_speed = default_animation_speed;
+    cycle = NULL;
+    seq_start = start;
+    seq_end = end;
+    index = 0;
+    if (seq_end > seq_start)
+        size = seq_end - seq_start + 1;
+    else
+        size = -(seq_start - seq_end + 1);
+    this->loop = loop;
+    finished = false;
+    this->endframe = endframe;
 }
 
 void AnimationCycle::startRandomSequence(int start, int end, bool loop, int endframe)
 {
-	current_animation_speed=default_animation_speed;
-	cycle=NULL;
-	seq_start=start;
-	seq_end=end;
-	if (seq_end > seq_start) {
-		size=seq_end - seq_start + 1;
-		index=ppl7::rand(0, size);
-	} else {
-		size=-(seq_start - seq_end + 1);
-		index=-ppl7::rand(0, -size);
-	}
+    current_animation_speed = default_animation_speed;
+    cycle = NULL;
+    seq_start = start;
+    seq_end = end;
+    if (seq_end > seq_start) {
+        size = seq_end - seq_start + 1;
+        index = ppl7::rand(0, size);
+    } else {
+        size = -(seq_start - seq_end + 1);
+        index = -ppl7::rand(0, -size);
+    }
 
-	this->loop=loop;
-	finished=false;
-	this->endframe=endframe;
+    this->loop = loop;
+    finished = false;
+    this->endframe = endframe;
 }
 
-void AnimationCycle::update()
+bool AnimationCycle::update(double time)
 {
-	if (finished) return;
-	if (size >= 0) {
-		index++;
-		if (index >= size) {
-			if (loop == true) {
-				index=0;
-			} else {
-				finished=true;
-			}
-		}
-	} else {
-		index--;
-		if (index <= size) {
-			if (loop == true) {
-				index=0;
-			} else {
-				finished=true;
-			}
-		}
-	}
+    if (time < next_animation) return false;
+    next_animation = time + current_animation_speed;
+    if (finished) return false;
+
+    if (size >= 0) {
+        index++;
+        if (index >= size) {
+            if (loop == true) {
+                index = 0;
+            } else {
+                finished = true;
+            }
+        }
+    } else {
+        index--;
+        if (index <= size) {
+            if (loop == true) {
+                index = 0;
+            } else {
+                finished = true;
+            }
+        }
+    }
+    return true;
 }
 
 int AnimationCycle::getFrame() const
 {
-	if (finished) return endframe;
-	if (cycle) return cycle[index];
-	return seq_start + index;
+    if (finished) return endframe;
+    if (cycle) return cycle[index];
+    return seq_start + index;
 }
 
 int AnimationCycle::getIndex() const
 {
-	return index;
+    return index;
 }
 
 bool AnimationCycle::isFinished() const
 {
-	return finished;
+    return finished;
 }
 
 void AnimationCycle::setSpeed(float seconds_per_frame)
 {
-	current_animation_speed=seconds_per_frame;
+    current_animation_speed = seconds_per_frame;
 }
 
 void AnimationCycle::setDefaultSpeed(float seconds_per_frame)
 {
-	default_animation_speed=seconds_per_frame;
+    default_animation_speed = seconds_per_frame;
 }
 
 void AnimationCycle::resetSpeed()
 {
-	current_animation_speed=default_animation_speed;
+    current_animation_speed = default_animation_speed;
 }
 
 float AnimationCycle::speed() const
 {
-	return current_animation_speed;
+    return current_animation_speed;
 }

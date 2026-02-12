@@ -76,7 +76,6 @@ private:
     const SpriteTexture* tiletype_resource;
 
     double next_keycheck;
-    double next_animation;
     double last_fullspeed;
     double idle_timeout;
     double last_aircheck;

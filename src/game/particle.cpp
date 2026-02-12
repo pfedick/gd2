@@ -54,7 +54,7 @@ Particle::Particle()
     useScaleGradient = false;
     color_age_diff = scale_age_diff = 0.0f;
     base_scale = 0.0f;
-    birth_time = next_animation = 0.0f;
+    birth_time = 0.0f;
     color_mod.set(255, 255, 255, 255);
     visible = true;
 }
@@ -169,9 +169,7 @@ void Particle::update(double time, float frame_rate_compensation)
 {
     // Color and scale gradients and animation must only be updated if particle is visible
     if (visible) {
-        if (time > next_animation) {
-            next_animation = time + 0.056f;
-            animation.update();
+        if (animation.update(time)) {
             sprite_no = animation.getFrame();
         }
         if (useColorGradient) updateColorGradient();
