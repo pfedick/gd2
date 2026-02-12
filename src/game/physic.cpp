@@ -572,12 +572,14 @@ void Physic::updateMovement(float frame_rate_compensation)
             target_velocity = speed_run;
         if (orientation == Left) target_velocity = -target_velocity;
         float acc_step = 0.8f * frame_rate_compensation;
-
+        // velocity_move.x += (target_velocity - velocity_move.x) * 0.1f * frame_rate_compensation;
         if (velocity_move.x < target_velocity) {
-            velocity_move.x += acc_step;
+            velocity_move.x += (target_velocity - velocity_move.x) * 0.1f * frame_rate_compensation;
+            // velocity_move.x += acc_step;
             if (velocity_move.x > target_velocity) velocity_move.x = target_velocity;
         } else if (velocity_move.x > target_velocity) {
-            velocity_move.x -= acc_step;
+            velocity_move.x += (target_velocity - velocity_move.x) * 0.1f * frame_rate_compensation;
+            // velocity_move.x -= acc_step;
             if (velocity_move.x < target_velocity) velocity_move.x = target_velocity;
         }
     } else if (movement == ClimbUp) {
