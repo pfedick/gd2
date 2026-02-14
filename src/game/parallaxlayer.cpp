@@ -115,7 +115,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
 
-    if (!bBlurEnabled || blur_factor <= 0.0f || isEditLayer) {
+    if (!bBlurEnabled || blur_factor <= 0.0f) {
         colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
         colorTargetInfo.texture = render_target;
     }
@@ -138,7 +138,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     SDL_EndGPURenderPass(renderPass);
 
     // Post-Processing: Blur
-    if (blur_factor > 0.0f && bBlurEnabled && !isEditLayer) {
+    if (blur_factor > 0.0f && bBlurEnabled) {
         blur(renderstate, renderstate.render_layer);
         copyLayerToTarget(renderstate, renderstate.render_layer, render_target);
     }
