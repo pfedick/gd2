@@ -620,7 +620,7 @@ void Physic::updateMovement(float frame_rate_compensation)
     } else if (movement == Falling) {
         if (velocity_move.y < -0.2f) velocity_move.y -= (velocity_move.y / 6.0f) * frame_rate_compensation;
         if (velocity_move.y > -0.2f) velocity_move.y = 0;
-        ppl7::PrintDebug("Player::updateMovement, velocity_move.y=%0.3f\n", velocity_move.y);
+        // ppl7::PrintDebug("Player::updateMovement, velocity_move.y=%0.3f\n", velocity_move.y);
     } else if (movement == Crawling) {
         if (orientation == Left) {
             velocity_move.x = -speed_walk * frame_rate_compensation;

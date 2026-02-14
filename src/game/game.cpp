@@ -378,6 +378,7 @@ void Game::run()
 
         wm->handleEvents();
         ppltk::MouseState mouse = wm->getMouseState();
+        editor.mouse = mouse;
         updateUi(mouse, last_metrics);
         if (filedialog) checkFileDialog();
         metrics.time_events.stop();
@@ -403,6 +404,11 @@ void Game::run()
         level.resizeRenderBuffer(game_viewport.getRenderSize());
 
         drawWorld(cmdbuf, swapchainTexture);
+
+        // editor.drawSelectedSprite(renderer, mouse.p);
+        // editor.drawSelectedObject(renderer, mouse.p);
+        // editor.drawSelectedTile(renderer, mouse.p);
+
         // HUD
         drawHUD(cmdbuf, swapchainTexture);
 
@@ -429,14 +435,19 @@ void Game::run()
         frame_time_accumulator += frame_time;
         if ((clock.frame_count % 60) == 0) {
             // ppl7::PrintDebug("Frametime: %0.3f ms\n", 1000.0 * (frame_time / frame_count));
-            editor.statusbar->setFrameTime(1000.0 * (frame_time_accumulator / 60.0f));
-            editor.statusbar->setLoad(frame_time_accumulator / idle_time_accumulator * 100.0f);
+            // editor.statusbar->setFrameTime(1000.0 * (frame_time_accumulator / 60.0f));
+            // editor.statusbar->setLoad(frame_time_accumulator / idle_time_accumulator * 100.0f);
             // editor.statusbar->setFrameTime(1000.0 * (clock.gpu_wait_fsync_time));
-            editor.statusbar->setFps(clock.fps);
+            // editor.statusbar->setFps(clock.fps);
             frame_time_accumulator = 0.0f;
             idle_time_accumulator = 0.0f;
         }
     }
+}
+
+const ppl7::grafix::PointF& Game::getWorldCoords() const
+{
+    return WorldCamera;
 }
 
 void Game::clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
@@ -452,11 +463,16 @@ void Game::clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTe
     SDL_EndGPURenderPass(renderPass);
 }
 
-void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& metrics)
+void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
 {
     // if (mouse.p.inside(game_viewport)) {
     moveWorldOnMouseClick(mouse);
+    editor.statusbar->setFps(clock.fps);
+    editor.statusbar->setLoad(last_metrics.time_total.get() * 100.0f / last_metrics.time_frame.get());
+    editor.statusbar->setFrameTime(last_metrics.time_total.get() * 1000.0f);
+    editor.statusbar->setMouse(mouse);
     editor.statusbar->setWorldCoords(WorldCamera);
+
     ParallaxLayerId current_layer = editor.mainmenue->currentLayer();
     // ppl7::PrintDebug("Current Layer: %d\n", static_cast<int>(current_layer));
     level.setEditLayer(current_layer);
@@ -478,6 +494,22 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& metrics)
 
     if (player) editor.statusbar->setPlayerCoords(ppl7::grafix::Point(player->x, player->y));
     if (player) editor.statusbar->setPlayerState(player->getState());
+
+    metrics.fps += clock.fps;
+    metrics.total_sprites += level.countSprites();
+    metrics.visible_sprites += level.countVisibleSprites();
+    metrics.total_objects += level.countObjects();
+    metrics.visible_objects += level.countVisibleObjects();
+    metrics.total_particles += level.countParticles();
+    metrics.visible_particles += level.countVisibleParticles();
+    metrics.total_lights += level.countLights();
+    metrics.visible_lights += level.countVisibleLights();
+
+    if (editor.selected_object) {
+        editor.statusbar->setSelectedObject(editor.selected_object->id);
+    } else {
+        editor.statusbar->setSelectedObject(-1);
+    }
 }
 
 void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)

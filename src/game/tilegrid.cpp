@@ -308,6 +308,11 @@ void TileGrid::setColorPalette(ColorPalette& palette)
     this->palette = &palette;
 }
 
+bool TileGrid::hasTileset(int no) const
+{
+    return no >= 0 && no < (int)this->tileset.size() && this->tileset[no] != nullptr;
+}
+
 void TileGrid::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const
 {
     // ppl7::PrintDebugTime("Drawing TileGrid at worldcoords %.2f/%.2f, scale %.2f\n", worldcoords.x, worldcoords.y, scale);

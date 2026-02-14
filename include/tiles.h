@@ -130,6 +130,7 @@ public:
     ppl7::grafix::Rect getOccupiedArea() const;
 
     void setTileset(int no, SpriteTexture* tileset);
+    bool hasTileset(int no) const;
     void setColorPalette(ColorPalette& palette);
     void draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const;
 };

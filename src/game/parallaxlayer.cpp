@@ -101,6 +101,10 @@ void ParallaxLayer::draw(RenderState& renderstate,
     if (bShowTileTypes) {
         TileTypeMatrix.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
     }
+    if (isEditLayer) {
+        game->editor.drawSelection(*renderstate.batcher);
+    }
+
     //  background_sprites.draw(batcher, cmdbuf, swapchainTexture, worldcoords, viewport
     renderstate.batcher->prepareInstanceData(renderstate.cmdbuf);
 
@@ -111,7 +115,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
 
-    if (!bBlurEnabled || blur_factor <= 0.0f) {
+    if (!bBlurEnabled || blur_factor <= 0.0f || isEditLayer) {
         colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
         colorTargetInfo.texture = render_target;
     }
@@ -134,7 +138,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     SDL_EndGPURenderPass(renderPass);
 
     // Post-Processing: Blur
-    if (blur_factor > 0.0f && bBlurEnabled) {
+    if (blur_factor > 0.0f && bBlurEnabled && !isEditLayer) {
         blur(renderstate, renderstate.render_layer);
         copyLayerToTarget(renderstate, renderstate.render_layer, render_target);
     }

@@ -6,6 +6,7 @@
 #include "level.h"
 #include "gpu.h"
 #include "player.h"
+#include "game.h"
 
 RenderState::RenderState()
 {
@@ -21,7 +22,7 @@ RenderState::RenderState()
     batcher = NULL;
 }
 
-Level::Level()
+Level::Level(Game* game)
 {
     // objects = new Decker::Objects::ObjectSystem(&waynet);
     //  particles = new ParticleSystem();
@@ -50,6 +51,7 @@ Level::Level()
         layer.background_sprites.setColorPalette(palette);
         layer.front_sprites.setColorPalette(palette);
         layer.tiles.setColorPalette(palette);
+        layer.game = game;
     }
 }
 
@@ -87,9 +89,11 @@ void Level::updateVisibility()
     for (auto& pl : parallax_layers) {
         pl.bShowGrid = false;
         pl.bShowTileTypes = false;
+        pl.isEditLayer = false;
     }
     parallax_layers[static_cast<int>(editlayer)].bShowGrid = bShowGrid;
     parallax_layers[static_cast<int>(editlayer)].bShowTileTypes = bShowTileTypes;
+    parallax_layers[static_cast<int>(editlayer)].isEditLayer = true;
 }
 
 void Level::setEditLayer(ParallaxLayerId layer)
@@ -880,17 +884,62 @@ size_t Level::countVisibleSprites() const
     return total;
 }
 
-/*
 size_t Level::countLights() const
 {
-    return lights.count();
+    size_t total = 0;
+    for (auto& layer : parallax_layers) {
+        // total += layer.lights.count();
+    }
+    return total;
 }
 
 size_t Level::countVisibleLights() const
 {
-    return lights.countVisible();
+    size_t total = 0;
+    for (auto& layer : parallax_layers) {
+        if (!layer.tiles.isVisible()) continue;
+        // total += layer.lights.count();
+    }
+    return total;
 }
-    */
+
+size_t Level::countObjects() const
+{
+    size_t total = 0;
+    for (auto& layer : parallax_layers) {
+        total += layer.objects.count();
+    }
+    return total;
+}
+
+size_t Level::countVisibleObjects() const
+{
+    size_t total = 0;
+    for (auto& layer : parallax_layers) {
+        if (!layer.tiles.isVisible()) continue;
+        total += layer.objects.countVisible();
+    }
+    return total;
+}
+
+size_t Level::countParticles() const
+{
+    size_t total = 0;
+    for (auto& layer : parallax_layers) {
+        total += layer.particles.count();
+    }
+    return total;
+}
+
+size_t Level::countVisibleParticles() const
+{
+    size_t total = 0;
+    for (auto& layer : parallax_layers) {
+        if (!layer.tiles.isVisible()) continue;
+        total += layer.particles.countVisible();
+    }
+    return total;
+}
 
 /*
 bool Level::findSprite(

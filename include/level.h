@@ -15,6 +15,8 @@
 #include "camera.h"
 #include "metrics.h"
 
+class Game;
+
 class ModifiableParameter
 {
 public:
@@ -129,6 +131,8 @@ public:
     bool bShowSprites = true;
     bool bShowObjects = true;
     bool bShowParticles = true;
+    bool isEditLayer = false;
+    Game* game = NULL;
 
     TileGrid tiles;
     enum class SpritePosition
@@ -240,7 +244,7 @@ private:
     void drawDebug(const Camera& camera, const GameViewport& viewport, const Player* player);
 
 public:
-    Level();
+    Level(Game* game);
     ~Level();
     void setPlayer(Player* player);
     void setEditmode(bool enabled);
@@ -285,8 +289,12 @@ public:
                     ParallaxLayer::SpritePosition& layer_position) const;
     size_t countSprites() const;
     size_t countVisibleSprites() const;
-    // size_t countLights() const;
-    // size_t countVisibleLights() const;
+    size_t countLights() const;
+    size_t countVisibleLights() const;
+    size_t countObjects() const;
+    size_t countVisibleObjects() const;
+    size_t countParticles() const;
+    size_t countVisibleParticles() const;
 
     // void getLevelStats(LevelStats& stats) const;
 

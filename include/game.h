@@ -152,9 +152,16 @@ private:
         History();
         void clear();
     };
+    enum class SpriteMode
+    {
+        Draw,
+        Edit,
+        Select
+    };
 
     History history;
     Game* game;
+    ppltk::MouseState mouse;
 
     Objects::Object* selected_object;
 
@@ -167,6 +174,8 @@ private:
 
     MainMenue* mainmenue;
     StatusBar* statusbar;
+
+    SpriteMode sprite_mode;
 
 public:
     GameEditor();
@@ -182,7 +191,14 @@ public:
 
     void updateDifficultyForSelectedObject(uint8_t dificulty);
     void updateObjectLayerForSelectedObject(int layer);
+    void updateParallaxLayerForSelectedObject(ParallaxLayerId plane);
     void setSpriteModeToDraw();
+
+    void drawSelection(GPUBatcher& batcher);
+
+    void drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
+    void drawSelectedTile(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
+    void drawSelectedObject(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
 };
 
 class Game : private ppltk::Window
@@ -244,7 +260,7 @@ private:
 public:
     GameEditor editor;
     GameController controller;
-    Level level;
+    Level level = Level(this);
     RenderPipelines renderPipelines;
     Resources resources;
     AudioPool audiopool;
@@ -266,7 +282,7 @@ public:
     void init_grafix();
 
     void run();
-    void updateUi(const ppltk::MouseState& mouse, const Metrics& metrics);
+    void updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics);
 
     void showUi(bool enable);
     void updateSpriteFromUi();
@@ -274,7 +290,7 @@ public:
     void moveWorld(float offset_x, float offset_y);
     void moveWorldOnMouseClick(const ppltk::MouseState& mouse);
 
-    const ppl7::grafix::Rect& getViewport() const;
+    // const ppl7::grafix::Rect& getViewport() const;
     const ppl7::grafix::PointF& getWorldCoords() const;
 
     void enableControls(bool enable);
