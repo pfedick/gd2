@@ -112,12 +112,17 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
             inst.m11 = m11;
 
             inst.pos_z = spriteCmd.z;
-            inst.pad2 = 0.0f;
+            inst.pad = 0.0f;
 
             inst.uv_x = spriteCmd.uv_x;
             inst.uv_y = spriteCmd.uv_y;
             inst.uv_w = spriteCmd.uv_w;
             inst.uv_h = spriteCmd.uv_h;
+
+            inst.u_min = spriteCmd.uv_x;
+            inst.v_min = spriteCmd.uv_y;
+            inst.u_max = spriteCmd.uv_x + spriteCmd.uv_w;
+            inst.v_max = spriteCmd.uv_y + spriteCmd.uv_h;
 
             // Normalize pivot relative to texture size
             inst.pivot_x = (spriteCmd.sprite_w > 0) ? pivot_pixel_x / (float)spriteCmd.sprite_w : 0.0f;
@@ -403,6 +408,7 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
 
         // Bind storage buffer for sprite instance data
         SDL_BindGPUVertexStorageBuffers(render_pass, 0, &storageBuffer, 1);
+        SDL_BindGPUFragmentStorageBuffers(render_pass, 0, &storageBuffer, 1);
 
         // Bind index buffer once
         SDL_GPUBufferBinding indexBinding = {.buffer = indexBuffer, .offset = 0};

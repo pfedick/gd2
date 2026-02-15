@@ -141,8 +141,9 @@ private:
         float m00, m01;                           // Transform Matrix Col 1
         float m10, m11;                           // Transform Matrix Col 2
         float pos_z;                              // Z-index from addSprite
-        float pad2;                               // PADDING
+        float pad;                                // PADDING to 16-byte boundary
         float uv_x, uv_y, uv_w, uv_h;             // UV rect (normalized 0-1)
+        float u_min, v_min, u_max, v_max;         // UV boundaries (clipping for outlines)
         float pivot_x, pivot_y;                   // Pivot point (0..1)
         float offset_x, offset_y;                 // Unused
         float color_r, color_g, color_b, color_a; // Color Modulation

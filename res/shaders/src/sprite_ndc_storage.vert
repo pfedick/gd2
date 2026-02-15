@@ -13,9 +13,10 @@ struct SpriteInstance {
     float pos_z;        // Z-Depth (offset 24)
     float _pad;         // Padding (offset 28)
     vec4 uv;            // Sprite UV rect (x, y, w, h) normalized 0-1 (offset 32)
+    vec4 uv_bounds;     // u_min, v_min, u_max, v_max (offset 48)
     vec2 pivot;         // Sprite pivot point (Normalized 0..1 relative to size)
     vec2 offset;        // Unused
-    vec4 color;         // Color Modulation (offset 64)
+    vec4 color;         // Color Modulation (offset 80)
 };
 
 // Storage buffer for sprite instances (readonly)
@@ -26,11 +27,15 @@ layout(std430, set = 0, binding = 0) readonly buffer SpriteInstanceBuffer {
 // Output to fragment shader
 layout(location = 0) out vec2 frag_texcoord;
 layout(location = 1) out vec4 frag_color;
+layout(location = 2) flat out uint frag_instanceID;
+layout(location = 3) flat out vec4 frag_uv_bounds;
 
 void main() {
     // Get instance ID (which sprite we're rendering)
     uint instanceID = gl_InstanceIndex;
     SpriteInstance sprite = sprites[instanceID];
+    frag_instanceID = instanceID;
+    frag_uv_bounds = sprite.uv_bounds;
     
     // Calculate UV coordinates
     frag_texcoord = sprite.uv.xy + in_texcoord * sprite.uv.zw;
