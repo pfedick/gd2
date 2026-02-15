@@ -31,6 +31,7 @@ Game::Game(GPUContext& gpu)
     : ppltk::Window(),
       gpu(gpu)
 {
+    SDL_SetHint(SDL_HINT_TIMER_RESOLUTION, "1");
     game = this;
     wm = (ppltk::WindowManager_SDL3*)ppltk::GetWindowManager();
     // wm->enableGPURenderer(gpu.gpu);
@@ -445,6 +446,8 @@ void Game::run()
             frame_time_accumulator = 0.0f;
             idle_time_accumulator = 0.0f;
         }
+        // Framerate-Limitierung (z.B. 60 FPS)
+        clock.limit(60);
     }
 }
 
@@ -498,6 +501,7 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
     if (player) editor.statusbar->setPlayerCoords(ppl7::grafix::Point(player->x, player->y));
     if (player) editor.statusbar->setPlayerState(player->getState());
 
+    metrics.frame_rate_compensation = clock.frame_rate_compensation;
     metrics.fps += clock.fps;
     metrics.total_sprites += level.countSprites();
     metrics.visible_sprites += level.countVisibleSprites();

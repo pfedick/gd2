@@ -95,6 +95,7 @@ private:
 
 public:
     void update();
+    void limit(int target_fps);
     uint64_t frame_count = 0;
     uint64_t current_second = 0;
     double time = 0.0f;
