@@ -34,50 +34,64 @@ void main() {
     vec2 uv_min = frag_uv_bounds.xy;
     vec2 uv_max = frag_uv_bounds.zw;
 
-    // Sample core texture
-    vec4 tex_color = texture(tex_sampler, frag_texcoord);
+    // Sample core texture with LOD 0 for sharp sprite rendering
+    vec4 tex_color = textureLod(tex_sampler, frag_texcoord, 0.0);
     
-    // If the pixel is already opaque, we render the sprite normally (with modulation)
-    if (tex_color.a > 0.1) {
+    // 1. Render core sprite if it's solid enough
+    // We use a smooth transition to avoid flickering at the edge of the sprite itself
+    float sprite_alpha = smoothstep(0.45, 0.55, tex_color.a);
+    if (sprite_alpha > 0.9) {
         tex_color.rgb *= tex_color.a;
-        out_color = tex_color * frag_color;
-        // Selection tint
-        out_color.rgb += vec3(0.1, 0.1, 0.1); 
+        out_color = (tex_color * frag_color) + vec4(0.1, 0.1, 0.1, 0.0);
         return;
     }
 
-    // Determine texel size for searching neighbors
-    ivec2 texSize = textureSize(tex_sampler, 0);
-    vec2 texelSize = 1.0 / vec2(texSize);
+    // 2. Search for outlines in the neighborhood
+    vec2 dX = dFdx(frag_texcoord);
+    vec2 dY = dFdy(frag_texcoord);
     
-    // Search radius - reduce slightly for tighter atlases
-    int radius = 2; 
-    bool is_edge = false;
+    float max_a = 0.0;
     
-    for (int y = -radius; y <= radius; y++) {
-        for (int x = -radius; x <= radius; x++) {
-            if (x == 0 && y == 0) continue;
-            
-            vec2 sample_uv = frag_texcoord + vec2(float(x), float(y)) * texelSize;
-            
-            // STRICT BOUNDARY CHECK (Avoid neighbor sprites in atlas)
-            // Using a tiny epsilon to stay safely within the intended sprite rect
-            if (sample_uv.x < uv_min.x || sample_uv.x > uv_max.x ||
-                sample_uv.y < uv_min.y || sample_uv.y > uv_max.y) {
-                continue;
-            }
+    // We use a stable 12-tap sampling pattern
+    // Using a slightly higher LOD (1.0) for the search makes the detection 
+    // much more stable against sub-pixel flickering and minification.
+    const vec2 taps[12] = {
+        vec2(-1.5, -1.5), vec2(0.0, -2.0), vec2(1.5, -1.5),
+        vec2(-2.0,  0.0),                  vec2(2.0,  0.0),
+        vec2(-1.5,  1.5), vec2(0.0,  2.0), vec2(1.5,  1.5),
+        vec2(-0.8, -0.8), vec2(0.8, -0.8), vec2(-0.8, 0.8), vec2(0.8, 0.8)
+    };
 
-            // Sample neighbor - use textureLod to be extra sure about sampling at level 0
-            if (textureLod(tex_sampler, sample_uv, 0.0).a > 0.1) {
-                is_edge = true;
-                break;
-            }
+    for (int i = 0; i < 12; i++) {
+        vec2 sample_uv = frag_texcoord + taps[i].x * dX + taps[i].y * dY;
+        
+        // STRICT BOUNDARY CHECK with tiny epsilon to prevent flickering at edges
+        if (sample_uv.x >= uv_min.x - 0.00001 && sample_uv.x <= uv_max.x + 0.00001 &&
+            sample_uv.y >= uv_min.y - 0.00001 && sample_uv.y <= uv_max.y + 0.00001) {
+            
+            // Sample alpha from a slightly blurred mipmap level for stability
+            // Note: This requires mipmaps to be generated for the atlas!
+            max_a = max(max_a, textureLod(tex_sampler, sample_uv, 1.0).a);
         }
-        if (is_edge) break;
     }
 
-    if (is_edge) {
-        out_color = vec4(1.0, 1.0, 1.0, 1.0);
+    // 3. Smooth the outline alpha to eliminate popping/flickering
+    float outline_alpha = smoothstep(0.1, 0.5, max_a);
+    
+    // Combine sprite and outline (simple max for selection look)
+    float final_a = max(sprite_alpha, outline_alpha);
+
+    if (final_a > 0.01) {
+        // Output white for the outline, or the sprite pixel
+        // For selection, we favor a solid white outline
+        out_color = vec4(final_a, final_a, final_a, final_a); // White PMA
+        
+        // If we are touching the sprite, blend with the slightly tinted sprite color
+        if (sprite_alpha > 0.01) {
+            vec4 sprite_col = (tex_color * frag_color) + vec4(0.1, 0.1, 0.1, 0.0);
+            sprite_col.rgb *= tex_color.a;
+            out_color = mix(out_color, sprite_col, sprite_alpha);
+        }
     } else {
         discard;
     }
