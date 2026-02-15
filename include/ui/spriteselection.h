@@ -15,12 +15,9 @@ private:
     Game* game;
     TilesFrame* tilesframe;
     ColorSelectionFrame* colorframe;
-    ppltk::RadioButton* layer0;
-    ppltk::RadioButton* layer1;
-    ppltk::RadioButton* layer2;
     ppltk::HorizontalSlider* z_axis;
     ppltk::ComboBox* tileset_combobox;
-    ppltk::ComboBox* plane_combobox;
+    ppltk::ComboBox* sprite_layer_combobox;
     ppltk::DoubleHorizontalSlider* scale_slider;
     ppltk::DoubleHorizontalSlider* rotation_slider;
 
@@ -60,8 +57,6 @@ public:
     void setColorIndex(int index);
     void setZAxis(int z);
     int zAxis() const;
-    void setPlane(int plane);
-    int plane() const;
     void valueChangedEvent(ppltk::Event* event, int value) override;
     void valueChangedEvent(ppltk::Event* event, int64_t value) override;
     void valueChangedEvent(ppltk::Event* event, double value) override;

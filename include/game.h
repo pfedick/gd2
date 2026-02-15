@@ -149,6 +149,11 @@ private:
         int ObjectType = 0;
         int ObjectDifficulty = 0xff;
         int ObjectLayer = 0;
+        // Sprites
+        ParallaxLayerId SpriteParallaxLayer = ParallaxLayerId::Player;
+        int SpriteLayer = 0;
+        int SpriteColorIndex = 0;
+
         History();
         void clear();
     };
@@ -175,7 +180,10 @@ private:
     MainMenue* mainmenue;
     StatusBar* statusbar;
 
+    // Sprites
     SpriteMode sprite_mode;
+    SpriteSystem::Item selected_sprite;
+    SpriteSystem* selected_sprite_system = NULL;
 
 public:
     GameEditor();

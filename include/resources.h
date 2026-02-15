@@ -34,10 +34,18 @@ public:
     TileOccupation Occupation;
 };
 
+class SpriteResource
+{
+public:
+    SpriteTexture Sprites;
+    SpriteTexture SpritesUi;
+};
+
 class Resources
 {
 private:
     void loadTiles(GPUContext& gpu);
+    void loadSprites(GPUContext& gpu);
 
 public:
     enum class TileSets
@@ -45,12 +53,18 @@ public:
         Granit = 1,
         MaxTileSet,
     };
+
+    enum class SpriteSets
+    {
+        Trees = 1,
+        MaxSpriteSet,
+    };
     SpriteTexture Cursor;
     SpriteTexture Hud;
     SpriteTexture Player;
     SpriteTexture TileTypes;
     TileResource Tiles[static_cast<int>(TileSets::MaxTileSet)];
-    SpriteTexture Trees;
+    SpriteResource SpriteSets[static_cast<int>(SpriteSets::MaxSpriteSet)];
     SpriteTexture Font24;
 
     SpriteTexture Particles;

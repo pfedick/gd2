@@ -6,6 +6,7 @@
 #include "ui/menue.h"
 #include "ui/worldwidget.h"
 #include "ui/objectselection.h"
+#include "ui/spriteselection.h"
 #include "constants.h"
 #include "resources.h"
 
@@ -120,7 +121,22 @@ void GameEditor::showTileTypeSelection()
 
 void GameEditor::showSpriteSelection()
 {
+    if (sprite_selection) {
+        closeAll();
+        return;
+    }
     closeAll();
+    sprite_selection = new SpriteSelection(0, 32, 300, statusbar->y() - 32, game);
+    sprite_selection->setSpriteSet(1, "Trees", &game->resources.SpriteSets[static_cast<int>(Resources::SpriteSets::Trees)].SpritesUi, 4);
+    sprite_selection->setCurrentLayer(history.lastTileLayer);
+    sprite_mode = SpriteMode::Draw;
+    selected_sprite.id = -1;
+    selected_sprite_system = NULL;
+
+    game->addChild(sprite_selection);
+    game->viewport.x1 = 300;
+    game->world_widget->setViewport(game->viewport);
+    game->game_viewport.setViewport(game->viewport);
 }
 
 void GameEditor::showObjectSelection()
@@ -253,18 +269,19 @@ void GameEditor::drawSelection(GPUBatcher& batcher)
 void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Point& mouse)
 {
     if (!sprite_selection) return;
-    // mouse.p
-    /*
-    if (sprite_selection->selectedSprite() >= 0 && sprite_mode != spriteModeDraw) {
+    if (mouse.x < 0 || mouse.y < 0) return;
+    if (sprite_selection->selectedSprite() >= 0 && sprite_mode != SpriteMode::Draw) {
         selected_sprite_system = NULL;
-        sprite_mode = spriteModeDraw;
+        sprite_mode = SpriteMode::Draw;
     }
-    if (sprite_mode == SpriteModeEdit && selected_sprite.id >= 0 && selected_sprite_system != NULL) {
-        int currentPlane = mainmenue->currentPlane();
-        selected_sprite_system->drawSelectedSpriteOutline(renderer, game_viewport, WorldCoords * planeFactor[currentPlane],
-                                                          selected_sprite.id);
-    } else if (sprite_mode == spriteModeDraw) {
-        if (!mouse.inside(game_viewport)) return;
+    ParallaxLayerId currentParalaxLayer = mainmenue->currentLayer();
+    ParallaxLayer& layer = game->level.layer(currentParalaxLayer);
+    ppl7::grafix::PointF parallax_worldcoords = game->WorldCamera * layer.speed_factor * layer.size_factor;
+    int sprite_layer = sprite_selection->currentLayer();
+    if (sprite_mode == SpriteMode::Edit && selected_sprite.id >= 0 && selected_sprite_system != NULL) {
+
+        selected_sprite_system->drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_sprite.id, layer.size_factor);
+    } else if (sprite_mode == SpriteMode::Draw) {
         int nr = sprite_selection->selectedSprite();
         if (nr < 0) return;
         int spriteset = sprite_selection->currentSpriteSet();
@@ -278,15 +295,15 @@ void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Poi
             // nr=nr * sprite_dimensions + ppl7::rand(0, sprite_dimensions - 1);
             nr = nr * sprite_dimensions;
         }
-        ppl7::grafix::Point tmouse = game_viewport.translate(mouse);
-        float scale = sprite_selection->spriteScale();
+        ppl7::grafix::PointF tmouse = game->game_viewport.translate(mouse);
+        float scale = sprite_selection->spriteScale() * layer.size_factor;
         float rotation = sprite_selection->spriteRotation();
-        if (!level.spriteset[spriteset]) return;
-        level.spriteset[spriteset]->drawScaledWithAngle(renderer, tmouse.x, tmouse.y, nr, scale, scale, rotation,
-                                                        level.palette.getColor(sprite_selection->colorIndex()));
-        level.spriteset[spriteset]->drawOutlinesWithAngle(renderer, tmouse.x, tmouse.y, nr, scale, scale, rotation);
+        if (nr < 0 || spriteset < 0 || spriteset < static_cast<int>(Resources::SpriteSets::MaxSpriteSet)) return;
+        game->resources.SpriteSets[static_cast<int>(spriteset)].Sprites.drawScaledWithAngle(
+            batcher, tmouse.x, tmouse.y, nr, scale, scale, rotation, game->level.palette.getColor(sprite_selection->colorIndex()));
+        game->resources.SpriteSets[static_cast<int>(spriteset)].Sprites.drawOutlinesWithAngle(batcher, tmouse.x, tmouse.y, nr, scale, scale,
+                                                                                              rotation);
     }
-        */
 }
 
 void GameEditor::drawSelectedTile(GPUBatcher& batcher, const ppl7::grafix::Point& mouse)

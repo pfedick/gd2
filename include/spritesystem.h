@@ -53,12 +53,12 @@ public:
     void setSpriteset(int no, SpriteTexture* spriteset);
     void setColorPalette(const ColorPalette& palette);
     void updateVisibleSpriteList(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Size& render_target_size);
-    void draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords, float scale) const;
+    void draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, float scale) const;
     void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer, unsigned char position) const;
     void load(const ppl7::ByteArrayPtr& ba);
-    bool findMatchingSprite(const ppl7::grafix::Point& p, SpriteSystem::Item& sprite) const;
+    bool findMatchingSprite(const ppl7::grafix::Point& p, SpriteSystem::Item& sprite, float scale) const;
 
-    void drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords, int id);
+    void drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, int id, float scale);
 
     size_t count() const;
     size_t countVisible() const;

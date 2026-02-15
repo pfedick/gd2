@@ -140,7 +140,7 @@ size_t SpriteSystem::countVisible() const
     return visible_sprite_map.size();
 }
 
-void SpriteSystem::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords, float scale) const
+void SpriteSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, float scale) const
 {
     if (!bSpritesVisible) return;
     std::map<uint64_t, const SpriteSystem::Item&>::const_iterator it;
@@ -163,10 +163,7 @@ void SpriteSystem::draw(GPUBatcher& batcher, const GameViewport& viewport, const
     }
 }
 
-void SpriteSystem::drawSelectedSpriteOutline(GPUBatcher& batcher,
-                                             const ppl7::grafix::Rect& viewport,
-                                             const ppl7::grafix::Point& worldcoords,
-                                             int id)
+void SpriteSystem::drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, int id, float scale)
 {
     if (!bSpritesVisible) return;
     std::map<int, SpriteSystem::Item>::const_iterator it;
@@ -174,8 +171,8 @@ void SpriteSystem::drawSelectedSpriteOutline(GPUBatcher& batcher,
     if (it != sprite_list.end()) {
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
-            item.texture->drawOutlinesWithAngle(batcher, item.x + viewport.x1 - worldcoords.x, item.y + viewport.y1 - worldcoords.y,
-                                                item.sprite_no, item.scale, item.scale, item.rotation);
+            item.texture->drawOutlinesWithAngle(batcher, item.x - worldcoords.x, item.y - worldcoords.y, item.sprite_no, item.scale * scale,
+                                                item.scale * scale, item.rotation);
         }
     }
 }
@@ -224,7 +221,7 @@ static inline ppl7::grafix::Point rotate_point(const ppl7::grafix::Point& p, con
     return pr;
 }
 
-bool SpriteSystem::findMatchingSprite(const ppl7::grafix::Point& p, SpriteSystem::Item& sprite) const
+bool SpriteSystem::findMatchingSprite(const ppl7::grafix::Point& p, SpriteSystem::Item& sprite, float scale) const
 {
     bool found_match = false;
     sprite.id = -1;
@@ -241,15 +238,15 @@ bool SpriteSystem::findMatchingSprite(const ppl7::grafix::Point& p, SpriteSystem
                     // rotate and scale selected point
                     ppl7::grafix::Point rp = rotate_point(p, item);
                     ppl7::grafix::Point of = item.texture->spriteOffset(item.sprite_no);
-                    int x = rp.x - item.x - ((float)of.x * item.scale);
-                    int y = rp.y - item.y - ((float)of.y * item.scale);
+                    int x = rp.x - item.x - ((float)of.x * item.scale * scale);
+                    int y = rp.y - item.y - ((float)of.y * item.scale * scale);
 
                     /*ppl7::PrintDebugTime("point: %d:%d, pivot: %d:%d, rotated point: %d:%d, Item: %d:%d\n",
                         p.x, p.y, item.x, item.y, rp.x, rp.y, x, y
                     );
                     */
 
-                    ppl7::grafix::Color c = draw.getPixel(x / item.scale, y / item.scale);
+                    ppl7::grafix::Color c = draw.getPixel(x / (item.scale * scale), y / (item.scale * scale));
                     if (c.alpha() > 40) {
                         sprite = item;
                         found_match = true;

@@ -43,6 +43,8 @@ void Resources::load(GPUContext& gpu)
         object_spritesets->setFontTexture(&Font24);
         object_spritesets->loadAll(gpu);
         ObjectsUi.load(gpu, "res/ui/objects.tex", SpriteBuffer::Memory);
+
+        loadSprites(gpu);
     }
     catch (const ppl7::Exception& exp) {
         exp.print();
@@ -56,4 +58,12 @@ void Resources::loadTiles(GPUContext& gpu)
     res.Sprites.load(gpu, "res/tiles.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
     res.SpritesUi.load(gpu, "res/ui/tiles.tex", SpriteBuffer::Memory);
     res.Occupation.createFromSpriteTexture(res.Sprites, TILE_WIDTH, TILE_HEIGHT);
+}
+
+void Resources::loadSprites(GPUContext& gpu)
+{
+    SpriteResource& res = SpriteSets[static_cast<int>(SpriteSets::Trees)];
+    res.Sprites.enableOutlines(true);
+    res.Sprites.load(gpu, "res/sprites/trees.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
+    res.SpritesUi.load(gpu, "res/ui/trees.tex", SpriteBuffer::Memory);
 }

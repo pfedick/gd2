@@ -18,33 +18,12 @@ SpriteSelection::SpriteSelection(int x, int y, int width, int height, Game* game
     this->addChild(tileset_combobox);
     y1 += 30;
 
-    this->addChild(new ppltk::Label(5, y1, 80, 30, "Layer: "));
-    plane_combobox = new ppltk::ComboBox(85, y1, client.width() - 85, 25);
-    plane_combobox->add("Close", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Close)));
-    plane_combobox->add("Near", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Near)));
-    plane_combobox->add("Player Front", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Front)));
-    plane_combobox->add("Player", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Player)));
-    plane_combobox->add("Player Back", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Back)));
-    plane_combobox->add("Middle", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Middle)));
-    plane_combobox->add("Far", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Far)));
-    plane_combobox->add("Horizon", ppl7::ToString("%d", static_cast<int>(ParallaxLayerId::Horizon)));
-
-    plane_combobox->setEventHandler(this);
-    this->addChild(plane_combobox);
-    y1 += 30;
-
     this->addChild(new ppltk::Label(5, y1, 70, 20, "Layer: "));
-    layer0 = new ppltk::RadioButton(60, y1, 110, 20, "before Tiles", true);
-    layer0->setEventHandler(this);
-    this->addChild(layer0);
-
-    layer1 = new ppltk::RadioButton(170, y1, 110, 20, "behind Tiles");
-    layer1->setEventHandler(this);
-    this->addChild(layer1);
-    y1 += 30;
-    layer2 = new ppltk::RadioButton(60, y1, 130, 20, "before Objects");
-    layer2->setEventHandler(this);
-    this->addChild(layer2);
+    sprite_layer_combobox = new ppltk::ComboBox(85, y1, client.width() - 85, 25);
+    sprite_layer_combobox->add("behind Tiles", "0");
+    sprite_layer_combobox->add("before Tiles", "1");
+    sprite_layer_combobox->setEventHandler(this);
+    this->addChild(sprite_layer_combobox);
     y1 += 30;
 
     this->addChild(new ppltk::Label(5, y1, 80, 30, "Z-Axis: "));
@@ -100,10 +79,7 @@ int SpriteSelection::selectedSprite() const
 
 int SpriteSelection::currentLayer() const
 {
-    if (layer0->checked()) return 1;
-    if (layer1->checked()) return 0;
-    if (layer2->checked()) return 2;
-    return 1;
+    return sprite_layer_combobox->currentIdentifier().toInt();
 }
 
 int SpriteSelection::spriteSetDimensions() const
@@ -115,14 +91,7 @@ int SpriteSelection::spriteSetDimensions() const
 
 void SpriteSelection::setCurrentLayer(int layer)
 {
-    if (layer == 1) layer0->setChecked(true);
-    if (layer == 0) layer1->setChecked(true);
-    if (layer == 2) {
-        if (plane_combobox->currentIdentifier().toInt() == 0)
-            layer2->setChecked(true);
-        else
-            layer0->setChecked(true);
-    }
+    sprite_layer_combobox->setCurrentIdentifier(ppl7::ToString("%d", layer));
 }
 
 void SpriteSelection::setCurrentSpriteSet(int id)
@@ -152,19 +121,6 @@ void SpriteSelection::setSpriteSet(int id, const ppl7::String& name, SpriteTextu
     spritesets[id] = sset;
     tileset_combobox->add(name, ppl7::ToString("%d", id));
     if (id == 1) setCurrentSpriteSet(1);
-}
-
-void SpriteSelection::setPlane(int plane)
-{
-    plane_combobox->setCurrentIdentifier(ppl7::ToString("%d", plane));
-    layer2->setEnabled(plane_combobox->currentIdentifier().toInt() == 0);
-    layer2->setVisible(plane_combobox->currentIdentifier().toInt() == 0);
-    if (plane != 0 && layer2->checked()) layer0->setChecked(true);
-}
-
-int SpriteSelection::plane() const
-{
-    return plane_combobox->currentIdentifier().toInt();
 }
 
 void SpriteSelection::setSpriteScale(float factor)
@@ -216,9 +172,7 @@ void SpriteSelection::valueChangedEvent(ppltk::Event* event, int value)
     } else if (event->widget() == colorframe) {
         tilesframe->setColor(colorframe->color());
         if (notifies_enabled) game->updateSpriteFromUi();
-    } else if (event->widget() == plane_combobox) {
-        layer2->setEnabled(plane_combobox->currentIdentifier().toInt() == 0);
-        layer2->setVisible(plane_combobox->currentIdentifier().toInt() == 0);
+    } else if (event->widget() == sprite_layer_combobox) {
         if (notifies_enabled) game->updateSpriteFromUi();
     }
 }
@@ -240,8 +194,4 @@ void SpriteSelection::valueChangedEvent(ppltk::Event* event, double value)
 void SpriteSelection::toggledEvent(ppltk::Event* event, bool checked)
 {
     // ppl7::PrintDebug("SpriteSelection::toggledEvent\n");
-    if ((event->widget() == layer0 || event->widget() == layer1 || event->widget() == layer2) && checked == true) {
-        // ppl7::PrintDebug("   SpriteSelection::toggledEvent => yes!\n");
-        if (notifies_enabled) game->updateSpriteFromUi();
-    }
 }

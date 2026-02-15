@@ -80,7 +80,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     metrics.time_draw_tsop.start();
 
     metrics.time_sprites.start();
-    background_sprites.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+    background_sprites.draw(*renderstate.batcher, parallax_worldcoords, size_factor);
     metrics.time_sprites.stop();
 
     metrics.time_tiles.start();
@@ -88,7 +88,7 @@ void ParallaxLayer::draw(RenderState& renderstate,
     metrics.time_tiles.stop();
 
     metrics.time_sprites.start();
-    front_sprites.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+    front_sprites.draw(*renderstate.batcher, parallax_worldcoords, size_factor);
     metrics.time_sprites.stop();
 
     if (myParallaxLayer == ParallaxLayerId::Player && player != NULL) {

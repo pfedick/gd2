@@ -143,6 +143,9 @@ void Game::init_grafix()
     level.setTileset(static_cast<int>(Resources::TileSets::Granit),
                      &resources.Tiles[static_cast<int>(Resources::TileSets::Granit)].Sprites);
     level.setTileTypeSpriteset(&resources.TileTypes);
+
+    level.setSpriteset(static_cast<int>(Resources::SpriteSets::Trees),
+                       &resources.SpriteSets[static_cast<int>(Resources::SpriteSets::Trees)].Sprites);
 }
 
 void Game::initUi()
