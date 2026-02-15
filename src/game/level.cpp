@@ -825,29 +825,28 @@ void Level::update(const GameClock& clock,
     // Objects
     metrics.time_objects.start();
     for (auto& layer : parallax_layers) {
-        layer.updateObjects(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
+        // TODO: layer.updateObjects(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
     }
     metrics.time_objects.stop();
 
     // Sprites
     metrics.time_update_sprites.start();
     for (auto& layer : parallax_layers) {
-        layer.updateSprites(clock, worldcoords * layer.size_factor * layer.speed_factor,
-                            render_target_size / layer.size_factor / layer.speed_factor);
+        layer.updateSprites(clock, worldcoords * layer.size_factor * layer.speed_factor, render_target_size / layer.size_factor);
     }
     metrics.time_update_sprites.stop();
 
     // Particles
     metrics.time_update_particles.start();
     for (auto& layer : parallax_layers) {
-        layer.updateParticles(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
+        // TODO:layer.updateParticles(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
     }
     metrics.time_update_particles.stop();
 
     // Lights
     metrics.time_update_lights.start();
     for (auto& layer : parallax_layers) {
-        layer.updateLights(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
+        // TODO:layer.updateLights(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
     }
     metrics.time_update_lights.stop();
 }

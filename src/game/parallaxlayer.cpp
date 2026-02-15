@@ -34,10 +34,12 @@ void ParallaxLayer::updateSprites(const GameClock& clock,
                                   const ppl7::grafix::PointF& worldcoords,
                                   const ppl7::grafix::Size& render_target_size)
 {
+
     ppl7::PrintDebug(
         "Updating sprites for ParallaxLayer %d with speed factor %.2f and size factor %.2f, coords=%0.0f:%0.0f, size:%d : %d\n ",
         static_cast<int>(myParallaxLayer), speed_factor, size_factor, worldcoords.x, worldcoords.y, render_target_size.width,
         render_target_size.height);
+
     background_sprites.updateVisibleSpriteList(worldcoords, render_target_size);
     front_sprites.updateVisibleSpriteList(worldcoords, render_target_size);
 }
