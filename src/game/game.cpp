@@ -661,15 +661,15 @@ void Game::mouseDownEvent(ppltk::MouseEvent* event)
         wm->setKeyboardFocus(world_widget);
         game_viewport.translateMouseEvent(event);
         if (editor.sprite_selection != NULL) {
-            // mouseDownEventOnSprite(event);
+            editor.mouseDownEventOnSprite(event);
         } else if (editor.object_selection != NULL) {
-            // mouseDownEventOnObject(event);
+            editor.mouseDownEventOnObject(event);
         } else if ((editor.tiles_selection != NULL || editor.tiletype_selection != NULL)) {
             editor.handleMouseDrawInWorld(*event);
         } else if (editor.waynet_edit != NULL) {
-            // mouseDownEventOnWayNet(event);
+            editor.mouseDownEventOnWayNet(event);
         } else if (editor.lights_selection != NULL) {
-            // mouseDownEventOnLight(event);
+            editor.mouseDownEventOnLight(event);
         }
     } else {
         ppl7::PrintDebugTime("Game::mouseDownEvent outside world_widget: %s\n", (const char*)event->widget()->widgetType());
@@ -678,6 +678,12 @@ void Game::mouseDownEvent(ppltk::MouseEvent* event)
 
 void Game::mouseWheelEvent(ppltk::MouseEvent* event)
 {
+    if (event->widget() == world_widget) {
+        game_viewport.translateMouseEvent(event);
+        if (editor.sprite_selection != NULL) {
+            editor.mouseWheelEventOnSprite(event);
+        }
+    }
 }
 
 void Game::keyDownEvent(ppltk::KeyEvent* event)

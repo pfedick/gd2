@@ -285,7 +285,7 @@ public:
     bool findSprite(const ppl7::grafix::Point& p,
                     const ppl7::grafix::Point& worldcoords,
                     SpriteSystem::Item& item,
-                    int& layer,
+                    ParallaxLayerId& parallax_layer,
                     ParallaxLayer::SpritePosition& layer_position) const;
     size_t countSprites() const;
     size_t countVisibleSprites() const;

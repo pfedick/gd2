@@ -352,3 +352,133 @@ void GameEditor::drawSelectedObject(GPUBatcher& batcher, const ppl7::grafix::Poi
     }
         */
 }
+
+void GameEditor::mouseDownEventOnObject(ppltk::MouseEvent* event)
+{
+}
+
+void GameEditor::mouseDownEventOnSprite(ppltk::MouseEvent* event)
+{
+#ifdef EVENTTRACKING
+    ppl7::PrintDebugTime("Game::mouseDownEventOnSprite\n");
+#endif
+
+    if (event->widget() == game->world_widget && event->buttonMask == ppltk::MouseState::Left) {
+        int nr = sprite_selection->selectedSprite();
+        if (nr < 0) {
+            selectSprite(event->p);
+            return;
+        }
+        if (sprite_mode != SpriteMode::Draw) return;
+        int spriteset = sprite_selection->currentSpriteSet();
+        int sprite_dimensions = sprite_selection->spriteSetDimensions();
+        if (spriteset == 7) {
+            if (nr == 0)
+                nr = ppl7::rand(0, 47);
+            else
+                nr = (nr - 1) * 6 + ppl7::rand(0, 5);
+        } else if (sprite_dimensions > 1) {
+            nr = nr * sprite_dimensions + ppl7::rand(0, sprite_dimensions - 1);
+        }
+        float scale = sprite_selection->spriteScale();
+        float rotation = sprite_selection->spriteRotation();
+        int layer = sprite_selection->currentLayer();
+        int z_axis = sprite_selection->zAxis();
+        /*
+        int currentPlane = sprite_selection->plane();
+        // ppl7::PrintDebug("plane: %d, layer: %d\n", currentPlane, layer);
+        if (spriteset > MAX_SPRITESETS) return;
+        if (currentPlane != 0 && (layer < 0 || layer > 1))
+            return;
+        else if (layer < 0 || layer > 2)
+            return;
+        if (!level.spriteset[spriteset]) return;
+        // ppl7::PrintDebug("OK\n");
+        SpriteSystem& ss = level.spritesystem(currentPlane, layer);
+        ppl7::grafix::Point coords = WorldCoords * planeFactor[currentPlane];
+        ss.addSprite(event->p.x + coords.x, event->p.y + coords.y, z_axis, spriteset, nr, scale, rotation, sprite_selection->colorIndex());
+        */
+    } else if (event->buttonMask == ppltk::MouseState::Right) {
+        sprite_selection->setSelectedSprite(-1);
+        sprite_mode = SpriteMode::Draw;
+        selected_sprite.id = -1;
+        selected_sprite_system = NULL;
+    }
+}
+
+void GameEditor::mouseWheelEventOnSprite(ppltk::MouseEvent* event)
+{
+    const bool* state = SDL_GetKeyboardState(NULL);
+    if (state[SDL_SCANCODE_LSHIFT]) {
+        if (sprite_mode == SpriteMode::Draw) {
+            float angle = sprite_selection->spriteRotation();
+            if (event->wheel.y < 0) angle -= 5;
+            if (event->wheel.y > 0) angle += 5;
+            if (angle <= 0) angle += 360;
+            if (angle >= 360) angle -= 360;
+            sprite_selection->setSpriteRotation(angle);
+        } else if (sprite_mode == SpriteMode::Edit && selected_sprite.id >= 0 && selected_sprite_system != NULL) {
+            if (event->wheel.y < 0) selected_sprite.rotation -= 5;
+            if (event->wheel.y > 0) selected_sprite.rotation += 5;
+            if (selected_sprite.rotation <= 0) selected_sprite.rotation += 360;
+            if (selected_sprite.rotation >= 360) selected_sprite.rotation -= 360;
+            sprite_selection->setSpriteRotation(selected_sprite.rotation);
+            selected_sprite_system->modifySprite(selected_sprite);
+        }
+
+    } else {
+        if (sprite_mode == SpriteMode::Draw) {
+            float scale = sprite_selection->spriteScale();
+            if (event->wheel.y < 0 && scale > 0.1)
+                scale -= 0.05;
+            else if (event->wheel.y > 0 && scale < 2.0)
+                scale += 0.05;
+            sprite_selection->setSpriteScale(scale);
+        } else if (sprite_mode == SpriteMode::Edit && selected_sprite.id >= 0 && selected_sprite_system != NULL) {
+            // printf ("wheel\n");
+            if (event->wheel.y < 0 && selected_sprite.scale > 0.1)
+                selected_sprite.scale -= 0.05;
+            else if (event->wheel.y > 0 && selected_sprite.scale < 2.0)
+                selected_sprite.scale += 0.05;
+            selected_sprite_system->modifySprite(selected_sprite);
+            sprite_selection->setSpriteScale(selected_sprite.scale);
+        }
+    }
+}
+
+void GameEditor::selectSprite(const ppl7::grafix::Point& mouse)
+{
+    ParallaxLayerId parallax_layer = ParallaxLayerId::Player;
+    ParallaxLayer::SpritePosition sprite_layer = ParallaxLayer::SpritePosition::Background;
+    if (game->level.findSprite(mouse, game->WorldCamera, selected_sprite, parallax_layer, sprite_layer)) {
+        ppl7::PrintDebug("found Sprite on parallax_layer %d, layer %d\n", (int)parallax_layer, (int)sprite_layer);
+        /*
+        mainmenue->setCurrentPlane(plane);
+        sprite_selection->enableNotfies(false);
+        sprite_selection->setPlane(plane);
+        sprite_selection->setCurrentLayer(layer);
+        sprite_selection->setCurrentSpriteSet(selected_sprite.sprite_set);
+        sprite_selection->setZAxis(selected_sprite.z);
+        sprite_selection->setSpriteScale(selected_sprite.scale);
+        sprite_selection->setSpriteRotation(selected_sprite.rotation);
+        sprite_selection->setColorIndex(selected_sprite.color_index);
+        sprite_selection->enableNotfies(true);
+
+        wm->setKeyboardFocus(world_widget);
+        sprite_mode = SpriteModeEdit;
+        selected_sprite_system = selected_sprite.spritesystem;
+        sprite_move_start = mouse;
+        */
+    } else {
+        selected_sprite.id = -1;
+        selected_sprite_system = NULL;
+    }
+}
+
+void GameEditor::mouseDownEventOnWayNet(ppltk::MouseEvent* event)
+{
+}
+
+void GameEditor::mouseDownEventOnLight(ppltk::MouseEvent* event)
+{
+}

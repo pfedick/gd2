@@ -185,6 +185,13 @@ private:
     SpriteSystem::Item selected_sprite;
     SpriteSystem* selected_sprite_system = NULL;
 
+    void mouseDownEventOnSprite(ppltk::MouseEvent* event);
+    void mouseDownEventOnObject(ppltk::MouseEvent* event);
+    void mouseDownEventOnWayNet(ppltk::MouseEvent* event);
+    void mouseDownEventOnLight(ppltk::MouseEvent* event);
+
+    void mouseWheelEventOnSprite(ppltk::MouseEvent* event);
+
 public:
     GameEditor();
     ~GameEditor();
@@ -207,6 +214,8 @@ public:
     void drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
     void drawSelectedTile(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
     void drawSelectedObject(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
+
+    void selectSprite(const ppl7::grafix::Point& mouse);
 };
 
 class Game : private ppltk::Window

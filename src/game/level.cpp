@@ -941,110 +941,28 @@ size_t Level::countVisibleParticles() const
     return total;
 }
 
-/*
-bool Level::findSprite(
-const ppl7::grafix::Point& p, const ppl7::grafix::Point& worldcoords, SpriteSystem::Item& item, int& plane, int& layer) const
+bool Level::findSprite(const ppl7::grafix::Point& p,
+                       const ppl7::grafix::Point& worldcoords,
+                       SpriteSystem::Item& item,
+                       ParallaxLayerId& parallax_layer,
+                       ParallaxLayer::SpritePosition& layer_position) const
 {
-if (NearPlane.isVisible()) {
-    ppl7::grafix::Point coords = p + worldcoords * planeFactor[6];
-    if (NearSprites[1].findMatchingSprite(coords, item)) {
-        plane = 6;
-        layer = 1;
-        return true;
+    for (auto& layer : parallax_layers) {
+        if (!layer.isVisible) continue;
+        ppl7::grafix::Point coords = p + worldcoords * layer.speed_factor * layer.size_factor;
+        if (layer.front_sprites.findMatchingSprite(coords, item, layer.size_factor)) {
+            parallax_layer = layer.myParallaxLayer;
+            layer_position = ParallaxLayer::SpritePosition::Front;
+            return true;
+        }
+        if (layer.background_sprites.findMatchingSprite(coords, item, layer.size_factor)) {
+            parallax_layer = layer.myParallaxLayer;
+            layer_position = ParallaxLayer::SpritePosition::Background;
+            return true;
+        }
     }
-    if (NearSprites[0].findMatchingSprite(coords, item)) {
-        plane = 6;
-        layer = 0;
-        return true;
-    }
+    return false;
 }
-if (FrontPlane.isVisible()) {
-    ppl7::grafix::Point coords = p + worldcoords * planeFactor[1];
-    if (FrontSprites[1].findMatchingSprite(coords, item)) {
-        plane = 1;
-        layer = 1;
-        return true;
-    }
-    if (FrontSprites[0].findMatchingSprite(coords, item)) {
-        plane = 1;
-        layer = 0;
-        return true;
-    }
-}
-if (PlayerPlane.isVisible()) {
-    ppl7::grafix::Point coords = p + worldcoords * planeFactor[0];
-    if (PlayerSprites[2].findMatchingSprite(coords, item)) {
-        plane = 0;
-        layer = 2;
-        return true;
-    }
-
-    if (PlayerSprites[1].findMatchingSprite(coords, item)) {
-        plane = 0;
-        layer = 1;
-        return true;
-    }
-    if (PlayerSprites[0].findMatchingSprite(coords, item)) {
-        plane = 0;
-        layer = 0;
-        return true;
-    }
-}
-if (BackPlane.isVisible()) {
-    ppl7::grafix::Point coords = p + worldcoords * planeFactor[3];
-    if (BackSprites[1].findMatchingSprite(coords, item)) {
-        plane = 3;
-        layer = 1;
-        return true;
-    }
-    if (BackSprites[0].findMatchingSprite(coords, item)) {
-        plane = 3;
-        layer = 0;
-        return true;
-    }
-}
-if (MiddlePlane.isVisible()) {
-    ppl7::grafix::Point coords = p + worldcoords * planeFactor[4];
-    if (MiddleSprites[1].findMatchingSprite(coords, item)) {
-        plane = 4;
-        layer = 1;
-        return true;
-    }
-    if (MiddleSprites[0].findMatchingSprite(coords, item)) {
-        plane = 4;
-        layer = 0;
-        return true;
-    }
-}
-if (FarPlane.isVisible()) {
-    ppl7::grafix::Point coords = p + worldcoords * planeFactor[2];
-    if (FarSprites[1].findMatchingSprite(coords, item)) {
-        plane = 2;
-        layer = 1;
-        return true;
-    }
-    if (FarSprites[0].findMatchingSprite(coords, item)) {
-        plane = 2;
-        layer = 0;
-        return true;
-    }
-}
-if (HorizonPlane.isVisible()) {
-    ppl7::grafix::Point coords = p + worldcoords * planeFactor[5];
-    if (HorizonSprites[1].findMatchingSprite(coords, item)) {
-        plane = 5;
-        layer = 1;
-        return true;
-    }
-    if (HorizonSprites[0].findMatchingSprite(coords, item)) {
-        plane = 5;
-        layer = 0;
-        return true;
-    }
-}
-return false;
-}
-*/
 
 size_t Level::tileCount() const
 {
