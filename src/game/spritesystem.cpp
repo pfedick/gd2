@@ -141,7 +141,10 @@ void SpriteSystem::updateVisibleSpriteList(const ppl7::grafix::Point& worldcoord
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
             if (item.boundary.x2 > view_x1 && item.boundary.x1 < view_x2 && item.boundary.y2 > view_y1 && item.boundary.y1 < view_y2) {
-                uint64_t id = ((uint64_t)item.z << 32 & 0x0000ffff00000000) | (uint64_t)(item.y << 16) | (uint64_t)item.x;
+                // uint64_t id = ((uint64_t)item.z << 32 & 0x0000ffff00000000) | (uint64_t)(item.y << 16) | (uint64_t)item.x;
+                uint64_t id =
+                    ((uint64_t)item.z << 48 & 0x00ffff0000000000) | (uint64_t)((item.y + 0xffff) << 24) | (uint64_t)(item.x + 0xffff);
+
                 visible_sprite_map.insert(std::pair<uint64_t, const SpriteSystem::Item&>(id, item));
             }
         }
@@ -208,8 +211,8 @@ void SpriteSystem::modifySprite(const SpriteSystem::Item& item)
         intitem.rotation = item.rotation;
         intitem.color_index = item.color_index;
         if (intitem.texture) {
-            intitem.boundary =
-                intitem.texture->spriteBoundary(intitem.sprite_no, intitem.scale, intitem.scale, intitem.rotation, intitem.x, intitem.y);
+            intitem.boundary = intitem.texture->spriteBoundary(intitem.sprite_no, intitem.scale * scale_factor,
+                                                               intitem.scale * scale_factor, intitem.rotation, intitem.x, intitem.y);
         }
     }
 }
