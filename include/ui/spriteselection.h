@@ -51,8 +51,8 @@ public:
     void setSpriteRotation(float rotation);
     float spriteRotation() const;
     void setSpriteSet(int id, const ppl7::String& name, SpriteTexture* sprites, int dimensions = 1);
-    int currentLayer() const;
-    void setCurrentLayer(int layer);
+    ParallaxLayer::SpritePosition currentSpriteLayer() const;
+    void setCurrentSpriteLayer(ParallaxLayer::SpritePosition layer);
     int colorIndex() const;
     void setColorIndex(int index);
     void setZAxis(int z);

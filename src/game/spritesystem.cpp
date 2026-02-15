@@ -80,6 +80,8 @@ int SpriteSystem::addSprite(
     item.color_index = color_index;
     item.rotation = sprite_rotation;
 
+    // ppl7::PrintDebug("Adding Sprite: id=%d, x=%d, y=%d, z=%d, spriteset=%d, sprite_no=%d, scale=%.2f, rotation=%.2f, color_index=%d\n",
+    //                  item.id, item.x, item.y, item.z, item.sprite_set, item.sprite_no, item.scale, item.rotation, item.color_index);
     /*
     if (item.sprite_set <= MAX_SPRITESETS && this->spriteset[item.sprite_set] != NULL) {
         item.texture = this->spriteset[item.sprite_set];
@@ -119,10 +121,14 @@ void SpriteSystem::updateVisibleSpriteList(const ppl7::grafix::Point& worldcoord
     for (it = sprite_list.begin(); it != sprite_list.end(); ++it) {
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
+            // ppl7::PrintDebug("Checking visibility for Sprite ID %d at (%d, %d) with boundary (%d, %d, %d, %d)\n", item.id, item.x,
+            // item.y,
+            //                  item.boundary.x1, item.boundary.y1, item.boundary.x2, item.boundary.y2);
             int x = item.x - worldcoords.x;
             int y = item.y - worldcoords.y;
             if (x + item.boundary.width() > 0 && y + item.boundary.height() > 0 && x - item.boundary.width() < render_target_size.width &&
                 y - item.boundary.height() < render_target_size.height) {
+                // ppl7::PrintDebug("  Sprite ID %d is visible and added to visible sprite map\n", item.id);
                 uint64_t id = ((uint64_t)item.z << 32 & 0x0000ffff00000000) | (uint64_t)(item.y << 16) | (uint64_t)item.x;
                 visible_sprite_map.insert(std::pair<uint64_t, const SpriteSystem::Item&>(id, item));
             }
@@ -144,22 +150,13 @@ void SpriteSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoo
 {
     if (!bSpritesVisible) return;
     std::map<uint64_t, const SpriteSystem::Item&>::const_iterator it;
+    // ppl7::PrintDebug("Drawing %zu sprites from %zu\n", visible_sprite_map.size(), sprite_list.size());
     for (it = visible_sprite_map.begin(); it != visible_sprite_map.end(); ++it) {
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
-            batcher.addSprite(*item.texture, item.sprite_no, item.x - worldcoords.x, item.y + worldcoords.y, item.scale * scale,
+            batcher.addSprite(*item.texture, item.sprite_no, item.x - worldcoords.x, item.y - worldcoords.y, item.scale * scale,
                               item.scale * scale, item.rotation, palette->getColor(item.color_index));
-            /*
-            item.texture->drawScaledWithAngle(renderer, item.x + viewport.x1 - worldcoords.x, item.y + viewport.y1 - worldcoords.y,
-                                              item.sprite_no, item.scale, item.scale, item.rotation, palette.getColor(item.color_index));
-            */
         }
-        /*
-        item.texture->drawBoundingBoxWithAngle(renderer,
-            item.x + viewport.x1 - worldcoords.x,
-            item.y + viewport.y1 - worldcoords.y,
-            item.sprite_no, item.scale, item.scale, item.rotation);
-        */
     }
 }
 
@@ -171,8 +168,8 @@ void SpriteSystem::drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::gr
     if (it != sprite_list.end()) {
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
-            item.texture->drawOutlinesWithAngle(batcher, item.x - worldcoords.x, item.y - worldcoords.y, item.sprite_no, item.scale * scale,
-                                                item.scale * scale, item.rotation);
+            batcher.addSpriteOutline(*item.texture, item.sprite_no, item.x - worldcoords.x, item.y - worldcoords.y, item.scale * scale,
+                                     item.scale * scale, item.rotation);
         }
     }
 }

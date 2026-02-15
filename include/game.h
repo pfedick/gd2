@@ -151,9 +151,8 @@ private:
         int ObjectDifficulty = 0xff;
         int ObjectLayer = 0;
         // Sprites
-        ParallaxLayerId SpriteParallaxLayer = ParallaxLayerId::Player;
-        int SpriteLayer = 0;
-        int SpriteColorIndex = 0;
+        ParallaxLayer::SpritePosition SpriteLayer = ParallaxLayer::SpritePosition::Background;
+        int SpriteColorIndex = 2;
 
         History();
         void clear();
@@ -185,6 +184,7 @@ private:
     SpriteMode sprite_mode;
     SpriteSystem::Item selected_sprite;
     SpriteSystem* selected_sprite_system = NULL;
+    ppl7::grafix::Point sprite_move_start;
 
     void mouseDownEventOnSprite(ppltk::MouseEvent* event);
     void mouseDownEventOnObject(ppltk::MouseEvent* event);
@@ -217,6 +217,7 @@ public:
     void drawSelectedObject(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
 
     void selectSprite(const ppl7::grafix::Point& mouse);
+    void updateSpriteFromUi();
 };
 
 class Game : private ppltk::Window
@@ -303,7 +304,6 @@ public:
     void updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics);
 
     void showUi(bool enable);
-    void updateSpriteFromUi();
 
     void moveWorld(float offset_x, float offset_y);
     void moveWorldOnMouseClick(const ppltk::MouseState& mouse);

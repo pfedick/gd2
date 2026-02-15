@@ -77,9 +77,9 @@ int SpriteSelection::selectedSprite() const
     return tilesframe->selectedTile();
 }
 
-int SpriteSelection::currentLayer() const
+ParallaxLayer::SpritePosition SpriteSelection::currentSpriteLayer() const
 {
-    return sprite_layer_combobox->currentIdentifier().toInt();
+    return static_cast<ParallaxLayer::SpritePosition>(sprite_layer_combobox->currentIdentifier().toInt());
 }
 
 int SpriteSelection::spriteSetDimensions() const
@@ -89,9 +89,9 @@ int SpriteSelection::spriteSetDimensions() const
     return it->second.dimensions;
 }
 
-void SpriteSelection::setCurrentLayer(int layer)
+void SpriteSelection::setCurrentSpriteLayer(ParallaxLayer::SpritePosition layer)
 {
-    sprite_layer_combobox->setCurrentIdentifier(ppl7::ToString("%d", layer));
+    sprite_layer_combobox->setCurrentIdentifier(ppl7::ToString("%d", static_cast<int>(layer)));
 }
 
 void SpriteSelection::setCurrentSpriteSet(int id)
@@ -171,23 +171,23 @@ void SpriteSelection::valueChangedEvent(ppltk::Event* event, int value)
         setCurrentSpriteSet(v);
     } else if (event->widget() == colorframe) {
         tilesframe->setColor(colorframe->color());
-        if (notifies_enabled) game->updateSpriteFromUi();
+        if (notifies_enabled) game->editor.updateSpriteFromUi();
     } else if (event->widget() == sprite_layer_combobox) {
-        if (notifies_enabled) game->updateSpriteFromUi();
+        if (notifies_enabled) game->editor.updateSpriteFromUi();
     }
 }
 
 void SpriteSelection::valueChangedEvent(ppltk::Event* event, int64_t value)
 {
     if (event->widget() == z_axis) {
-        if (notifies_enabled) game->updateSpriteFromUi();
+        if (notifies_enabled) game->editor.updateSpriteFromUi();
     }
 }
 
 void SpriteSelection::valueChangedEvent(ppltk::Event* event, double value)
 {
     if (event->widget() == scale_slider || event->widget() == rotation_slider) {
-        if (notifies_enabled) game->updateSpriteFromUi();
+        if (notifies_enabled) game->editor.updateSpriteFromUi();
     }
 }
 

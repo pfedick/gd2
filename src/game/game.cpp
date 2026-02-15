@@ -420,7 +420,7 @@ void Game::run()
         drawUi(cmdbuf, swapchainTexture, mouse);
 
         // TODO: Alle Berechnungen sollten hier passieren
-        level.update(clock, metrics, WorldCamera, game_viewport.getWindowSize());
+        level.update(clock, metrics, WorldCamera, game_viewport.getLogicalSize());
 
         // Frame done
         SDL_SubmitGPUCommandBuffer(cmdbuf);
@@ -599,11 +599,6 @@ void Game::closeEvent(ppltk::Event* event)
     quitGame = true;
 }
 
-void Game::updateSpriteFromUi()
-{
-    // TODO
-}
-
 void Game::enableControls(bool enable)
 {
     controlsEnabled = enable;
@@ -692,6 +687,17 @@ void Game::mouseWheelEvent(ppltk::MouseEvent* event)
 
 void Game::keyDownEvent(ppltk::KeyEvent* event)
 {
+    if (event->widget() == world_widget) {
+        if (editor.sprite_mode == GameEditor::SpriteMode::Edit && editor.sprite_selection != NULL && editor.selected_sprite.id >= 0 &&
+            editor.selected_sprite_system != NULL) {
+            if (event->key == ppltk::KeyEvent::KEY_DELETE && (event->modifier & ppltk::KeyEvent::KEYMOD_MODIFIER) == 0) {
+                // printf ("KeyEvent\n");
+                editor.selected_sprite_system->deleteSprite(editor.selected_sprite.id);
+                editor.selected_sprite.id = -1;
+                editor.selected_sprite_system = NULL;
+            }
+        }
+    }
     if (event->key == ppltk::KeyEvent::KEY_F9) {
         showUi(!showui);
     } else if (event->key == ppltk::KeyEvent::KEY_F10) {
@@ -737,6 +743,18 @@ void Game::mouseMoveEvent(ppltk::MouseEvent* event)
     if ((editor.tiles_selection != NULL || editor.tiletype_selection != NULL) && event->widget() == world_widget) {
         game_viewport.translateMouseEvent(event);
         editor.handleMouseDrawInWorld(*event);
+    }
+    if (editor.sprite_selection != NULL) {
+        if (event->widget() == world_widget && event->buttonMask == ppltk::MouseState::Left &&
+            editor.sprite_mode == GameEditor::SpriteMode::Edit && editor.selected_sprite.id >= 0 && editor.selected_sprite_system != NULL) {
+            game_viewport.translateMouseEvent(event);
+            ppl7::grafix::Point diff = event->p - editor.sprite_move_start;
+            editor.selected_sprite.x += diff.x;
+            editor.selected_sprite.y += diff.y;
+            editor.selected_sprite_system->modifySprite(editor.selected_sprite);
+            // printf("Move: %d, %d\n", diff.x, diff.y);
+            editor.sprite_move_start = event->p;
+        }
     }
 }
 

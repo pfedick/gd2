@@ -72,6 +72,12 @@ void GameEditor::closeAll()
         object_selection = NULL;
         selected_object = NULL;
     }
+    if (sprite_selection) {
+        history.SpriteLayer = sprite_selection->currentSpriteLayer();
+        history.SpriteColorIndex = sprite_selection->colorIndex();
+        delete sprite_selection;
+        sprite_selection = NULL;
+    }
     game->viewport.x1 = 0;
     if (game->world_widget) game->world_widget->setViewport(game->viewport);
     game->game_viewport.setViewport(game->viewport);
@@ -128,7 +134,8 @@ void GameEditor::showSpriteSelection()
     closeAll();
     sprite_selection = new SpriteSelection(0, 32, 300, statusbar->y() - 32, game);
     sprite_selection->setSpriteSet(1, "Trees", &game->resources.SpriteSets[static_cast<int>(Resources::SpriteSets::Trees)].SpritesUi, 4);
-    sprite_selection->setCurrentLayer(history.lastTileLayer);
+    sprite_selection->setCurrentSpriteLayer(history.SpriteLayer);
+    sprite_selection->setColorIndex(history.SpriteColorIndex);
     sprite_mode = SpriteMode::Draw;
     selected_sprite.id = -1;
     selected_sprite_system = NULL;
@@ -277,7 +284,7 @@ void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Poi
     ParallaxLayerId currentParalaxLayer = mainmenue->currentLayer();
     ParallaxLayer& layer = game->level.layer(currentParalaxLayer);
     ppl7::grafix::PointF parallax_worldcoords = game->WorldCamera * layer.speed_factor * layer.size_factor;
-    int sprite_layer = sprite_selection->currentLayer();
+    ParallaxLayer::SpritePosition sprite_layer = sprite_selection->currentSpriteLayer();
     if (sprite_mode == SpriteMode::Edit && selected_sprite.id >= 0 && selected_sprite_system != NULL) {
 
         selected_sprite_system->drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_sprite.id, layer.size_factor);
@@ -363,7 +370,7 @@ void GameEditor::mouseDownEventOnSprite(ppltk::MouseEvent* event)
     ppl7::PrintDebugTime("Game::mouseDownEventOnSprite\n");
 #endif
 
-    if (event->widget() == game->world_widget && event->buttonMask == ppltk::MouseState::Left) {
+    if (event->buttonMask == ppltk::MouseState::Left) {
         int nr = sprite_selection->selectedSprite();
         if (nr < 0) {
             selectSprite(event->p);
@@ -372,32 +379,27 @@ void GameEditor::mouseDownEventOnSprite(ppltk::MouseEvent* event)
         if (sprite_mode != SpriteMode::Draw) return;
         int spriteset = sprite_selection->currentSpriteSet();
         int sprite_dimensions = sprite_selection->spriteSetDimensions();
-        if (spriteset == 7) {
-            if (nr == 0)
-                nr = ppl7::rand(0, 47);
-            else
-                nr = (nr - 1) * 6 + ppl7::rand(0, 5);
-        } else if (sprite_dimensions > 1) {
+        if (sprite_dimensions > 1) {
             nr = nr * sprite_dimensions + ppl7::rand(0, sprite_dimensions - 1);
         }
         float scale = sprite_selection->spriteScale();
         float rotation = sprite_selection->spriteRotation();
-        int layer = sprite_selection->currentLayer();
+        ParallaxLayer::SpritePosition sprite_layer = sprite_selection->currentSpriteLayer();
         int z_axis = sprite_selection->zAxis();
-        /*
-        int currentPlane = sprite_selection->plane();
-        // ppl7::PrintDebug("plane: %d, layer: %d\n", currentPlane, layer);
-        if (spriteset > MAX_SPRITESETS) return;
-        if (currentPlane != 0 && (layer < 0 || layer > 1))
-            return;
-        else if (layer < 0 || layer > 2)
-            return;
-        if (!level.spriteset[spriteset]) return;
-        // ppl7::PrintDebug("OK\n");
-        SpriteSystem& ss = level.spritesystem(currentPlane, layer);
-        ppl7::grafix::Point coords = WorldCoords * planeFactor[currentPlane];
-        ss.addSprite(event->p.x + coords.x, event->p.y + coords.y, z_axis, spriteset, nr, scale, rotation, sprite_selection->colorIndex());
-        */
+
+        ParallaxLayerId parallax_layer = mainmenue->currentLayer();
+        if (spriteset >= static_cast<int>(Resources::SpriteSets::MaxSpriteSet)) return;
+        ParallaxLayer& layer = game->level.layer(parallax_layer);
+        ppl7::grafix::Point coords = game->WorldCamera * layer.speed_factor * layer.size_factor;
+
+        if (sprite_layer == ParallaxLayer::SpritePosition::Background) {
+            layer.background_sprites.addSprite(event->p.x + coords.x, event->p.y + coords.y, z_axis, spriteset, nr, scale, rotation,
+                                               sprite_selection->colorIndex());
+        }
+        if (sprite_layer == ParallaxLayer::SpritePosition::Front) {
+            layer.front_sprites.addSprite(event->p.x + coords.x, event->p.y + coords.y, z_axis, spriteset, nr, scale, rotation,
+                                          sprite_selection->colorIndex());
+        }
     } else if (event->buttonMask == ppltk::MouseState::Right) {
         sprite_selection->setSelectedSprite(-1);
         sprite_mode = SpriteMode::Draw;
@@ -451,12 +453,11 @@ void GameEditor::selectSprite(const ppl7::grafix::Point& mouse)
     ParallaxLayerId parallax_layer = ParallaxLayerId::Player;
     ParallaxLayer::SpritePosition sprite_layer = ParallaxLayer::SpritePosition::Background;
     if (game->level.findSprite(mouse, game->WorldCamera, selected_sprite, parallax_layer, sprite_layer)) {
-        ppl7::PrintDebug("found Sprite on parallax_layer %d, layer %d\n", (int)parallax_layer, (int)sprite_layer);
-        /*
-        mainmenue->setCurrentPlane(plane);
+        // ppl7::PrintDebug("found Sprite on parallax_layer %d, layer %d\n", (int)parallax_layer, (int)sprite_layer);
+
+        mainmenue->setCurrentLayer(parallax_layer);
         sprite_selection->enableNotfies(false);
-        sprite_selection->setPlane(plane);
-        sprite_selection->setCurrentLayer(layer);
+        sprite_selection->setCurrentSpriteLayer(sprite_layer);
         sprite_selection->setCurrentSpriteSet(selected_sprite.sprite_set);
         sprite_selection->setZAxis(selected_sprite.z);
         sprite_selection->setSpriteScale(selected_sprite.scale);
@@ -464,14 +465,40 @@ void GameEditor::selectSprite(const ppl7::grafix::Point& mouse)
         sprite_selection->setColorIndex(selected_sprite.color_index);
         sprite_selection->enableNotfies(true);
 
-        wm->setKeyboardFocus(world_widget);
-        sprite_mode = SpriteModeEdit;
+        game->wm->setKeyboardFocus(game->world_widget);
+        sprite_mode = SpriteMode::Edit;
         selected_sprite_system = selected_sprite.spritesystem;
         sprite_move_start = mouse;
-        */
+
     } else {
         selected_sprite.id = -1;
         selected_sprite_system = NULL;
+    }
+}
+
+void GameEditor::updateSpriteFromUi()
+{
+    if (!sprite_selection) return;
+    if (!selected_sprite_system) return;
+    if (selected_sprite.id < 0) return;
+    selected_sprite.z = sprite_selection->zAxis();
+    selected_sprite.color_index = sprite_selection->colorIndex();
+    selected_sprite.rotation = sprite_selection->spriteRotation();
+    selected_sprite.scale = sprite_selection->spriteScale();
+    ParallaxLayer& layer = game->level.layer(mainmenue->currentLayer());
+    SpriteSystem* new_ss = NULL;
+    if (sprite_selection->currentSpriteLayer() == ParallaxLayer::SpritePosition::Background) {
+        new_ss = &layer.background_sprites;
+    } else if (sprite_selection->currentSpriteLayer() == ParallaxLayer::SpritePosition::Front) {
+        new_ss = &layer.front_sprites;
+    }
+    if (new_ss != selected_sprite_system) {
+        selected_sprite_system->deleteSprite(selected_sprite.id);
+        int id = new_ss->addSprite(selected_sprite);
+        selected_sprite_system = new_ss;
+        selected_sprite_system->getSprite(id, selected_sprite);
+    } else {
+        selected_sprite_system->modifySprite(selected_sprite);
     }
 }
 
