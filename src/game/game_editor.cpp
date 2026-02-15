@@ -276,7 +276,7 @@ void GameEditor::drawSelection(GPUBatcher& batcher)
 void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Point& mouse)
 {
     if (!sprite_selection) return;
-    if (mouse.x < 0 || mouse.y < 0) return;
+    // if (mouse.x < 0 || mouse.y < 0) return;
     if (sprite_selection->selectedSprite() >= 0 && sprite_mode != SpriteMode::Draw) {
         selected_sprite_system = NULL;
         sprite_mode = SpriteMode::Draw;
