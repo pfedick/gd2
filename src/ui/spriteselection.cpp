@@ -36,7 +36,7 @@ SpriteSelection::SpriteSelection(int x, int y, int width, int height, Game* game
     this->addChild(new ppltk::Label(5, y1, 80, 30, "Scale: "));
     scale_slider = new ppltk::DoubleHorizontalSlider(85, y1, client.width() - 85, 30);
     scale_slider->setValue(1.0f);
-    scale_slider->setLimits(0.1f, 2.0f);
+    scale_slider->setLimits(0.1f, 4.0f);
     scale_slider->enableSpinBox(true, 0.05, 2, 70);
     scale_slider->setEventHandler(this);
     this->addChild(scale_slider);
@@ -125,7 +125,7 @@ void SpriteSelection::setSpriteSet(int id, const ppl7::String& name, SpriteTextu
 
 void SpriteSelection::setSpriteScale(float factor)
 {
-    if (factor >= 0.1f && factor <= 2.0f) scale_slider->setValue(factor);
+    if (factor >= 0.1f && factor <= 4.0f) scale_slider->setValue(factor);
 }
 
 float SpriteSelection::spriteScale() const
