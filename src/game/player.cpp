@@ -8,15 +8,15 @@
 #include "audiopool.h"
 #include "animation.h"
 
-static AnimationDefinition RunCycleLeft(36, 51, true, 51, 0.01666f);
-static AnimationDefinition RunCycleRight(16, 31, true, 31, 0.01666f);
-static AnimationDefinition JumpUp(53, 58, false, 58, 0.01666f);
-static AnimationDefinition JumpRightUp(60, 65, false, 65, 0.01666f);
-static AnimationDefinition JumpRightDown(66, 71, false, 71, 0.01666f);
-static AnimationDefinition JumpRightLand(72, 77, false, 0, 0.01666f);
-static AnimationDefinition JumpLeftUp(78, 84, false, 84, 0.01666f);
-static AnimationDefinition JumpLeftDown(85, 90, false, 90, 0.01666f);
-static AnimationDefinition JumpLeftLand(91, 96, false, 6, 0.01666f);
+static AnimationDefinition RunCycleLeft(36, 51, true, 51, 0.01666f * 2.0f);
+static AnimationDefinition RunCycleRight(16, 31, true, 31, 0.01666f * 2.0f);
+static AnimationDefinition JumpUp(53, 58, false, 58, 0.01666f * 2.0f);
+static AnimationDefinition JumpRightUp(60, 65, false, 65, 0.01666f * 2.0f);
+static AnimationDefinition JumpRightDown(66, 71, false, 71, 0.01666f * 2.0f);
+static AnimationDefinition JumpRightLand(72, 77, false, 0, 0.01666f * 2.0f);
+static AnimationDefinition JumpLeftUp(78, 84, false, 84, 0.01666f * 2.0f);
+static AnimationDefinition JumpLeftDown(85, 90, false, 90, 0.01666f * 2.0f);
+static AnimationDefinition JumpLeftLand(91, 96, false, 6, 0.01666f * 2.0f);
 
 static float getMaxAirFromDifficultyLevel(Config::DifficultyLevel level)
 {
