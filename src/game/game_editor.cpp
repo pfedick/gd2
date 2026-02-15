@@ -431,14 +431,14 @@ void GameEditor::mouseWheelEventOnSprite(ppltk::MouseEvent* event)
             float scale = sprite_selection->spriteScale();
             if (event->wheel.y < 0 && scale > 0.1)
                 scale -= 0.05;
-            else if (event->wheel.y > 0 && scale < 2.0)
+            else if (event->wheel.y > 0 && scale < 4.0)
                 scale += 0.05;
             sprite_selection->setSpriteScale(scale);
         } else if (sprite_mode == SpriteMode::Edit && selected_sprite.id >= 0 && selected_sprite_system != NULL) {
             // printf ("wheel\n");
             if (event->wheel.y < 0 && selected_sprite.scale > 0.1)
                 selected_sprite.scale -= 0.05;
-            else if (event->wheel.y > 0 && selected_sprite.scale < 2.0)
+            else if (event->wheel.y > 0 && selected_sprite.scale < 4.0)
                 selected_sprite.scale += 0.05;
             selected_sprite_system->modifySprite(selected_sprite);
             sprite_selection->setSpriteScale(selected_sprite.scale);
