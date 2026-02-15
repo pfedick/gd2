@@ -329,8 +329,6 @@ void TileGrid::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl
     // Start-Index in der Matrix berechnen
     int start_x = static_cast<int>(worldcoords.x / scaled_tile_width) - 2;
     int start_y = static_cast<int>(worldcoords.y / scaled_tile_height) - 2;
-    // if (start_x < 0) start_x = 0;
-    // if (start_y < 0) start_y = 0;
 
     // Den Pixel-Versatz berechnen (Modulo für Floats)
     float offset_x = worldcoords.x - (start_x * scaled_tile_width);
