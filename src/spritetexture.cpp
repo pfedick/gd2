@@ -398,92 +398,27 @@ void SpriteTexture::drawBoundingBoxWithAngle(GPUBatcher& gpu, int x, int y, int 
 void SpriteTexture::draw(GPUBatcher& gpu, int id, const SDL_FRect& source, const SDL_FRect& target) const
 {
     if (!bGPUBufferd) return;
-#ifdef OLD_SDL_RENDERER_API
-    std::map<int, SpriteIndexItem>::const_iterator it;
-    it = SpriteList.find(id);
-    if (it == SpriteList.end()) return;
-    const SpriteIndexItem& item = it->second;
-    SDL_SetTextureColorMod(item.tex, 255, 255, 255);
-    SDL_SetTextureAlphaMod(item.tex, 255);
-    SDL_RenderTexture(renderer, item.tex, &source, &target);
-#endif
+    // gpu.addSprite(*this, id, target.x, target.y, target.w / source.w, target.h / source.h, 0.0f, ppl7::grafix::Color(255, 255, 255, 255),
+    // source);
 }
 
 void SpriteTexture::drawScaled(GPUBatcher& gpu, int x, int y, int id, float scale_factor) const
 {
     if (!bGPUBufferd) return;
-#ifdef OLD_SDL_RENDERER_API
-    std::map<int, SpriteIndexItem>::const_iterator it;
-    it = SpriteList.find(id);
-    if (it == SpriteList.end()) return;
-    const SpriteIndexItem& item = it->second;
-    SDL_FRect tr;
-    // printf ("Sprite::drawScaled %0.1f\n", scale_factor);
-    if (scale_factor == 1.0) {
-        tr.x = x + item.Offset.x - item.Pivot.x;
-        tr.y = y + item.Offset.y - item.Pivot.y;
-        tr.w = item.r.w;
-        tr.h = item.r.h;
-    } else {
-        tr.x = x + (item.Offset.x - item.Pivot.x) * scale_factor;
-        tr.y = y + (item.Offset.y - item.Pivot.y) * scale_factor;
-        tr.w = (int)((float)item.r.w * scale_factor);
-        tr.h = (int)((float)item.r.h * scale_factor);
-    }
-    SDL_SetTextureColorMod(item.tex, 255, 255, 255);
-    SDL_SetTextureAlphaMod(item.tex, 255);
-    SDL_RenderTexture(renderer, item.tex, &item.r, &tr);
-#endif
+    gpu.addSprite(*this, id, (float)x, (float)y, scale_factor, scale_factor);
 }
 
 void SpriteTexture::drawScaled(GPUBatcher& gpu, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const
 {
     if (!bGPUBufferd) return;
-#ifdef OLD_SDL_RENDERER_API
-    std::map<int, SpriteIndexItem>::const_iterator it;
-    it = SpriteList.find(id);
-    if (it == SpriteList.end()) return;
-    const SpriteIndexItem& item = it->second;
-    SDL_FRect tr;
-    if (scale_factor == 1.0) {
-        tr.x = x + item.Offset.x - item.Pivot.x;
-        tr.y = y + item.Offset.y - item.Pivot.y;
-        tr.w = item.r.w;
-        tr.h = item.r.h;
-    } else {
-        tr.x = x + (item.Offset.x - item.Pivot.x) * scale_factor;
-        tr.y = y + (item.Offset.y - item.Pivot.y) * scale_factor;
-        tr.w = (int)((float)item.r.w * scale_factor);
-        tr.h = (int)((float)item.r.h * scale_factor);
-    }
-    SDL_SetTextureAlphaMod(item.tex, color_modulation.alpha());
-    SDL_SetTextureColorMod(item.tex, color_modulation.red(), color_modulation.green(), color_modulation.blue());
-    SDL_RenderTexture(renderer, item.tex, &item.r, &tr);
-#endif
+    gpu.addSprite(*this, id, (float)x, (float)y, scale_factor, scale_factor, 0.0f, color_modulation);
 }
 
 void SpriteTexture::drawScaledWithAngle(
     GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation) const
 {
     if (!bGPUBufferd) return;
-#ifdef OLD_SDL_RENDERER_API
-    std::map<int, SpriteIndexItem>::const_iterator it;
-    it = SpriteList.find(id);
-    if (it == SpriteList.end()) return;
-    const SpriteIndexItem& item = it->second;
-    SDL_FRect tr;
-    tr.x = x + (item.Offset.x - item.Pivot.x) * scale_x;
-    tr.y = y + (item.Offset.y - item.Pivot.y) * scale_y;
-    tr.w = (int)((float)item.r.w * scale_x);
-    tr.h = (int)((float)item.r.h * scale_y);
-    SDL_FPoint center;
-    center.x = (item.Pivot.x - item.Offset.x) * scale_x;
-    center.y = (item.Pivot.y - item.Offset.y) * scale_y;
-
-    SDL_SetTextureAlphaMod(item.tex, color_modulation.alpha());
-    SDL_SetTextureColorMod(item.tex, color_modulation.red(), color_modulation.green(), color_modulation.blue());
-    SDL_RenderTextureRotated(renderer, item.tex, &item.r, &tr, angle, &center, SDL_FLIP_NONE);
-#endif
+    gpu.addSprite(*this, id, (float)x, (float)y, scale_x, scale_y, angle, color_modulation);
 }
 
 void SpriteTexture::drawOutlines(GPUBatcher& gpu, int x, int y, int id, float scale_factor)
