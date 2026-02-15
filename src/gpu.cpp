@@ -68,15 +68,24 @@ SDL_GPUTexture* GPUContext::createGPUTexture(const ppl7::grafix::Drawable& surfa
     if (!gpu) {
         throw GPUException("GPU device is not initialized");
     }
+    // 1. Berechnung der Mip-Levels basierend auf der Größe
+    Uint32 num_levels = 1;
+    Uint32 w = (Uint32)surface.width();
+    Uint32 h = (Uint32)surface.height();
+    while (w > 1 || h > 1) {
+        w >>= 1;
+        h >>= 1;
+        num_levels++;
+    }
     // Textur-Beschreibung
     SDL_GPUTextureCreateInfo texture_info = {
         .type = SDL_GPU_TEXTURETYPE_2D,
-        .format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM, // BGRA matches PPL7 byte order
-        .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER,          // Für Shader-Sampling
+        .format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM,                            // BGRA matches PPL7 byte order
+        .usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, // Required for Mipmap generation
         .width = (Uint32)surface.width(),
         .height = (Uint32)surface.height(),
         .layer_count_or_depth = 1,
-        .num_levels = 1,
+        .num_levels = num_levels,
     };
     // Textur erstellen
     SDL_GPUTexture* texture = SDL_CreateGPUTexture(gpu, &texture_info);
@@ -133,6 +142,11 @@ SDL_GPUTexture* GPUContext::createGPUTexture(const ppl7::grafix::Drawable& surfa
                                            .d = 1};
     SDL_UploadToGPUTexture(copy_pass, &transfer_region, &texture_region, false);
     SDL_EndGPUCopyPass(copy_pass);
+
+    // 2. Mipmaps auf der GPU generieren lassen
+    if (num_levels > 1) {
+        SDL_GenerateMipmapsForGPUTexture(cmd, texture);
+    }
     SDL_SubmitGPUCommandBuffer(cmd);
     SDL_WaitForGPUIdle(gpu); // Wartet bis GPU fertig ist
     SDL_ReleaseGPUTransferBuffer(gpu, transfer_buffer);
@@ -183,6 +197,21 @@ void GPUContext::updateGPUTexture(SDL_GPUTexture* texture, const ppl7::grafix::D
                                            .d = 1};
     SDL_UploadToGPUTexture(copy_pass, &transfer_region, &texture_region, false);
     SDL_EndGPUCopyPass(copy_pass);
+
+    // Mipmaps nach dem Update neu generieren (falls vorhanden)
+    // Wir berechnen die Anzahl der Level erneut, um zu entscheiden, ob wir generieren müssen.
+    Uint32 num_levels = 1;
+    Uint32 w = (Uint32)surface.width();
+    Uint32 h = (Uint32)surface.height();
+    while (w > 1 || h > 1) {
+        w >>= 1;
+        h >>= 1;
+        num_levels++;
+    }
+    if (num_levels > 1) {
+        SDL_GenerateMipmapsForGPUTexture(cmd, texture);
+    }
+
     SDL_SubmitGPUCommandBuffer(cmd);
     SDL_ReleaseGPUTransferBuffer(gpu, transfer_buffer);
 }
@@ -342,11 +371,11 @@ void GPUStreamingTexture::resize(int width, int height)
     memset(&textureInfo, 0, sizeof(SDL_GPUTextureCreateInfo));
     textureInfo.type = SDL_GPU_TEXTURETYPE_2D;
     textureInfo.format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM;
-    textureInfo.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER; // WICHTIG: Soll im Shader gelesen werden
+    textureInfo.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET; // Added COLOR_TARGET for consistency
     textureInfo.width = size.width;
     textureInfo.height = size.height;
     textureInfo.layer_count_or_depth = 1;
-    textureInfo.num_levels = 1;
+    textureInfo.num_levels = 1; // Streaming textures usually don't need mipmaps, but usage should be consistent
     // ppl7::PrintDebug("SDL_CreateGPUTexture for Window\n");
     texture = SDL_CreateGPUTexture(gpu, &textureInfo);
     if (!texture) throw GPUException("SDL_CreateGPUTexture ERROR: %s", SDL_GetError());
