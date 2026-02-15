@@ -294,8 +294,8 @@ void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Poi
         float scale = sprite_selection->spriteScale() * layer.size_factor;
         float rotation = sprite_selection->spriteRotation();
         if (nr < 0 || spriteset < 0 || spriteset >= static_cast<int>(Resources::SpriteSets::MaxSpriteSet)) return;
-        game->resources.SpriteSets[static_cast<int>(spriteset)].Sprites.drawScaledWithAngle(
-            batcher, tmouse.x, tmouse.y, nr, scale, scale, rotation, game->level.palette.getColor(sprite_selection->colorIndex()));
+        // game->resources.SpriteSets[static_cast<int>(spriteset)].Sprites.drawScaledWithAngle(
+        //     batcher, tmouse.x, tmouse.y, nr, scale, scale, rotation, game->level.palette.getColor(sprite_selection->colorIndex()));
         game->resources.SpriteSets[static_cast<int>(spriteset)].Sprites.drawOutlinesWithAngle(batcher, tmouse.x, tmouse.y, nr, scale, scale,
                                                                                               rotation);
     }

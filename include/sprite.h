@@ -190,9 +190,6 @@ private:
     std::map<int, ppl7::grafix::Image> InMemoryTextureMap;
     std::map<int, SpriteIndexItem> SpriteList;
 
-    SDL_GPUTexture* current_outline_texture;
-    int current_outline_sprite_id;
-
     bool bGPUBufferd;
     bool bMemoryBufferd;
     bool bOutlinesEnabled;
@@ -203,7 +200,6 @@ private:
 
     ppl7::grafix::Image loadTexture(ppl7::PFPChunk* chunk);
     void loadIndex(ppl7::PFPChunk* chunk);
-    SDL_GPUTexture* postGenerateOutlines(int sprite_id);
     SDL_GPUTexture* findTexture(int id) const;
     const ppl7::grafix::Drawable* findInMemoryTexture(int id) const;
     const ppl7::grafix::Size& textureSize(int id) const;

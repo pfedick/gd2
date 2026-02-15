@@ -16,8 +16,6 @@ SpriteTexture::SpriteTexture()
     bHasSpeculars = true;
     bGPUBufferd = true;
     defaultBlendMode = SDL_BLENDMODE_BLEND;
-    current_outline_texture = NULL;
-    current_outline_sprite_id = -1;
     gpu = NULL;
 }
 
@@ -64,10 +62,7 @@ void SpriteTexture::clear()
         for (it = TextureMap.begin(); it != TextureMap.end(); ++it) {
             gpu->destroyGPUTexture(it->second);
         }
-        if (current_outline_texture) gpu->destroyGPUTexture(current_outline_texture);
     }
-    current_outline_texture = NULL;
-    current_outline_sprite_id = -1;
     TextureMap.clear();
     InMemoryTextureMap.clear();
     SpriteList.clear();
@@ -424,64 +419,13 @@ void SpriteTexture::drawScaledWithAngle(
 void SpriteTexture::drawOutlines(GPUBatcher& gpu, int x, int y, int id, float scale_factor)
 {
     if (!bOutlinesEnabled) return;
-    std::map<int, SpriteIndexItem>::const_iterator it;
-    it = SpriteList.find(id);
-    if (it == SpriteList.end()) return;
-    const SpriteIndexItem& item = it->second;
-
-    if (id != current_outline_sprite_id || current_outline_texture == NULL) {
-        current_outline_texture = postGenerateOutlines(id);
-        if (current_outline_texture)
-            current_outline_sprite_id = id;
-        else
-            return;
-    }
-
-    SDL_FRect tr;
-    // printf ("Sprite::drawScaled %0.1f\n", scale_factor);
-    if (scale_factor == 1.0) {
-        tr.x = x + item.Offset.x - item.Pivot.x;
-        tr.y = y + item.Offset.y - item.Pivot.y;
-        tr.w = item.r.w;
-        tr.h = item.r.h;
-    } else {
-        tr.x = x + (item.Offset.x - item.Pivot.x) * scale_factor;
-        tr.y = y + (item.Offset.y - item.Pivot.y) * scale_factor;
-        tr.w = (int)((float)item.r.w * scale_factor);
-        tr.h = (int)((float)item.r.h * scale_factor);
-    }
-#ifdef OLD_SDL_RENDERER_API
-    SDL_RenderTexture(renderer, current_outline_texture, NULL, &tr);
-#endif
+    gpu.addSpriteOutline(*this, id, (float)x, (float)y, scale_factor, scale_factor);
 }
 
 void SpriteTexture::drawOutlinesWithAngle(GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle)
 {
     if (!bOutlinesEnabled) return;
-    std::map<int, SpriteIndexItem>::const_iterator it;
-    it = SpriteList.find(id);
-    if (it == SpriteList.end()) return;
-    const SpriteIndexItem& item = it->second;
-
-    if (id != current_outline_sprite_id || current_outline_texture == NULL) {
-        current_outline_texture = postGenerateOutlines(id);
-        if (current_outline_texture)
-            current_outline_sprite_id = id;
-        else
-            return;
-    }
-    SDL_FRect tr;
-    tr.x = x + (item.Offset.x - item.Pivot.x) * scale_x;
-    tr.y = y + (item.Offset.y - item.Pivot.y) * scale_y;
-    tr.w = (int)((float)item.r.w * scale_x);
-    tr.h = (int)((float)item.r.h * scale_y);
-    SDL_FPoint center;
-    center.x = (item.Pivot.x - item.Offset.x) * scale_x;
-    center.y = (item.Pivot.y - item.Offset.y) * scale_y;
-    // TODO
-#ifdef OLD_SDL_RENDERER_API
-    SDL_RenderTextureRotated(renderer, current_outline_texture, NULL, &tr, angle, &center, SDL_FLIP_NONE);
-#endif
+    gpu.addSpriteOutline(*this, id, (float)x, (float)y, scale_x, scale_y, angle);
 }
 
 ppl7::grafix::Size SpriteTexture::spriteSize(int id, float scale_factor) const
@@ -681,28 +625,6 @@ static void generateOutlinesForSprite(const ppl7::grafix::Drawable& source, ppl7
             }
         }
     }
-}
-
-SDL_GPUTexture* SpriteTexture::postGenerateOutlines(int sprite_id)
-{
-    if (!bMemoryBufferd || !bOutlinesEnabled) return NULL;
-    // ppl7::PrintDebugTime("SpriteTexture::postGenerateOutlines\n");
-    // double start=ppl7::GetMicrotime();
-    if (current_outline_texture) gpu->destroyGPUTexture(current_outline_texture);
-    current_outline_texture = NULL;
-    current_outline_sprite_id = -1;
-    std::map<int, SpriteIndexItem>::iterator it;
-    it = SpriteList.find(sprite_id);
-    if (it == SpriteList.end()) return NULL;
-    const SpriteIndexItem& item = it->second;
-    ppl7::grafix::Image target(item.r.w, item.r.h, ppl7::grafix::RGBFormat::A8R8G8B8);
-
-    ppl7::grafix::Rect r(item.r.x, item.r.y, item.r.w, item.r.h);
-    ppl7::grafix::Drawable source = item.drawable->getDrawable(r);
-    generateOutlinesForSprite(source, target);
-    SDL_GPUTexture* tex = gpu->createGPUTexture(target);
-    // ppl7::PrintDebugTime("  ===> %0.6f s\n", ppl7::GetMicrotime() - start);
-    return tex;
 }
 
 const ppl7::grafix::Size& SpriteTexture::textureSize(int id) const

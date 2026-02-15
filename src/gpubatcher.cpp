@@ -16,6 +16,8 @@ GPUBatcher::GPUBatcher()
     primitiveVertShader = nullptr;
     primitiveFragShader = nullptr;
     spritePipeline = nullptr;
+    spriteOutlinePipeline = nullptr;
+    outlineFragShader = nullptr;
     primitivePipeline = nullptr;
     primitiveFillPipeline = nullptr;
     sampler = nullptr;
@@ -67,74 +69,70 @@ void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
     }
 
     // Upload instance data for all sprite batches
-    for (const auto& [textureId, spriteList] : spriteCommands) {
+    for (const auto& [batchKey, spriteList] : spriteCommands) {
         if (spriteList.empty()) continue;
 
         // Collect instance data
         for (const SpriteCommand& spriteCmd : spriteList) {
-            const SpriteTexture::SpriteIndexItem* item = spriteCmd.sprite->getSpriteIndex(spriteCmd.sprite_id);
-            if (item) {
-                // Determine Pivot Point in Texture Coordinates (Pixels relative to Texture Top-Left)
-                // Legacy: center = Pivot - Offset
-                float pivot_pixel_x = (float)item->Pivot.x - (float)item->Offset.x;
-                float pivot_pixel_y = (float)item->Pivot.y - (float)item->Offset.y;
+            // Determine Pivot Point in Texture Coordinates (Pixels relative to Texture Top-Left)
+            float pivot_pixel_x = spriteCmd.pivot_x;
+            float pivot_pixel_y = spriteCmd.pivot_y;
 
-                // Set world position to the desired Pivot Point (x,y)
-                // The shader assumes 'pos' is the center of rotation/scaling.
-                float world_x = spriteCmd.x;
-                float world_y = spriteCmd.y;
+            // Set world position to the desired Pivot Point (x,y)
+            // The shader assumes 'pos' is the center of rotation/scaling.
+            float world_x = spriteCmd.x;
+            float world_y = spriteCmd.y;
 
-                // X: 0..W -> -1..1
-                float ndc_x = (world_x * 2.0f / screenWidth) - 1.0f;
-                // Y: +1 (Top) ... -1 (Bottom)
-                float ndc_y = 1.0f - (world_y * 2.0f / screenHeight);
+            // X: 0..W -> -1..1
+            float ndc_x = (world_x * 2.0f / screenWidth) - 1.0f;
+            // Y: +1 (Top) ... -1 (Bottom)
+            float ndc_y = 1.0f - (world_y * 2.0f / screenHeight);
 
-                float rad = spriteCmd.angle * (M_PI / 180.0f);
-                float c = cosf(rad);
-                float s = sinf(rad);
+            float rad = spriteCmd.angle * (M_PI / 180.0f);
+            float c = cosf(rad);
+            float s = sinf(rad);
 
-                // Pixel dimensions of the sprite
-                float sw = (float)item->r.w * spriteCmd.scale_x;
-                float sh = (float)item->r.h * spriteCmd.scale_y;
+            // Pixel dimensions of the sprite
+            float sw = spriteCmd.sprite_w * spriteCmd.scale_x;
+            float sh = spriteCmd.sprite_h * spriteCmd.scale_y;
 
-                // Matrix calculation to transform (0..1) unit vector to Rotated NDC
-                float m00 = (2.0f / screenWidth) * sw * c;
-                float m01 = (2.0f / screenWidth) * sh * (-s);
-                float m10 = (-2.0f / screenHeight) * sw * s;
-                float m11 = (-2.0f / screenHeight) * sh * c;
+            // Matrix calculation to transform (0..1) unit vector to Rotated NDC
+            float m00 = (2.0f / screenWidth) * sw * c;
+            float m01 = (2.0f / screenWidth) * sh * (-s);
+            float m10 = (-2.0f / screenHeight) * sw * s;
+            float m11 = (-2.0f / screenHeight) * sh * c;
 
-                SpriteInstance inst;
-                inst.pos_x = ndc_x;
-                inst.pos_y = ndc_y;
+            SpriteInstance inst;
+            inst.pos_x = ndc_x;
+            inst.pos_y = ndc_y;
 
-                inst.m00 = m00;
-                inst.m01 = m01;
-                inst.m10 = m10;
-                inst.m11 = m11;
+            inst.m00 = m00;
+            inst.m01 = m01;
+            inst.m10 = m10;
+            inst.m11 = m11;
 
-                inst.pos_z = spriteCmd.z;
-                inst.pad2 = 0.0f;
+            inst.pos_z = spriteCmd.z;
+            inst.pad2 = 0.0f;
 
-                inst.uv_x = item->uv.x;
-                inst.uv_y = item->uv.y;
-                inst.uv_w = item->uv.w;
-                inst.uv_h = item->uv.h;
+            inst.uv_x = spriteCmd.uv_x;
+            inst.uv_y = spriteCmd.uv_y;
+            inst.uv_w = spriteCmd.uv_w;
+            inst.uv_h = spriteCmd.uv_h;
 
-                // Normalize pivot relative to texture size
-                inst.pivot_x = (item->r.w > 0) ? pivot_pixel_x / (float)item->r.w : 0.0f;
-                inst.pivot_y = (item->r.h > 0) ? pivot_pixel_y / (float)item->r.h : 0.0f;
+            // Normalize pivot relative to texture size
+            inst.pivot_x = (spriteCmd.sprite_w > 0) ? pivot_pixel_x / (float)spriteCmd.sprite_w : 0.0f;
+            inst.pivot_y = (spriteCmd.sprite_h > 0) ? pivot_pixel_y / (float)spriteCmd.sprite_h : 0.0f;
 
-                inst.offset_x = 0.0f;
-                inst.offset_y = 0.0f;
+            inst.offset_x = 0.0f;
+            inst.offset_y = 0.0f;
 
-                float a = (float)spriteCmd.color_modulation.alpha() / 255.0f;
-                inst.color_r = ((float)spriteCmd.color_modulation.red() / 255.0f) * a;
-                inst.color_g = ((float)spriteCmd.color_modulation.green() / 255.0f) * a;
-                inst.color_b = ((float)spriteCmd.color_modulation.blue() / 255.0f) * a;
-                inst.color_a = a;
+            float a = (float)spriteCmd.color_modulation.alpha() / 255.0f;
+            inst.color_r = ((float)spriteCmd.color_modulation.red() / 255.0f) * a;
+            inst.color_g = ((float)spriteCmd.color_modulation.green() / 255.0f) * a;
+            inst.color_b = ((float)spriteCmd.color_modulation.blue() / 255.0f) * a;
+            inst.color_a = a;
 
-                instanceData.push_back(inst);
-            }
+            instanceData.push_back(inst);
         }
     }
 
@@ -399,9 +397,6 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
 
         // ppl7::PrintDebugTime("  endRenderPass: Drawing %zu sprites\n", totalSprites);
 
-        // Bind sprite pipeline
-        SDL_BindGPUGraphicsPipeline(render_pass, spritePipeline);
-
         // Bind vertex buffer only
         SDL_GPUBufferBinding vertexBinding = {.buffer = vertexBuffer, .offset = 0};
         SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
@@ -409,28 +404,28 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
         // Bind storage buffer for sprite instance data
         SDL_BindGPUVertexStorageBuffers(render_pass, 0, &storageBuffer, 1);
 
-        // Draw by texture batch
-        Uint32 instanceOffset = 0;
-
         // Bind index buffer once
         SDL_GPUBufferBinding indexBinding = {.buffer = indexBuffer, .offset = 0};
         SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
-        for (const auto& [textureId, spriteList] : spriteCommands) {
+        // Draw by texture batch
+        Uint32 instanceOffset = 0;
+        SDL_GPUGraphicsPipeline* currentPipeline = nullptr;
+
+        for (const auto& [batchKey, spriteList] : spriteCommands) {
             if (spriteList.empty()) continue;
 
-            const SpriteCommand& firstSprite = spriteList.front();
-            const SpriteTexture::SpriteIndexItem* indexItem = firstSprite.sprite->getSpriteIndex(firstSprite.sprite_id);
-            if (!indexItem || !indexItem->tex) {
-                instanceOffset += (Uint32)spriteList.size();
-                continue;
+            // Pipeline switch if needed
+            SDL_GPUGraphicsPipeline* targetPipeline = batchKey.outline ? spriteOutlinePipeline : spritePipeline;
+            if (targetPipeline != currentPipeline) {
+                SDL_BindGPUGraphicsPipeline(render_pass, targetPipeline);
+                currentPipeline = targetPipeline;
             }
 
             // Bind texture for this batch
-            bindTexture(render_pass, indexItem->tex);
+            bindTexture(render_pass, batchKey.texture);
 
             // Draw instances for this batch only
-            // first_instance = instanceOffset
             SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)spriteList.size(), 0, 0, instanceOffset);
 
             instanceOffset += (Uint32)spriteList.size();
@@ -480,9 +475,71 @@ void GPUBatcher::addSprite(const SpriteTexture& sprite,
     if (!item || !item->tex) {
         return;
     }
-    SpriteCommand cmd(&sprite, sprite_id, x, y, z, scale_x, scale_y, angle, color_modulation);
+
+    SpriteCommand cmd;
+    cmd.texture = item->tex;
+    cmd.x = x;
+    cmd.y = y;
+    cmd.z = z;
+    cmd.scale_x = scale_x;
+    cmd.scale_y = scale_y;
+    cmd.angle = angle;
+    cmd.color_modulation = color_modulation;
+
+    cmd.uv_x = item->uv.x;
+    cmd.uv_y = item->uv.y;
+    cmd.uv_w = item->uv.w;
+    cmd.uv_h = item->uv.h;
+
+    cmd.pivot_x = (float)item->Pivot.x - (float)item->Offset.x;
+    cmd.pivot_y = (float)item->Pivot.y - (float)item->Offset.y;
+    cmd.sprite_w = (float)item->r.w;
+    cmd.sprite_h = (float)item->r.h;
+    cmd.outline = false;
+
     z -= 0.0001f; // Slightly increase Z to ensure correct layering
-    spriteCommands[item->tex].push_back(cmd);
+    SpriteBatchKey key = {cmd.texture, cmd.outline};
+    spriteCommands[key].push_back(cmd);
+}
+
+void GPUBatcher::addSpriteOutline(const SpriteTexture& sprite,
+                                  int sprite_id,
+                                  float x,
+                                  float y,
+                                  float scale_x,
+                                  float scale_y,
+                                  float angle,
+                                  const ppl7::grafix::Color& color_modulation)
+{
+    const SpriteTexture::SpriteIndexItem* item = sprite.getSpriteIndex(sprite_id);
+    if (!item || !item->tex) {
+        return;
+    }
+
+    SpriteCommand cmd;
+    cmd.texture = item->tex;
+    cmd.x = x;
+    cmd.y = y;
+    cmd.z = z;
+    cmd.scale_x = scale_x;
+    cmd.scale_y = scale_y;
+    cmd.angle = angle;
+    cmd.color_modulation = color_modulation;
+
+    cmd.uv_x = item->uv.x;
+    cmd.uv_y = item->uv.y;
+    cmd.uv_w = item->uv.w;
+    cmd.uv_h = item->uv.h;
+
+    cmd.pivot_x = (float)item->Pivot.x - (float)item->Offset.x;
+    cmd.pivot_y = (float)item->Pivot.y - (float)item->Offset.y;
+    cmd.sprite_w = (float)item->r.w;
+    cmd.sprite_h = (float)item->r.h;
+    cmd.outline = true;
+
+    z -= 0.0001f; // Slightly increase Z to ensure correct layering
+    SpriteBatchKey key = {cmd.texture, cmd.outline};
+    spriteCommands[key].push_back(cmd);
 }
 
 void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness)
@@ -519,6 +576,13 @@ void GPUBatcher::loadShaders()
                                  0,  // num_storage_textures
                                  0,  // num_storage_buffers
                                  0); // num_uniform_buffers
+
+    // Load outline fragment shader
+    outlineFragShader = gpu->loadShader("res/shaders/vulkan/sprite_outline.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT,
+                                        1,  // num_samplers
+                                        0,  // num_storage_textures
+                                        0,  // num_storage_buffers
+                                        0); // num_uniform_buffers
 
     // Load primitive shaders
     primitiveVertShader = gpu->loadShader("res/shaders/vulkan/primitive.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 0);
@@ -609,6 +673,13 @@ void GPUBatcher::createPipeline()
     spritePipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
     if (!spritePipeline) {
         throw GPUException("Failed to create graphics pipeline: %s", SDL_GetError());
+    }
+
+    // Create outline graphics pipeline
+    pipelineInfo.fragment_shader = outlineFragShader;
+    spriteOutlinePipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
+    if (!spriteOutlinePipeline) {
+        throw GPUException("Failed to create outline graphics pipeline: %s", SDL_GetError());
     }
 
     // --- Create Primitive Pipeline (LineList) ---
@@ -845,6 +916,10 @@ void GPUBatcher::cleanup()
         SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, spritePipeline);
         spritePipeline = nullptr;
     }
+    if (spriteOutlinePipeline) {
+        SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, spriteOutlinePipeline);
+        spriteOutlinePipeline = nullptr;
+    }
     if (primitivePipeline) {
         SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, primitivePipeline);
         primitivePipeline = nullptr;
@@ -883,6 +958,10 @@ void GPUBatcher::cleanup()
         SDL_ReleaseGPUShader(gpu->gpu, fragShader);
         fragShader = nullptr;
     }
+    if (outlineFragShader) {
+        SDL_ReleaseGPUShader(gpu->gpu, outlineFragShader);
+        outlineFragShader = nullptr;
+    }
     if (vertShader) {
         SDL_ReleaseGPUShader(gpu->gpu, vertShader);
         vertShader = nullptr;
@@ -908,22 +987,4 @@ void GPUBatcher::bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* tex
     SDL_GPUTextureSamplerBinding textureSamplerBinding = {.texture = texture, .sampler = sampler};
 
     SDL_BindGPUFragmentSamplers(render_pass, 0, &textureSamplerBinding, 1);
-}
-
-void GPUBatcher::drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites)
-{
-    if (sprites.empty() || !vertexBuffer || !indexBuffer || !storageBuffer) return;
-
-    // Bind static buffers (vertex and index data already uploaded at init)
-    SDL_GPUBufferBinding vertexBinding = {.buffer = vertexBuffer, .offset = 0};
-    SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
-
-    SDL_GPUBufferBinding indexBinding = {.buffer = indexBuffer, .offset = 0};
-    SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-
-    // Bind storage buffer to Slot 0 (default)
-    SDL_BindGPUVertexStorageBuffers(render_pass, 0, &storageBuffer, 1);
-
-    // Draw all instances
-    SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)sprites.size(), 0, 0, 0);
 }

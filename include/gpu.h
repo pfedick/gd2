@@ -100,6 +100,9 @@ private:
     SDL_GPUShader* vertShader;
     SDL_GPUGraphicsPipeline* spritePipeline;
 
+    SDL_GPUGraphicsPipeline* spriteOutlinePipeline;
+    SDL_GPUShader* outlineFragShader;
+
     SDL_GPUShader* primitiveVertShader;
     SDL_GPUShader* primitiveFragShader;
     SDL_GPUGraphicsPipeline* primitivePipeline;     // LINELIST
@@ -145,6 +148,17 @@ private:
         float color_r, color_g, color_b, color_a; // Color Modulation
     };
 
+    std::vector<SpriteInstance> instanceData;
+
+    void loadShaders();
+    void createPipeline();
+    void createBuffers();
+    void uploadStaticQuadData();
+    void cleanup();
+    void bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture);
+    void drawPrimitives(SDL_GPURenderPass* render_pass);
+
+public:
     class PrimitiveCommand
     {
     public:
@@ -194,48 +208,39 @@ private:
     class SpriteCommand
     {
     public:
-        const SpriteTexture* sprite;
-        int sprite_id;
+        SDL_GPUTexture* texture; // Direktes Texture-Handling
         float x, y, z;
         float scale_x, scale_y;
         float angle;
         ppl7::grafix::Color color_modulation;
 
-        SpriteCommand(const SpriteTexture* sprite,
-                      int sprite_id,
-                      float x,
-                      float y,
-                      float z,
-                      float scale_x,
-                      float scale_y,
-                      float angle,
-                      const ppl7::grafix::Color& color_modulation)
-            : sprite(sprite),
-              sprite_id(sprite_id),
-              x(x),
-              y(y),
-              z(z),
-              scale_x(scale_x),
-              scale_y(scale_y),
-              angle(angle),
-              color_modulation(color_modulation)
+        // Neue Felder für Unabhängigkeit und Outlines:
+        float uv_x, uv_y, uv_w, uv_h;
+        float pivot_x, pivot_y;
+        float sprite_w, sprite_h;
+        bool outline; // Flag für den Outline-Modus
+
+        SpriteCommand()
+            : texture(nullptr),
+              outline(false)
         {
         }
     };
 
-    void loadShaders();
-    void createPipeline();
-    void createBuffers();
-    void uploadStaticQuadData();
-    void cleanup();
-    void bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture);
-    void drawSprites(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass, const std::list<SpriteCommand>& sprites);
-    void drawPrimitives(SDL_GPURenderPass* render_pass);
+    struct SpriteBatchKey
+    {
+        SDL_GPUTexture* texture;
+        bool outline;
+        bool operator<(const SpriteBatchKey& other) const
+        {
+            if (texture != other.texture) return texture < other.texture;
+            return outline < other.outline;
+        }
+    };
 
+private:
     std::list<PrimitiveCommand> primitiveCommands;
-
-    std::map<SDL_GPUTexture*, std::list<SpriteCommand>> spriteCommands;
-    std::vector<SpriteInstance> instanceData;
+    std::map<SpriteBatchKey, std::list<SpriteCommand>> spriteCommands;
 
 public:
     GPUBatcher();
@@ -257,6 +262,14 @@ public:
                    float scale_y = 1.0f,
                    float angle = 0.0f,
                    const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
+    void addSpriteOutline(const SpriteTexture& sprite,
+                          int sprite_id,
+                          float x,
+                          float y,
+                          float scale_x = 1.0f,
+                          float scale_y = 1.0f,
+                          float angle = 0.0f,
+                          const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
     void addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness = 1.0f);
     void addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness = 1.0f);
     void addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color);

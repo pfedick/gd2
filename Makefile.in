@@ -110,6 +110,7 @@ shaders:
 	@# --- Core Sprite Shaders (using Storage Buffers for Transform) ---
 	glslc res/shaders/src/sprite_ndc_storage.vert -o res/shaders/vulkan/sprite_ndc_storage.vert.spv
 	glslc res/shaders/src/sprite.frag -o res/shaders/vulkan/sprite_ndc_storage.frag.spv
+	glslc res/shaders/src/sprite_outline.frag -o res/shaders/vulkan/sprite_outline.frag.spv
 	@# --- Primitive Shaders (Lines, etc) ---
 	glslc res/shaders/src/primitive.vert -o res/shaders/vulkan/primitive.vert.spv
 	glslc res/shaders/src/primitive.frag -o res/shaders/vulkan/primitive.frag.spv
