@@ -37,6 +37,7 @@ private:
     std::map<uint64_t, const SpriteSystem::Item&> visible_sprite_map;
     std::vector<SpriteTexture*> spriteset;
     // SpriteTexture* spriteset[MAX_SPRITESETS + 1];
+    float scale_factor;
     bool bSpritesVisible;
 
 public:
@@ -49,6 +50,8 @@ public:
     void deleteSprite(int id);
     void modifySprite(const SpriteSystem::Item& item);
     void setVisible(bool visible);
+    void setScaleFactor(float scale_factor);
+    float getScaleFactor() const;
     bool isVisible() const;
     void setSpriteset(int no, SpriteTexture* spriteset);
     void setColorPalette(const ColorPalette& palette);

@@ -23,10 +23,33 @@ SpriteSystem::SpriteSystem()
     palette = NULL;
     bSpritesVisible = true;
     maxid = 0;
+    scale_factor = 1.0f;
 }
 
 SpriteSystem::~SpriteSystem()
 {
+}
+
+void SpriteSystem::setScaleFactor(float scale_factor)
+{
+    if (scale_factor != this->scale_factor) {
+        this->scale_factor = scale_factor;
+        // Update boundaries of all sprites
+        for (auto& pair : sprite_list) {
+            SpriteSystem::Item& item = pair.second;
+            if (item.texture) {
+                item.boundary = item.texture->spriteBoundary(item.sprite_no, item.scale * scale_factor, item.scale * scale_factor,
+                                                             item.rotation, item.x, item.y);
+            }
+        }
+    } else {
+        this->scale_factor = scale_factor;
+    }
+}
+
+float SpriteSystem::getScaleFactor() const
+{
+    return scale_factor;
 }
 
 void SpriteSystem::setColorPalette(const ColorPalette& palette)
@@ -79,18 +102,10 @@ int SpriteSystem::addSprite(
     item.spritesystem = this;
     item.color_index = color_index;
     item.rotation = sprite_rotation;
-
-    // ppl7::PrintDebug("Adding Sprite: id=%d, x=%d, y=%d, z=%d, spriteset=%d, sprite_no=%d, scale=%.2f, rotation=%.2f, color_index=%d\n",
-    //                  item.id, item.x, item.y, item.z, item.sprite_set, item.sprite_no, item.scale, item.rotation, item.color_index);
-    /*
-    if (item.sprite_set <= MAX_SPRITESETS && this->spriteset[item.sprite_set] != NULL) {
-        item.texture = this->spriteset[item.sprite_set];
-        item.boundary = this->spriteset[item.sprite_set]->spriteBoundary(sprite_no, sprite_scale, sprite_scale, sprite_rotation, x, y);
-    }
-    */
     if (item.sprite_set < (int)this->spriteset.size() && this->spriteset[item.sprite_set] != NULL) {
         item.texture = this->spriteset[item.sprite_set];
-        item.boundary = this->spriteset[item.sprite_set]->spriteBoundary(sprite_no, sprite_scale, sprite_scale, sprite_rotation, x, y);
+        item.boundary = this->spriteset[item.sprite_set]->spriteBoundary(sprite_no, sprite_scale * scale_factor,
+                                                                         sprite_scale * scale_factor, sprite_rotation, x, y);
     }
 
     sprite_list.insert(std::pair<int, SpriteSystem::Item>(item.id, item));
@@ -117,18 +132,15 @@ void SpriteSystem::updateVisibleSpriteList(const ppl7::grafix::Point& worldcoord
 {
     if (!bSpritesVisible) return;
     visible_sprite_map.clear();
-    std::map<int, SpriteSystem::Item>::const_iterator it;
-    for (it = sprite_list.begin(); it != sprite_list.end(); ++it) {
+    int view_x1 = worldcoords.x;
+    int view_y1 = worldcoords.y;
+    int view_x2 = worldcoords.x + render_target_size.width;
+    int view_y2 = worldcoords.y + render_target_size.height;
+
+    for (auto it = sprite_list.begin(); it != sprite_list.end(); ++it) {
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
-            // ppl7::PrintDebug("Checking visibility for Sprite ID %d at (%d, %d) with boundary (%d, %d, %d, %d)\n", item.id, item.x,
-            // item.y,
-            //                  item.boundary.x1, item.boundary.y1, item.boundary.x2, item.boundary.y2);
-            int x = item.x - worldcoords.x;
-            int y = item.y - worldcoords.y;
-            if (x + item.boundary.width() > 0 && y + item.boundary.height() > 0 && x - item.boundary.width() < render_target_size.width &&
-                y - item.boundary.height() < render_target_size.height) {
-                // ppl7::PrintDebug("  Sprite ID %d is visible and added to visible sprite map\n", item.id);
+            if (item.boundary.x2 > view_x1 && item.boundary.x1 < view_x2 && item.boundary.y2 > view_y1 && item.boundary.y1 < view_y2) {
                 uint64_t id = ((uint64_t)item.z << 32 & 0x0000ffff00000000) | (uint64_t)(item.y << 16) | (uint64_t)item.x;
                 visible_sprite_map.insert(std::pair<uint64_t, const SpriteSystem::Item&>(id, item));
             }

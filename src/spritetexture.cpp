@@ -520,7 +520,6 @@ ppl7::grafix::Rect SpriteTexture::spriteBoundary(int id, float scale_factor_x, f
     ppl7::grafix::Rect r;
     if (it == SpriteList.end()) return r;
     const SpriteIndexItem& item = it->second;
-    // TODO: add rotation into calculation
     r.x1 = x + (item.Offset.x - item.Pivot.x) * scale_factor_x;
     r.y1 = y + (item.Offset.y - item.Pivot.y) * scale_factor_y;
     r.x2 = r.x1 + (int)((float)item.r.w * scale_factor_x);

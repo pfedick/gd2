@@ -832,7 +832,8 @@ void Level::update(const GameClock& clock,
     // Sprites
     metrics.time_update_sprites.start();
     for (auto& layer : parallax_layers) {
-        layer.updateSprites(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
+        layer.updateSprites(clock, worldcoords * layer.size_factor * layer.speed_factor,
+                            render_target_size / layer.size_factor / layer.speed_factor);
     }
     metrics.time_update_sprites.stop();
 
