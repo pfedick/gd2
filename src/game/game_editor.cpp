@@ -1,3 +1,4 @@
+#include <math.h>
 #include "game.h"
 #include "ui/tileselection.h"
 #include "ui/tiletypeselection.h"
@@ -301,27 +302,22 @@ void GameEditor::drawSelectedTile(GPUBatcher& batcher, const ppl7::grafix::Point
     int color_index = tiles_selection->colorIndex();
     if (nr < 0 || tileset < 0 || tileset >= static_cast<int>(Resources::TileSets::MaxTileSet)) return;
     ppl7::grafix::PointF tmouse = game->game_viewport.translate(mouse);
-    // ppl7::PrintDebug("Draw Selected Tile at mouse x=%d, y=%d, Translated: x=%d, y=%d\n", mouse.x, mouse.y, tmouse.x, tmouse.y);
 
-    // ppl7::grafix::Point wp=tmouse - game_viewport.topLeft() + WorldCoords * planeFactor[currentPlane];
-    ppl7::grafix::PointF wp = tmouse + ppl7::grafix::PointF(game->WorldCamera * layer.speed_factor);
+    // Effektive Kamera-Position für diesen Layer
+    ppl7::grafix::PointF parallax_worldcoords = game->WorldCamera * layer.speed_factor * layer.size_factor;
+    ppl7::grafix::PointF wp = tmouse + parallax_worldcoords;
+
     float scaled_tile_width = TILE_WIDTH * layer.size_factor;
     float scaled_tile_height = TILE_HEIGHT * layer.size_factor;
 
-    int tx = static_cast<int>(wp.x / scaled_tile_width);
-    int ty = static_cast<int>(wp.y / scaled_tile_height);
-
-    // float offset_x = tmouse.x / scaled_tile_width;
-    // float offset_y = tmouse.y / scaled_tile_height;
+    int tx = static_cast<int>(floorf(wp.x / scaled_tile_width));
+    int ty = static_cast<int>(floorf(wp.y / scaled_tile_height));
 
     TileResource& tile_resource = game->resources.Tiles[tileset];
     TileOccupation::Matrix occupation = tile_resource.Occupation.get(nr);
     if (!layer.tiles.isOccupied(tx, ty, currentLayer, occupation)) {
-        int x = (float)tx * scaled_tile_width - (game->WorldCamera.x * layer.speed_factor);
-        int y = (float)ty * scaled_tile_height - (game->WorldCamera.y * layer.speed_factor);
-        // int x = (float)tx * scaled_tile_width + offset_x;
-        // int y = (float)ty * scaled_tile_height + offset_y;
-
+        float x = (float)tx * scaled_tile_width - parallax_worldcoords.x;
+        float y = (float)ty * scaled_tile_height - parallax_worldcoords.y;
         batcher.addSprite(tile_resource.Sprites, nr, x, y + scaled_tile_height, layer.size_factor, layer.size_factor, 0.0f,
                           game->level.palette.getColor(color_index));
     }

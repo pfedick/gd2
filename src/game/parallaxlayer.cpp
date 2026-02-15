@@ -151,7 +151,6 @@ void ParallaxLayer::drawTileGrid(RenderState& renderstate, const ppl7::grafix::P
     ppl7::grafix::Color grid_shadow(0, 0, 0, 128);
     float tile_width = viewport.tileWidth() * size_factor;
     float tile_height = viewport.tileHeight() * size_factor;
-    // ppl7::PrintDebug("Drawing tile grid...\n");
 
     int start_x = static_cast<int>(worldcoords.x / tile_width);
     int start_y = static_cast<int>(worldcoords.y / tile_height);
@@ -161,9 +160,6 @@ void ParallaxLayer::drawTileGrid(RenderState& renderstate, const ppl7::grafix::P
 
     start_x = -offset_x;
     start_y = -offset_y;
-    // renderstate.batcher->addLine(100, 100, 200, 200, ppl7::grafix::Color(255, 0, 0, 255), 10.0f);
-    // renderstate.batcher->addRect(300, 100, 50, 50, ppl7::grafix::Color(0, 255, 0, 255), 10.0f);
-    // renderstate.batcher->addFilledRect(400, 100, 50, 50, ppl7::grafix::Color(0, 0, 255, 255));
 
     for (float x = start_x; x < viewport.width(); x += tile_width) {
         renderstate.batcher->addLine(x + 2, 0, x + 2, viewport.height(), grid_shadow, 2.0f);
