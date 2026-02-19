@@ -273,8 +273,8 @@ void Camera::setDeadZone(float x, float y)
 void Camera::setFollowPlayer(bool enable)
 {
     if (enable && !follow_player) {
-        x = player_position.x;
-        y = player_position.y;
+        // x = player_position.x;
+        // y = player_position.y;
         speed.setPoint(0.0f, 0.0f);
     }
     follow_player = enable;

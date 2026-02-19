@@ -23,6 +23,7 @@ ppl7::String StatusBar::widgetType() const
 
 void StatusBar::resize(int x, int y, int width, int height)
 {
+    if (this->size().width == width && this->size().height == height && this->pos().x == x && this->pos().y == y) return;
     this->setPos(x, y);
     this->setSize(width, height);
     this->destroyChilds();
