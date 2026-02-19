@@ -13,7 +13,6 @@ AnimationDefinition::AnimationDefinition(int start, int end, bool loop, int endf
         size = seq_end - seq_start + 1;
     else
         size = -(seq_start - seq_end + 1);
-    cycle = NULL;
 }
 
 void AnimationCycle::start(const AnimationDefinition& animation)
@@ -21,7 +20,6 @@ void AnimationCycle::start(const AnimationDefinition& animation)
     index = 0;
     current_animation_speed = animation.default_animation_speed;
     default_animation_speed = animation.default_animation_speed;
-    cycle = animation.cycle;
     this->size = animation.size;
     this->endframe = animation.endframe;
     this->seq_start = animation.seq_start;
@@ -43,41 +41,8 @@ void AnimationCycle::startRandom(const AnimationDefinition& animation)
     }
 }
 
-void AnimationCycle::start(int* cycle_array, int size, bool loop, int endframe)
-{
-    // printf("start\n");
-    current_animation_speed = default_animation_speed;
-    cycle = cycle_array;
-    this->size = size;
-    this->loop = loop;
-    this->endframe = endframe;
-    finished = false;
-    index = 0;
-}
-
-void AnimationCycle::start(const AnimationCycle& other)
-{
-    current_animation_speed = default_animation_speed;
-    cycle = other.cycle;
-    index = other.index;
-    size = other.size;
-    endframe = other.endframe;
-    seq_start = other.seq_start;
-    seq_end = other.seq_end;
-    loop = other.loop;
-    finished = other.finished;
-}
-
-void AnimationCycle::startRandom(int* cycle_array, int size, bool loop, int endframe)
-{
-    start(cycle_array, size, loop, endframe);
-    index = ppl7::rand(0, size);
-    if (index >= size) index = 0;
-}
-
 void AnimationCycle::setStaticFrame(int nr)
 {
-    cycle = NULL;
     seq_start = 0;
     seq_end = 0;
     index = 0;
@@ -89,7 +54,6 @@ void AnimationCycle::setStaticFrame(int nr)
 void AnimationCycle::startSequence(int start, int end, bool loop, int endframe)
 {
     current_animation_speed = default_animation_speed;
-    cycle = NULL;
     seq_start = start;
     seq_end = end;
     index = 0;
@@ -105,7 +69,6 @@ void AnimationCycle::startSequence(int start, int end, bool loop, int endframe)
 void AnimationCycle::startRandomSequence(int start, int end, bool loop, int endframe)
 {
     current_animation_speed = default_animation_speed;
-    cycle = NULL;
     seq_start = start;
     seq_end = end;
     if (seq_end > seq_start) {
@@ -152,13 +115,7 @@ bool AnimationCycle::update(double time)
 int AnimationCycle::getFrame() const
 {
     if (finished) return endframe;
-    if (cycle) return cycle[index];
     return seq_start + index;
-}
-
-int AnimationCycle::getIndex() const
-{
-    return index;
 }
 
 bool AnimationCycle::isFinished() const

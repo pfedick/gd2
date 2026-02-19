@@ -10,7 +10,7 @@ RenderRangeArbitrary 0-120
 PreviewFirstFrame 0
 PreviewLastFrame 120
 PreviewFrameStep 1
-CurrentFrame 81
+CurrentFrame 0
 FramesPerSecond 30
 AutoKeyFixedFrame 0
 Preferences
@@ -116,6 +116,51 @@ VERS 2
   DSAllowChannelGroupSelection 1
   LayoutItemListSortMode 6
   ChannelListSortMode 0
+}
+EndPlugin
+Plugin MasterHandler 3 .DynamicsMaster
+{ DynamicsMaster
+  Version 2
+  DrawShapesBodies 3
+  DrawShapesConstraints 3
+  DrawShapesForceFields 3
+  ShowDynamics 15
+  { Simulation
+    { Simulation
+      Version 1
+      Order 0
+      Flags 3
+    }
+  }
+  { Enabled
+    1
+  }
+  { StepsPerSecond
+    180
+  }
+  { StartTime
+    0
+  }
+  { TimeScale
+    { VariantParameter
+      3
+      0
+      { ParameterValue
+        1
+        0
+      }
+    }
+  }
+  { Gravity
+    { VariantParameter
+      3
+      0
+      { ParameterValue
+        0 -9.8000002 0
+        0
+      }
+    }
+  }
 }
 EndPlugin
 Plugin ViewportObjectHandler 1 .VPR
@@ -6442,7 +6487,7 @@ DefineView 0
 ViewType 7
 ViewLevel 5
 ViewAimpoint -0.07061099 1.126084 0.3006783
-ViewRotation 1.500079 1.299988 0
+ViewRotation 9.70002 14.49997 0
 ViewZoomFactor 0.7242568
 ViewXRay 1
 ViewMBDofPreview 0
@@ -6502,7 +6547,7 @@ Plugin VirtualStudio 1 VirtualStudio
 }
 EndPlugin
 
-CurrentObject 0
+CurrentObject 1
 CurrentLight 0
 CurrentCamera 0
 GraphEditorData
