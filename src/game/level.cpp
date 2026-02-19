@@ -119,6 +119,46 @@ void Level::setShowCollisions(bool enable)
     bShowCollisions = enable;
 }
 
+void Level::setShowTiles(bool enable)
+{
+    showTiles = enable;
+    for (auto& layer : parallax_layers) {
+        layer.bShowTiles = enable;
+    }
+}
+
+void Level::setShowSprites(bool enable)
+{
+    showSprites = enable;
+    for (auto& layer : parallax_layers) {
+        layer.bShowSprites = enable;
+    }
+}
+
+void Level::setShowObjects(bool enable)
+{
+    showObjects = enable;
+    for (auto& layer : parallax_layers) {
+        layer.bShowObjects = enable;
+    }
+}
+
+void Level::setShowParticles(bool enable)
+{
+    showParticles = enable;
+    for (auto& layer : parallax_layers) {
+        layer.bShowParticles = enable;
+    }
+}
+
+void Level::setLightsEnabled(bool enabled)
+{
+    lightsEnabled = enabled;
+    for (auto& layer : parallax_layers) {
+        layer.bLightningEnabled = enabled;
+    }
+}
+
 void Level::setTileTypeSpriteset(SpriteTexture* tileset)
 {
     for (auto& layer : parallax_layers) {
@@ -143,6 +183,13 @@ void Level::setSpriteset(int no, SpriteTexture* spriteset)
     for (auto& layer : parallax_layers) {
         layer.front_sprites.setSpriteset(no, spriteset);
         layer.background_sprites.setSpriteset(no, spriteset);
+    }
+}
+
+void Level::setSpritesetResources(ObjectSpritesets* spriteset)
+{
+    for (auto& layer : parallax_layers) {
+        layer.objects.setSpritesetResources(spriteset);
     }
 }
 
@@ -823,12 +870,13 @@ void Level::update(const GameClock& clock,
                    const ppl7::grafix::PointF& worldcoords,
                    const ppl7::grafix::Size& render_target_size)
 {
+    metrics.time_update_total.start();
     // Objects
-    metrics.time_objects.start();
+    metrics.time_update_objects.start();
     for (auto& layer : parallax_layers) {
-        // TODO: layer.updateObjects(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
+        layer.updateObjects(clock, worldcoords * layer.size_factor * layer.speed_factor, render_target_size);
     }
-    metrics.time_objects.stop();
+    metrics.time_update_objects.stop();
 
     // Sprites
     metrics.time_update_sprites.start();
@@ -850,6 +898,7 @@ void Level::update(const GameClock& clock,
         // TODO:layer.updateLights(clock, worldcoords / layer.size_factor, render_target_size / layer.size_factor);
     }
     metrics.time_update_lights.stop();
+    metrics.time_update_total.stop();
 }
 
 /*

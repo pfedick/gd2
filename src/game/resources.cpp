@@ -37,6 +37,7 @@ void Resources::load(GPUContext& gpu)
 
         loadTiles(gpu);
         TileTypes.load(gpu, "res/tiletypes.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
+        TileTypesUi.load(gpu, "res/ui/tiletypes.tex", SpriteBuffer::Memory);
         Player.load(gpu, "res/player1.tex", SpriteBuffer::GPU | SpriteBuffer::Memory);
         Particles.load(gpu, "res/particles.tex", SpriteBuffer::GPU);
         Font24.load(gpu, "res/fonts/scp_24.tex", SpriteBuffer::GPU);

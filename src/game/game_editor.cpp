@@ -112,7 +112,7 @@ void GameEditor::showTileTypeSelection()
         return;
     }
     closeAll();
-    tiletype_selection = new TileTypeSelection(0, 32, 300, statusbar->y() - 32, game, &game->resources.TileTypes);
+    tiletype_selection = new TileTypeSelection(0, 32, 300, statusbar->y() - 32, game, &game->resources.TileTypesUi);
     tiletype_selection->setTileType(history.lastTileType);
     game->addChild(tiletype_selection);
     // viewport.x1 = 300;

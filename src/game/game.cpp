@@ -147,6 +147,8 @@ void Game::init_grafix()
 
     level.setSpriteset(static_cast<int>(Resources::SpriteSets::Trees),
                        &resources.SpriteSets[static_cast<int>(Resources::SpriteSets::Trees)].Sprites);
+
+    level.setSpritesetResources(resources.object_spritesets);
 }
 
 void Game::initUi()
@@ -380,7 +382,12 @@ void Game::run()
 
         metrics.time_events.start();
 
+        // Handle events muss vor level.update ausgeführt werden,damit
+        // z.B. im Editor gelöschte Objekte nicht mehr aktualisiert werden
         wm->handleEvents();
+
+        level.update(clock, metrics, WorldCamera, game_viewport.getLogicalSize());
+
         ppltk::MouseState mouse = wm->getMouseState();
         editor.mouse = mouse;
         updateUi(mouse, last_metrics);
@@ -418,9 +425,6 @@ void Game::run()
 
         // Ui and Mouse if enabled
         drawUi(cmdbuf, swapchainTexture, mouse);
-
-        // TODO: Alle Berechnungen sollten hier passieren
-        level.update(clock, metrics, WorldCamera, game_viewport.getLogicalSize());
 
         // Frame done
         SDL_SubmitGPUCommandBuffer(cmdbuf);
@@ -488,6 +492,11 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
     level.setShowTileGrid(editor.mainmenue->visibility_grid);
     level.setShowTileTypes(editor.mainmenue->visibility_tiletypes);
     level.setShowCollisions(editor.mainmenue->visibility_collision);
+    level.setShowSprites(editor.mainmenue->visibility_sprites);
+    level.setShowObjects(editor.mainmenue->visibility_objects);
+    level.setShowParticles(editor.mainmenue->visibility_particles);
+    level.setLightsEnabled(editor.mainmenue->visibility_lighting);
+
     for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
         auto& layer = level.layer(static_cast<ParallaxLayerId>(i));
         layer.isVisible = editor.mainmenue->layer_visibility[i];

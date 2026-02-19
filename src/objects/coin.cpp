@@ -12,7 +12,7 @@ AnimationDefinition coin_rotate(14, 44, true, 0);
 
 Representation Coin::representation()
 {
-    return Representation(SpritesetId::GenericObjects, 84);
+    return Representation(SpritesetId::GenericObjects, 14);
 }
 
 Coin::Coin()
@@ -21,7 +21,7 @@ Coin::Coin()
     sprite_set = SpritesetId::GenericObjects;
     animation.startRandom(coin_rotate);
     collisionDetection = true;
-    sprite_no_representation = 84;
+    sprite_no_representation = 14;
     alwaysUpdate = false;
 }
 

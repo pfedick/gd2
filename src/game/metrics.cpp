@@ -85,6 +85,7 @@ void Metrics::clear()
     time_draw_ui.clear();
     time_draw_world.clear();
     time_events.clear();
+    time_update_total.clear();
     time_update_sprites.clear();
     time_update_lights.clear();
     time_update_objects.clear();
@@ -116,6 +117,7 @@ Metrics Metrics::getAverage() const
         m.time_draw_ui.duration = time_draw_ui.get() / framecount;
         m.time_draw_world.duration = time_draw_world.get() / framecount;
         m.time_events.duration = time_events.get() / framecount;
+        m.time_update_total.duration = time_update_total.get() / framecount;
         m.time_update_sprites.duration = time_update_sprites.get() / framecount;
         m.time_update_lights.duration = time_update_lights.get() / framecount;
         m.time_update_objects.duration = time_update_objects.get() / framecount;
@@ -166,6 +168,7 @@ Metrics& Metrics::operator+=(const Metrics& other)
     time_draw_ui += other.time_draw_ui;
     time_draw_world += other.time_draw_world;
     time_events += other.time_events;
+    time_update_total += other.time_update_total;
     time_update_sprites += other.time_update_sprites;
     time_update_lights += other.time_update_lights;
     time_update_objects += other.time_update_objects;

@@ -1,7 +1,7 @@
 #ifndef INCLUDE_CONSTANTS_H_
 #define INCLUDE_CONSTANTS_H_
 
-#define TILE_WIDTH 64
-#define TILE_HEIGHT 64
+#define TILE_WIDTH 100
+#define TILE_HEIGHT 100
 
 #endif // INCLUDE_CONSTANTS_H_

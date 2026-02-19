@@ -37,9 +37,9 @@ void ObjectSystem::init(ParallaxLayerId parallaxLayer)
     this->myParallaxLayer = parallaxLayer;
 }
 
-void ObjectSystem::setSpritesetResources(ObjectSpritesets& spritesets)
+void ObjectSystem::setSpritesetResources(ObjectSpritesets* spritesets)
 {
-    this->spritesets = &spritesets;
+    this->spritesets = spritesets;
 }
 
 void ObjectSystem::clear()
@@ -290,6 +290,7 @@ void ObjectSystem::drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::gr
 
 SpriteTexture* ObjectSystem::getTexture(Objects::SpritesetId sprite_set) const
 {
+    if (!spritesets) return NULL;
     return spritesets->getSpriteset(sprite_set);
 }
 

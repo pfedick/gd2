@@ -211,7 +211,7 @@ void Game::startLevel(const ppl7::String& filename)
     player->setParallaxLayer(ParallaxLayerId::Player);
 
     // DEBUG, TODO REMOVE
-    startpoint.x = 1920;
+    startpoint.x = 3000;
     startpoint.y = 1080;
     if (startpoint.x > 0) {
         player->move(startpoint.x, startpoint.y);

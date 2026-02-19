@@ -63,6 +63,7 @@ public:
     SpriteTexture Hud;
     SpriteTexture Player;
     SpriteTexture TileTypes;
+    SpriteTexture TileTypesUi;
     TileResource Tiles[static_cast<int>(TileSets::MaxTileSet)];
     SpriteResource SpriteSets[static_cast<int>(SpriteSets::MaxSpriteSet)];
     SpriteTexture Font24;

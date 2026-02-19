@@ -129,6 +129,7 @@ public:
     bool bBlurEnabled = true;
     bool bLightningEnabled = true;
     bool bShowSprites = true;
+    bool bShowTiles = true;
     bool bShowObjects = true;
     bool bShowParticles = true;
     bool isEditLayer = false;
@@ -190,6 +191,7 @@ private:
 
     bool editMode;
     bool showSprites;
+    bool showTiles;
     bool showObjects;
     bool showParticles;
     bool lightsEnabled;
@@ -217,27 +219,6 @@ public:
     };
 
 private:
-    /*
-    void drawNonePlayerPlane(SDL_Renderer* renderer,
-                             PlaneId planeid,
-                             const Plane& plane,
-                             const SpriteSystem& sprites1,
-                             const SpriteSystem& sprites2,
-                             const ppl7::grafix::Point& worldcoords,
-                             Metrics& metrics,
-                             Particle::Layer particle_back,
-                             Particle::Layer particle_front);
-    void drawPlane(SDL_Renderer* renderer, const Plane& plane, const ppl7::grafix::Point& worldcoords) const;
-    void drawParticles(SDL_Renderer* renderer, Particle::Layer layer, const ppl7::grafix::Point& worldcoords, Metrics& metrics);
-    void addLightmap(SDL_Renderer* renderer,
-                     LightPlaneId plane,
-                     LightPlayerPlaneMatrix pplane,
-                     const ppl7::grafix::Point& worldcoords,
-                     Metrics& metrics);
-    void prepareLayer(SDL_Renderer* renderer);
-    void blurLayer(SDL_Renderer* renderer, float factor = 0.0f);
-    */
-
     void clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf);
     void copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const SDL_FRect& destRect);
     void updateVisibility();
@@ -250,6 +231,7 @@ public:
     void setEditmode(bool enabled);
     void setTileset(int no, SpriteTexture* tileset);
     void setSpriteset(int no, SpriteTexture* spriteset);
+    void setSpritesetResources(ObjectSpritesets* spriteset);
     void setTileTypeSpriteset(SpriteTexture* spriteset);
     void create(int width, int height);
     void load(const ppl7::String& Filename);
@@ -271,7 +253,12 @@ public:
     void setEditLayer(ParallaxLayerId layer);
     void setShowTileGrid(bool enable);
     void setShowTileTypes(bool enable);
+    void setShowTiles(bool enable);
     void setShowCollisions(bool enable);
+    void setShowSprites(bool enable);
+    void setShowObjects(bool enable);
+    void setShowParticles(bool enable);
+    void setLightsEnabled(bool enabled);
 
     ParallaxLayer& layer(ParallaxLayerId id);
     ParallaxLayer& editLayer();

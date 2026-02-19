@@ -41,6 +41,7 @@ public:
     Timer time_draw_ui;
     Timer time_draw_world;
     Timer time_events;
+    Timer time_update_total;
     Timer time_update_sprites;
     Timer time_update_lights;
     Timer time_update_objects;

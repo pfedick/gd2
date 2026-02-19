@@ -245,7 +245,7 @@ public:
     ObjectSystem();
     ~ObjectSystem();
     void init(ParallaxLayerId parallaxLayer);
-    void setSpritesetResources(ObjectSpritesets& spritesets);
+    void setSpritesetResources(ObjectSpritesets* spritesets);
     void clear();
     // void setWaynet(Waynet* waynet);
     // void loadSpritesets(SDL& sdl);   // TODO: Wir brauchen globale Spritesets, die jedem ObjectSystem zur Verfügung stehen

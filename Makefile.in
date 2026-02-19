@@ -181,13 +181,14 @@ sprites_ui:
 	texmaker -s lightwave/Render/Tiles/ui/ -t res/ui/tiles.tex -w 512 -h 512 -pd fixed -px 0 -py 0 -i
 	texmaker -s lightwave/Render/objects_ui/ -t res/ui/objects.tex -w 512 -h 512 -pd fixed -px 0 -py 0 -i
 	texmaker -s lightwave/Render/Trees_ui/ -t res/ui/trees.tex -w 512 -h 512 -pd fixed -px 0 -py 0 -i
+	texmaker -s lightwave/Render/TileTypes_ui/ -t res/ui/tiletypes.tex -w 640 -h 512 -pd fixed -px 0 -py 0
 
 sprites: sprites_hud sprites_ui
 	texmaker -s lightwave/Render/particles/ -t res/particles.tex -w 1024 -h 1024 -px 128 -py 128 -x tmp/particles
-	texmaker -s lightwave/Render/Tiles/ -t res/tiles.tex -w 1024 -h 1024  -pd fixed -px 0 -py 512 -x tmp/tiles
-	texmaker -s lightwave/Render/TileTypes/ -t res/tiletypes.tex -w 512 -h 512 -pd fixed -px 0 -py 0 -x tmp/tiles
+	texmaker -s lightwave/Render/Tiles/ -t res/tiles.tex -w 1024 -h 1024  -pd fixed -px 0 -py 800 -x tmp/tiles
+	texmaker -s lightwave/Render/TileTypes/ -t res/tiletypes.tex -w 1024 -h 512 -pd fixed -px 0 -py 0 -x tmp/tiles
 	texmaker -s lightwave/Render/objects/ -t res/objects/generic.tex -w 1024 -h 1024  -pd fixed -px 255 -py 358 -i -x tmp/objects
-	texmaker -s lightwave/Render/Player1/ -t res/player1.tex -w 2048 -h 2048  -pd fixed -px 512 -py 482 -i -x tmp/player1
+	texmaker -s lightwave/Render/Player1/ -t res/player1.tex -w 2048 -h 2048  -pd fixed -px 500 -py 565 -i -x tmp/player1
 	texmaker -s lightwave/Render/Trees/ -t res/sprites/trees.tex -w 4096 -h 4096  -pd fixed -px 650 -py 1003 -i -x tmp/trees
 
 fonts:
