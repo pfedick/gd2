@@ -222,7 +222,7 @@ public:
     void addLife(int lifes);
     void addSpecialObject(int type);
     bool hasSpecialObject(int type) const;
-    void countObject(int type);
+    void countObject(Objects::Type type);
     size_t getObjectCount(int type) const;
     void dropHealth(float points, HealthDropReason reason = HealthDropReason::Unknown);
     void addInventory(int object_id, const Objects::Representation& repr);

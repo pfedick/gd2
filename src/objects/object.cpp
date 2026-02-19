@@ -71,7 +71,7 @@ Representation getRepresentation(Type object_type)
     case Type::PlayerStartpoint:
         return Objects::PlayerStartPoint::representation();
     case Type::Coin:
-        return Objects::CoinReward::representation();
+        return Objects::Coin::representation();
     default:
         return Object::representation();
     }
@@ -79,7 +79,8 @@ Representation getRepresentation(Type object_type)
 
 Object::Object(Type type)
 {
-    myPlane = ParallaxLayerId::Player;
+    myParallaxLayer = ParallaxLayerId::Player;
+    objectSystem = NULL;
     myType = type;
     sprite_set = SpritesetId::GenericObjects;
     sprite_no = 0;
@@ -136,42 +137,34 @@ void Object::update(const GameClock&, TileTypePlane&, Player& player)
 size_t Object::save(unsigned char* buffer, size_t size) const
 {
     if (size < 17) return 0;
-    ppl7::Poke8(buffer + 0, 3); // Object-Header-Version
+    ppl7::Poke8(buffer + 0, 1); // Object-Header-Version
     ppl7::Poke16(buffer + 1, static_cast<uint16_t>(myType));
     ppl7::Poke8(buffer + 3, static_cast<int>(myLayer));
     ppl7::Poke32(buffer + 4, id);
     ppl7::Poke32(buffer + 8, initial_p.x);
     ppl7::Poke32(buffer + 12, initial_p.y);
     ppl7::Poke8(buffer + 16, difficulty_matrix);
-    ppl7::Poke8(buffer + 17, static_cast<int>(myPlane));
     return 18;
 }
 
 size_t Object::saveSize() const
 {
-    return 18;
+    return 17;
 }
 
 size_t Object::load(const unsigned char* buffer, size_t size)
 {
 
-    if (size < 16) return 0;
+    if (size < 17) return 0;
     int version = ppl7::Peek8(buffer + 0);
-    if (version < 1 || version > 3) return 0;
+    if (version != 1) return 0;
     myLayer = static_cast<Layer>(ppl7::Peek8(buffer + 3));
     id = ppl7::Peek32(buffer + 4);
-    if (static_cast<int>(myLayer) > 2) {
-        ppl7::PrintDebug("Waring, found object with id %d and obsolete layer: %d\n", id, static_cast<int>(myLayer));
-        return 0;
-    }
     initial_p.x = ppl7::Peek32(buffer + 8);
     initial_p.y = ppl7::Peek32(buffer + 12);
     p = initial_p;
-    if (version == 1) return 16;
     difficulty_matrix = ppl7::Peek8(buffer + 16);
-    if (version == 2) return 17;
-    myPlane = static_cast<ParallaxLayerId>(ppl7::Peek8(buffer + 17));
-    return 18;
+    return 17;
 }
 
 void Object::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const

@@ -46,6 +46,7 @@ private:
 
 public:
     Dialog(ppltk::Window* parent, int width, int height, int buttons = Buttons::OK);
+    Dialog(int width, int height, int buttons = Buttons::OK);
     ~Dialog();
 
     void addChild(Widget* w);

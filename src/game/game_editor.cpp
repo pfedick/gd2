@@ -178,8 +178,8 @@ void GameEditor::updateObjectLayerForSelectedObject(int layer)
 void GameEditor::updateParallaxLayerForSelectedObject(ParallaxLayerId plane)
 {
     if (selected_object) {
-        if (static_cast<ParallaxLayerId>(plane) != selected_object->myPlane) {
-            const ParallaxLayer& oldLayer = game->level.layer(selected_object->myPlane);
+        if (static_cast<ParallaxLayerId>(plane) != selected_object->myParallaxLayer) {
+            const ParallaxLayer& oldLayer = game->level.layer(selected_object->myParallaxLayer);
             ppl7::grafix::PointF coords = game->WorldCamera * oldLayer.speed_factor;
             ppl7::grafix::PointF pp_initial = ppl7::grafix::PointF(selected_object->initial_p) - coords;
             ppl7::grafix::PointF pp_current = ppl7::grafix::PointF(selected_object->p) - coords;
@@ -188,7 +188,7 @@ void GameEditor::updateParallaxLayerForSelectedObject(ParallaxLayerId plane)
             selected_object->initial_p = pp_initial + coords;
             selected_object->p = pp_current + coords;
             selected_object->updateBoundary();
-            selected_object->myPlane = plane;
+            selected_object->myParallaxLayer = plane;
             // if (selected_object->myPlane != PlaneId::Player && static_cast<int>(selected_object->myLayer) > 1)
             //     selected_object->myLayer = Decker::Objects::Object::Layer::BeforeBricks;
         }

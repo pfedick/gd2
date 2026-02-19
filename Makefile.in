@@ -62,7 +62,6 @@ OBJECTS=compile/main.o \
 	compile/particleupdatethread.o \
 	compile/objectsystem.o \
 	compile/objectspritesets.o \
-	compile/object.o \
 	compile/collision.o \
 	compile/soundtrack.o \
 	compile/audio_audioinstance.o \
@@ -97,10 +96,14 @@ WIDGETS = compile/widgets/colorsliderwidget.o \
 	compile/widgets/levelselection.o \
 	compile/widgets/levelselectionitem.o \
 	
+# Findet alle .cpp Dateien in src/objects/
+GAME_OBJECT_FILES_SRC = $(wildcard src/objects/*.cpp)
+
+GAME_OBJ_OBJECTS = $(patsubst src/objects/%.cpp,compile/objects/%.o,$(GAME_OBJECT_FILES_SRC))
 
 
-$(PROGRAM): update_version ppl7 ppl_toolkit $(OBJECTS) $(UI) $(WIDGETS)
-	$(CXX) -o $(PROGRAM) $(OBJECTS) $(UI) $(WIDGETS) $(LIBS)
+$(PROGRAM): update_version ppl7 ppl_toolkit $(OBJECTS) $(UI) $(WIDGETS) $(GAME_OBJ_OBJECTS)
+	$(CXX) -o $(PROGRAM) $(OBJECTS) $(GAME_OBJ_OBJECTS) $(UI) $(WIDGETS) $(LIBS)
 	-chmod 755 $(PROGRAM)
 
 all: update_version $(PROGRAM) texmaker
@@ -204,6 +207,10 @@ update_version:
 	@echo "#endif" >> tmp/version.h
 	@diff tmp/version.h include/version.h > /dev/null 2>&1; if [ $$? -ne 0 ] ; then cp tmp/version.h include/version.h; fi
 
+compile/objects/%.o: src/objects/%.cpp Makefile
+	- @mkdir -p compile/objects
+	$(CXX) -o $@ -c $< $(CFLAGS)
+
 compile/main.o: src/main.cpp Makefile
 	- @mkdir -p compile
 	$(CXX) -o compile/main.o -c src/main.cpp $(CFLAGS)
@@ -276,10 +283,6 @@ compile/objectsystem.o: src/game/objectsystem.cpp Makefile
 compile/objectspritesets.o: src/game/objectspritesets.cpp Makefile
 	- @mkdir -p compile
 	$(CXX) -o compile/objectspritesets.o -c src/game/objectspritesets.cpp $(CFLAGS)
-
-compile/object.o: src/objects/object.cpp Makefile
-	- @mkdir -p compile
-	$(CXX) -o compile/object.o -c src/objects/object.cpp $(CFLAGS)
 
 compile/collision.o: src/game/collision.cpp Makefile
 	- @mkdir -p compile
@@ -479,4 +482,4 @@ genscpfonts: tools/gentexturefonts.cpp Makefile
 	$(CXX) -o genscpfonts compile/genscpfonts.o $(CFLAGS) $(LIBS)
 	-chmod 755 genscpfonts
 
--include $(OBJECTS:.o=.d) $(UI:.o=.d) $(WIDGETS:.o=.d) compile/genscpfonts.d
+-include $(OBJECTS:.o=.d) $(UI:.o=.d) $(WIDGETS:.o=.d) $(OBJ_OBJECTS:.o=.d) compile/genscpfonts.d

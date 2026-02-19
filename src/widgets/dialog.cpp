@@ -1,11 +1,12 @@
 #include "widgets.h"
 
-Dialog::Dialog(ppltk::Window *parent, int width, int height, int buttons) : ppltk::Widget()
+Dialog::Dialog(ppltk::Window* parent, int width, int height, int buttons)
+    : ppltk::Widget()
 {
     setUseOwnDrawbuffer(true);
     setTopmost(true);
-    const ppltk::WidgetStyle &style = ppltk::GetWidgetStyle();
-    ppltk::WindowManager *wm = ppltk::GetWindowManager();
+    const ppltk::WidgetStyle& style = ppltk::GetWidgetStyle();
+    ppltk::WindowManager* wm = ppltk::GetWindowManager();
     setWindowIcon(wm->Toolbar.getDrawable(21));
     myBackground = style.windowBackgroundColor * 1.4f;
     myBackground.setAlpha(240);
@@ -74,14 +75,18 @@ Dialog::Dialog(ppltk::Window *parent, int width, int height, int buttons) : pplt
         client_offset_y2 = 40 + 8;
     }
 
-    client_frame = new ppltk::Frame(8, 40, this->width() - 16, this->height() - 40 - client_offset_y2,
-                                    ppltk::Frame::BorderStyle::NoBorder);
+    client_frame = new ppltk::Frame(8, 40, this->width() - 16, this->height() - 40 - client_offset_y2, ppltk::Frame::BorderStyle::NoBorder);
     client_frame->setBackgroundColor(myBackground);
     ppltk::Widget::addChild(client_frame);
 
     this->setModal(true);
     // this->setClientOffset(8, 40, 8, client_offset_y2);
     drag_started = false;
+}
+
+Dialog::Dialog(int width, int height, int buttons)
+    : Dialog(NULL, width, height, buttons)
+{
 }
 
 Dialog::~Dialog()
@@ -92,12 +97,12 @@ Dialog::~Dialog()
     }
 }
 
-void Dialog::addChild(Widget *w)
+void Dialog::addChild(Widget* w)
 {
     client_frame->addChild(w);
 }
 
-void Dialog::removeChild(Widget *w)
+void Dialog::removeChild(Widget* w)
 {
     client_frame->removeChild(w);
 }
@@ -117,42 +122,42 @@ ppl7::grafix::Size Dialog::clientSize() const
     return client_frame->clientSize();
 }
 
-const ppl7::String &Dialog::windowTitle() const
+const ppl7::String& Dialog::windowTitle() const
 {
     return WindowTitle;
 }
 
-void Dialog::setWindowTitle(const ppl7::String &title)
+void Dialog::setWindowTitle(const ppl7::String& title)
 {
     WindowTitle = title;
     needsRedraw();
 }
-const ppl7::grafix::Drawable &Dialog::windowIcon() const
+const ppl7::grafix::Drawable& Dialog::windowIcon() const
 {
     return WindowIcon;
 }
 
-void Dialog::setWindowIcon(const ppl7::grafix::Drawable &icon)
+void Dialog::setWindowIcon(const ppl7::grafix::Drawable& icon)
 {
     WindowIcon = icon;
     needsRedraw();
 }
 
-const ppl7::grafix::Color &Dialog::backgroundColor() const
+const ppl7::grafix::Color& Dialog::backgroundColor() const
 {
     return myBackground;
 }
 
-void Dialog::setBackgroundColor(const ppl7::grafix::Color &c)
+void Dialog::setBackgroundColor(const ppl7::grafix::Color& c)
 {
     myBackground = c;
     client_frame->setBackgroundColor(myBackground);
     needsRedraw();
 }
 
-void Dialog::paint(ppl7::grafix::Drawable &draw)
+void Dialog::paint(ppl7::grafix::Drawable& draw)
 {
-    const ppltk::WidgetStyle &style = ppltk::GetWidgetStyle();
+    const ppltk::WidgetStyle& style = ppltk::GetWidgetStyle();
     // ppl7::grafix::Color light=style.buttonBackgroundColor*1.8f;
     ppl7::grafix::Color white(255, 255, 255, 255);
     ppl7::grafix::Color shadow = style.buttonBackgroundColor * 0.4f;
@@ -182,9 +187,9 @@ void Dialog::paint(ppl7::grafix::Drawable &draw)
     draw.print(myFont, x, 3 + ((30 - s.height) >> 1), WindowTitle);
 }
 
-void Dialog::mouseDownEvent(ppltk::MouseEvent *event)
+void Dialog::mouseDownEvent(ppltk::MouseEvent* event)
 {
-    ppltk::Widget *widget = event->widget();
+    ppltk::Widget* widget = event->widget();
     if (widget == ok_button) {
         this->deleteLater();
         return;
@@ -203,9 +208,9 @@ void Dialog::mouseDownEvent(ppltk::MouseEvent *event)
     }
 }
 
-void Dialog::mouseClickEvent(ppltk::MouseEvent *event)
+void Dialog::mouseClickEvent(ppltk::MouseEvent* event)
 {
-    ppltk::Widget *widget = event->widget();
+    ppltk::Widget* widget = event->widget();
     if (widget == ok_button || (widget == close_button && ok_button != NULL)) {
         this->deleteLater();
         return;
@@ -217,7 +222,7 @@ void Dialog::mouseClickEvent(ppltk::MouseEvent *event)
     }
 }
 
-void Dialog::mouseUpEvent(ppltk::MouseEvent *event)
+void Dialog::mouseUpEvent(ppltk::MouseEvent* event)
 {
     if (drag_started) {
         drag_started = false;
@@ -225,7 +230,7 @@ void Dialog::mouseUpEvent(ppltk::MouseEvent *event)
     }
 }
 
-void Dialog::lostFocusEvent(ppltk::FocusEvent *event)
+void Dialog::lostFocusEvent(ppltk::FocusEvent* event)
 {
     if (drag_started) {
         drag_started = false;
@@ -233,7 +238,7 @@ void Dialog::lostFocusEvent(ppltk::FocusEvent *event)
     }
 }
 
-void Dialog::mouseMoveEvent(ppltk::MouseEvent *event)
+void Dialog::mouseMoveEvent(ppltk::MouseEvent* event)
 {
     if (event->buttonMask & ppltk::MouseEvent::MouseButton::Left) {
         if (drag_started) {

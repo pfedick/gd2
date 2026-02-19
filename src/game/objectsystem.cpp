@@ -22,7 +22,7 @@ static uint8_t getDifficultyMatrix()
 ObjectSystem::ObjectSystem()
 {
     nextid = 1;
-    next_spawn_id = 1000000;
+    next_spawn_id = 1;
     player_start = 0;
     spritesets = NULL;
 }
@@ -51,28 +51,47 @@ void ObjectSystem::clear()
     }
     object_list.clear();
     nextid = 1;
-    next_spawn_id = 1000000;
+    next_spawn_id = 1;
     player_start = 0;
+}
+
+static uint32_t genObjectId(ParallaxLayerId layer, uint32_t counter, bool spawned)
+{
+    // Bits 0-23: Counter
+    // Bit 24: Spawned-Flag
+    // Bit 25-31: ParallaxLayerId
+    uint32_t id = counter & 0xffffff;
+    if (spawned) id |= 1 << 24;
+    id |= (static_cast<uint32_t>(layer) & 0x7f) << 25;
+    return id;
 }
 
 void ObjectSystem::addObject(Objects::Object* object)
 {
     if (!object) return;
     if (object->spawned) {
-        object->id = next_spawn_id;
+        object->id = genObjectId(myParallaxLayer, next_spawn_id, true);
         next_spawn_id++;
+        if (next_spawn_id > 0xffffff) {
+            next_spawn_id = 1;
+        }
     } else {
-        object->id = nextid;
+        object->id = genObjectId(myParallaxLayer, nextid, false);
         nextid++;
+        if (nextid > 0xffffff) {
+            throw ppl7::Exception("Too many objects created, id counter overflow");
+        }
     }
     if (spritesets) {
         object->texture = spritesets->getSpriteset(object->sprite_set);
         object->updateBoundary();
     }
+    object->objectSystem = this;
+    object->myParallaxLayer = myParallaxLayer;
     object_list.insert(std::pair<uint32_t, Objects::Object*>(object->id, object));
 }
 
-void ObjectSystem::deleteObject(int id)
+void ObjectSystem::deleteObject(uint32_t id)
 {
     std::map<uint32_t, Objects::Object*>::const_iterator it;
     it = object_list.find(id);
@@ -293,7 +312,7 @@ Objects::Object* ObjectSystem::getInstance(Objects::Type object_type) const
     case Objects::Type::PlayerStartpoint:
         return new Objects::PlayerStartPoint();
     case Objects::Type::Coin:
-        return new Objects::CoinReward();
+        return new Objects::Coin();
     default:
         break;
     }
@@ -309,7 +328,8 @@ void ObjectSystem::save(ppl7::FileObject& file, unsigned char chunkid, unsigned 
         Objects::Object* object = it->second;
         if (!object->spawned) buffersize += object->saveSize() + 4;
     }
-    unsigned char* buffer = (unsigned char*)malloc(buffersize + 5);
+    unsigned char* buffer = (unsigned char*)malloc(buffersize + 7);
+    if (!buffer) throw ppl7::OutOfMemoryException();
     ppl7::Poke32(buffer + 0, 0);
     ppl7::Poke8(buffer + 4, chunkid);
     ppl7::Poke8(buffer + 5, layer);
@@ -479,8 +499,7 @@ void ObjectSystem::detectObjectCollision(const Objects::Object* object, std::lis
     if (object->pixelExactCollision) getCheckPoints(object, checkpoints);
     std::map<uint32_t, Objects::Object*>::const_iterator it;
     for (it = object_list.begin(); it != object_list.end(); ++it) {
-        if (it->second != object && it->second->enabled == true && it->second->visibleAtPlaytime == true &&
-            it->second->myPlane == object->myPlane) {
+        if (it->second != object && it->second->enabled == true && it->second->visibleAtPlaytime == true) {
             if (object->boundary.intersects(it->second->boundary)) {
                 if (checkCollision(object, checkpoints, it->second)) collision_object_list.push_back(it->second);
             }

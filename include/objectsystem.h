@@ -27,6 +27,7 @@ class Widget;
 class AudioInstance;
 class Glimmer;
 class GameClock;
+class ObjectSystem;
 
 enum class ParallaxLayerId;
 
@@ -151,8 +152,8 @@ private:
 
 public:
     Layer myLayer;
-    ParallaxLayerId myPlane;
-
+    ParallaxLayerId myParallaxLayer;
+    ObjectSystem* objectSystem;
     ppl7::grafix::PointF p;
     ppl7::grafix::PointF initial_p;
     SpriteTexture* texture;
@@ -271,7 +272,7 @@ public:
 
     void drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, int id);
     void drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::Point& p, Objects::Type object_type);
-    void deleteObject(int id);
+    void deleteObject(uint32_t id);
     bool findObjectsInRange(const ppl7::grafix::PointF& p, double range, std::list<Objects::Object*>& objects);
     ppl7::grafix::Point findPlayerStart() const;
     ppl7::grafix::Point nextPlayerStart();

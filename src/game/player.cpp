@@ -581,9 +581,9 @@ void Player::addLife(int lifes)
     this->lifes += lifes;
 }
 
-void Player::countObject(int type)
+void Player::countObject(Objects::Type type)
 {
-    object_counter[type]++;
+    object_counter[static_cast<int>(type)]++;
 }
 
 size_t Player::getObjectCount(int type) const

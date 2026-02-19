@@ -252,7 +252,8 @@ void Level::load(const ppl7::String& Filename)
                 int layer = ppl7::Peek8(ba.adr());
                 if (layer < static_cast<int>(ParallaxLayerId::MaxLayerId)) parallax_layers[layer].TileTypeMatrix.load(ba);
             } else if (id == ChunkId::Objects) {
-                // objects->load(ba);
+                int layer = ppl7::Peek8(ba.adr());
+                if (layer < static_cast<int>(ParallaxLayerId::MaxLayerId)) parallax_layers[layer].objects.load(ba);
             } else if (id == ChunkId::WayNet) {
                 // waynet.load(ba);
             } else if (id == ChunkId::Lights) {
@@ -288,9 +289,9 @@ void Level::save(const ppl7::String& Filename)
         parallax_layers[layer].tiles.save(ff, static_cast<int>(ChunkId::Tiles), layer);
         parallax_layers[layer].front_sprites.save(ff, static_cast<int>(ChunkId::Sprites), layer, 0);
         parallax_layers[layer].background_sprites.save(ff, static_cast<int>(ChunkId::Sprites), layer, 1);
+        parallax_layers[layer].objects.save(ff, static_cast<int>(ChunkId::Objects), layer);
     }
 
-    // objects->save(ff, LevelChunkId::chunkObjects);
     // waynet.save(ff, LevelChunkId::chunkWayNet);
     // lights.save(ff, LevelChunkId::chunkLights);
 

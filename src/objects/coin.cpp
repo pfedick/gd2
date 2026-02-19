@@ -1,35 +1,33 @@
 #include <ppl7.h>
 #include <ppl7-grafix.h>
-#include "objects.h"
+#include "objectsystem.h"
 #include "audiopool.h"
 #include "player.h"
 #include "objects/generic.h"
+#include "game.h"
 
 namespace Objects
 {
-AnimationDefinition coin_rotate(84, 113, true, 0);
+AnimationDefinition coin_rotate(14, 44, true, 0);
 
-Representation CoinReward::representation()
+Representation Coin::representation()
 {
     return Representation(SpritesetId::GenericObjects, 84);
 }
 
-CoinReward::CoinReward()
-    : Object(Type::ObjectType::Coin)
+Coin::Coin()
+    : Object(Type::Coin)
 {
-    sprite_set = Spriteset::GenericObjects;
-    animation.startRandom(coin_rotate, sizeof(coin_rotate) / sizeof(int), true, 0);
-    next_animation = 0.0f;
+    sprite_set = SpritesetId::GenericObjects;
+    animation.startRandom(coin_rotate);
     collisionDetection = true;
     sprite_no_representation = 84;
     alwaysUpdate = false;
 }
 
-void CoinReward::update(double time, TileTypePlane&, Player&, float)
+void Coin::update(const GameClock& clock, TileTypePlane&, Player&)
 {
-    if (time > next_animation) {
-        next_animation = time + 0.056f;
-        animation.update();
+    if (animation.update(clock.time)) {
         int new_sprite = animation.getFrame();
         if (new_sprite != sprite_no) {
             sprite_no = new_sprite;
@@ -38,7 +36,7 @@ void CoinReward::update(double time, TileTypePlane&, Player&, float)
     }
 }
 
-void CoinReward::handleCollision(Player* player, const Collision&)
+void Coin::handleCollision(Player* player, const Collision&)
 {
     enabled = false;
     if (spawned) deleteDefered = true;
@@ -49,7 +47,7 @@ void CoinReward::handleCollision(Player* player, const Collision&)
     int sample = ppl7::rand(0, 1);
     switch (sample) {
     case 1:
-        audio.playOnce(AudioClip::coin3, 0.3f);
+        audio.playOnce(AudioClip::coin2, 0.3f);
         break;
     default:
         audio.playOnce(AudioClip::coin1, 0.3f);
