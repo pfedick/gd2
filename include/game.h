@@ -149,7 +149,7 @@ private:
         int lastTileType = 1;
         Objects::Type ObjectType = Objects::Type::Invalid;
         int ObjectDifficulty = 0xff;
-        int ObjectLayer = 0;
+        Objects::Object::Layer ObjectLayer = Objects::Object::Layer::BeforePlayer;
         // Sprites
         ParallaxLayer::SpritePosition SpriteLayer = ParallaxLayer::SpritePosition::Background;
         int SpriteColorIndex = 2;

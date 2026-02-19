@@ -36,7 +36,7 @@ void ObjectsFrame::showPlayerPlaneObjects()
     selected_object = Objects::Type::Invalid;
 
     addObject(Objects::Type::PlayerStartpoint, "Player start", 0);
-    addObject(Objects::Type::SpawnPoint, "Player SpawnPoint", 1);
+    addObject(Objects::Type::SpawnPoint, "Object SpawnPoint", 1);
     addObject(Objects::Type::Savepoint, "Savepoint", 2);
     addObject(Objects::Type::Medikit, "Medikit", 3);
     addObject(Objects::Type::Crystal, "Crystal", 15);
@@ -205,6 +205,7 @@ ObjectSelection::ObjectSelection(int x, int y, int width, int height, Game* game
     layer_selection->add("Behind Player", ppl7::ToString("%d", static_cast<int>(Objects::Object::Layer::BehindPlayer)));
     layer_selection->add("Before Player", ppl7::ToString("%d", static_cast<int>(Objects::Object::Layer::BeforePlayer)));
     layer_selection->add("Before Bricks", ppl7::ToString("%d", static_cast<int>(Objects::Object::Layer::BeforeBricks)));
+    layer_selection->setCurrentIdentifier(ppl7::ToString("%d", static_cast<int>(Objects::Object::Layer::BeforePlayer)));
     layer_selection->setEventHandler(this);
     this->addChild(layer_selection);
     yy += 30;
@@ -244,14 +245,14 @@ void ObjectSelection::setObjectDifficulty(uint8_t matrix)
     difficulty_hard->setChecked(matrix & 4);
 }
 
-int ObjectSelection::currentLayer() const
+Objects::Object::Layer ObjectSelection::currentLayer() const
 {
-    return layer_selection->currentIdentifier().toInt();
+    return static_cast<Objects::Object::Layer>(layer_selection->currentIdentifier().toInt());
 }
 
-void ObjectSelection::setLayer(int layer)
+void ObjectSelection::setLayer(Objects::Object::Layer layer)
 {
-    layer_selection->setCurrentIdentifier(ppl7::ToString("%d", layer));
+    layer_selection->setCurrentIdentifier(ppl7::ToString("%d", static_cast<int>(layer)));
 }
 
 void ObjectSelection::setSpriteSet(SpriteTexture* texture)

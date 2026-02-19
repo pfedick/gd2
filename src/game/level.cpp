@@ -1000,12 +1000,12 @@ bool Level::findSprite(const ppl7::grafix::Point& p,
     for (auto& layer : parallax_layers) {
         if (!layer.isVisible) continue;
         ppl7::grafix::Point coords = p + worldcoords * layer.speed_factor * layer.size_factor;
-        if (layer.front_sprites.findMatchingSprite(coords, item, layer.size_factor)) {
+        if (layer.front_sprites.findMatchingSprite(coords, item)) {
             parallax_layer = layer.myParallaxLayer;
             layer_position = ParallaxLayer::SpritePosition::Front;
             return true;
         }
-        if (layer.background_sprites.findMatchingSprite(coords, item, layer.size_factor)) {
+        if (layer.background_sprites.findMatchingSprite(coords, item)) {
             parallax_layer = layer.myParallaxLayer;
             layer_position = ParallaxLayer::SpritePosition::Background;
             return true;

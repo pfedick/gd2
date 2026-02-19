@@ -17,6 +17,7 @@ MainMenue::MainMenue(int x, int y, int width, int height, Game* game)
     visibility_sprites = true;
     visibility_objects = true;
     visibility_particles = true;
+    visibility_tiles = true;
     visibility_grid = false;
     visibility_tiletypes = false;
     visibility_collision = false;
@@ -324,7 +325,7 @@ void MainMenue::closeEvent(ppltk::Event* event)
 }
 
 VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
-    : ppltk::Frame(x, y, 140, 460)
+    : ppltk::Frame(x, y, 140, 480)
 {
     this->menue = menue;
     int y1 = 0;
@@ -354,6 +355,11 @@ VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
     show_collision_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Collision", menue->visibility_collision);
     show_collision_checkbox->setEventHandler(this);
     this->addChild(show_collision_checkbox);
+    y1 += 20;
+
+    show_tiles_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Tiles", menue->visibility_tiles);
+    show_tiles_checkbox->setEventHandler(this);
+    this->addChild(show_tiles_checkbox);
     y1 += 20;
 
     show_sprites_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Sprites", menue->visibility_sprites);
@@ -421,6 +427,8 @@ void VisibilitySubMenu::toggledEvent(ppltk::Event* event, bool checked)
         menue->visibility_tiletypes = checked;
     } else if (widget == show_collision_checkbox) {
         menue->visibility_collision = checked;
+    } else if (widget == show_tiles_checkbox) {
+        menue->visibility_tiles = checked;
     } else if (widget == show_sprites_checkbox) {
         menue->visibility_sprites = checked;
     } else if (widget == show_objects_checkbox) {

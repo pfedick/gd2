@@ -287,7 +287,7 @@ void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Poi
     // ParallaxLayer::SpritePosition sprite_layer = sprite_selection->currentSpriteLayer();
     if (sprite_mode == SpriteMode::Edit && selected_sprite.id >= 0 && selected_sprite_system != NULL) {
 
-        selected_sprite_system->drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_sprite.id, layer.size_factor);
+        selected_sprite_system->drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_sprite.id);
     } else if (sprite_mode == SpriteMode::Draw) {
         int nr = sprite_selection->selectedSprite();
         if (nr < 0) return;
@@ -361,6 +361,61 @@ void GameEditor::drawSelectedObject(GPUBatcher& batcher, const ppl7::grafix::Poi
 
 void GameEditor::mouseDownEventOnObject(ppltk::MouseEvent* event)
 {
+    if ((event->buttonMask == ppltk::MouseState::Middle ||
+         (event->buttonMask == ppltk::MouseState::Left && SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LSHIFT]))) {
+        /* TODO
+    Objects::Object* object = level.objects->findMatchingObject(WorldCoords, event->p);
+    if (object) {
+        wm->setKeyboardFocus(world_widget);
+        object_selection->setObjectType(object->type());
+
+        object_selection->setObjectDifficulty(object->difficulty_matrix);
+        object_selection->setLayer(static_cast<int>(object->myLayer));
+        object_selection->setPlane(static_cast<int>(object->myPlane));
+        sprite_mode = SpriteModeEdit;
+        selected_object = object;
+        sprite_move_start = event->p;
+        object->openUi();
+    }
+        */
+    } else if (event->buttonMask == ppltk::MouseState::Left) {
+        Objects::Type object_type = object_selection->selectedObjectType();
+        if (object_type == Objects::Type::Invalid || sprite_mode == SpriteMode::Select || sprite_mode == SpriteMode::Edit) {
+            sprite_mode = SpriteMode::Select;
+            /* TODO
+            Objects::Object* object = level.objects->findMatchingObject(WorldCoords, event->p);
+            if (object) {
+                // printf ("found Object with id %d\n", object->id);
+                wm->setKeyboardFocus(world_widget);
+                sprite_mode = SpriteModeEdit;
+                // if (selected_object==object) object->openUi();
+                selected_object = object;
+                sprite_move_start = event->p;
+                object_selection->setObjectType(object->type());
+                object_selection->setObjectDifficulty(object->difficulty_matrix);
+                object_selection->setLayer(static_cast<int>(object->myLayer));
+                object_selection->setPlane(static_cast<int>(object->myPlane));
+            }
+            */
+            return;
+        }
+        if (sprite_mode != SpriteMode::Draw) return;
+        ParallaxLayer& layer = game->level.layer(mainmenue->currentLayer());
+        selected_object = layer.objects.getInstance(object_type);
+        if (selected_object) {
+            selected_object->difficulty_matrix = object_selection->getDifficulty();
+            selected_object->myLayer = object_selection->currentLayer();
+            selected_object->myParallaxLayer = layer.myParallaxLayer;
+            ppl7::grafix::Point coords = game->WorldCamera * layer.speed_factor * layer.size_factor;
+            selected_object->initial_p.setPoint(event->p.x + coords.x, event->p.y + coords.y);
+            selected_object->p = selected_object->initial_p;
+            layer.objects.addObject(selected_object);
+            sprite_mode = SpriteMode::Draw;
+        }
+    } else if (event->buttonMask == ppltk::MouseState::Right) {
+        sprite_mode = SpriteMode::Select;
+        selected_object = NULL;
+    }
 }
 
 void GameEditor::mouseDownEventOnSprite(ppltk::MouseEvent* event)

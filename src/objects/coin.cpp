@@ -8,7 +8,7 @@
 
 namespace Objects
 {
-AnimationDefinition coin_rotate(14, 44, true, 0);
+AnimationDefinition coin_rotate(14, 44, true, 0, 1.0f / 20.0f);
 
 Representation Coin::representation()
 {

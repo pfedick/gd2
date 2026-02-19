@@ -71,8 +71,8 @@ public:
     ObjectSelection(int x, int y, int width, int height, Game* game);
     void setSpriteSet(SpriteTexture* texture);
     Objects::Type selectedObjectType() const;
-    int currentLayer() const;
-    void setLayer(int layer);
+    Objects::Object::Layer currentLayer() const;
+    void setLayer(Objects::Object::Layer layer);
     void setObjectType(Objects::Type type);
     void setObjectDifficulty(uint8_t matrix);
     uint8_t getDifficulty() const;

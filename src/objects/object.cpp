@@ -144,7 +144,7 @@ size_t Object::save(unsigned char* buffer, size_t size) const
     ppl7::Poke32(buffer + 8, initial_p.x);
     ppl7::Poke32(buffer + 12, initial_p.y);
     ppl7::Poke8(buffer + 16, difficulty_matrix);
-    return 18;
+    return 17;
 }
 
 size_t Object::saveSize() const
@@ -176,12 +176,15 @@ void Object::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coords
 
     ppl7::grafix::Color c = color_mod;
     c.setAlpha(90);
-    batcher.addSprite(*texture, sprite_no_representation, p.x + coords.x, p.y + coords.y, scale, scale, rotation, c);
+    batcher.addSprite(*texture, sprite_no, p.x + coords.x, p.y + coords.y, scale, scale, rotation, c);
 }
 
 void Object::draw(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const
 {
-    batcher.addSprite(*texture, sprite_no_representation, p.x + coords.x, p.y + coords.y + coords.y, scale, scale, rotation, color_mod);
+    if (myType == Type::PlayerStartpoint) {
+        ppl7::PrintDebug("Drawing PlayerStartpoint at (%f, %f)\n", p.x, p.y);
+    }
+    batcher.addSprite(*texture, sprite_no, p.x + coords.x, p.y + coords.y, scale, scale, rotation, color_mod);
 }
 
 void Object::handleCollision(Player* player, const Collision& collision)

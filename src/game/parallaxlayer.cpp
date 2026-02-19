@@ -18,7 +18,7 @@ void ParallaxLayer::init(ParallaxLayerId parallaxLayer, float blur, float speed,
     blur_factor = blur;
     speed_factor = speed;
     size_factor = size;
-    objects.init(parallaxLayer);
+    objects.init(parallaxLayer, size_factor);
     background_sprites.setScaleFactor(size_factor);
     front_sprites.setScaleFactor(size_factor);
 }
@@ -89,8 +89,13 @@ void ParallaxLayer::draw(RenderState& renderstate,
 
     if (bShowSprites) {
         metrics.time_sprites.start();
-        background_sprites.draw(*renderstate.batcher, parallax_worldcoords, size_factor);
+        background_sprites.draw(*renderstate.batcher, parallax_worldcoords);
         metrics.time_sprites.stop();
+    }
+    if (bShowObjects) {
+        metrics.time_objects.start();
+        objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
+        metrics.time_objects.stop();
     }
     if (bShowTiles) {
         metrics.time_tiles.start();
@@ -99,12 +104,22 @@ void ParallaxLayer::draw(RenderState& renderstate,
     }
     if (bShowSprites) {
         metrics.time_sprites.start();
-        front_sprites.draw(*renderstate.batcher, parallax_worldcoords, size_factor);
+        front_sprites.draw(*renderstate.batcher, parallax_worldcoords);
         metrics.time_sprites.stop();
+    }
+    if (bShowObjects) {
+        metrics.time_objects.start();
+        objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
+        metrics.time_objects.stop();
     }
 
     if (myParallaxLayer == ParallaxLayerId::Player && player != NULL) {
         player->draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+    }
+    if (bShowObjects) {
+        metrics.time_objects.start();
+        objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
+        metrics.time_objects.stop();
     }
 
     if (bShowGrid) {

@@ -25,6 +25,7 @@ ObjectSystem::ObjectSystem()
     next_spawn_id = 1;
     player_start = 0;
     spritesets = NULL;
+    scale_factor = 1.0f;
 }
 
 ObjectSystem::~ObjectSystem()
@@ -32,9 +33,10 @@ ObjectSystem::~ObjectSystem()
     clear();
 }
 
-void ObjectSystem::init(ParallaxLayerId parallaxLayer)
+void ObjectSystem::init(ParallaxLayerId parallaxLayer, float scale_factor)
 {
     this->myParallaxLayer = parallaxLayer;
+    this->scale_factor = scale_factor;
 }
 
 void ObjectSystem::setSpritesetResources(ObjectSpritesets* spritesets)
@@ -58,11 +60,13 @@ void ObjectSystem::clear()
 static uint32_t genObjectId(ParallaxLayerId layer, uint32_t counter, bool spawned)
 {
     // Bits 0-23: Counter
-    // Bit 24: Spawned-Flag
-    // Bit 25-31: ParallaxLayerId
+    // Bits 24-30: ParallaxLayerId
+    // Bit 31: Spawned-Flag
+
     uint32_t id = counter & 0xffffff;
-    if (spawned) id |= 1 << 24;
-    id |= (static_cast<uint32_t>(layer) & 0x7f) << 25;
+    if (spawned) id |= 1 << 31;
+    id |= (static_cast<uint32_t>(layer) & 0x7f) << 24;
+    // ppl7::PrintDebug("genObjectId, layer=%d, counter=%d, spawned=%d => %d (0x%x)\n", layer, counter, spawned, id, id);
     return id;
 }
 
@@ -79,6 +83,7 @@ void ObjectSystem::addObject(Objects::Object* object)
         object->id = genObjectId(myParallaxLayer, nextid, false);
         nextid++;
         if (nextid > 0xffffff) {
+            ppl7::PrintDebug("ObjectSystem::addObject: ID counter overflow, no more objects can be created");
             throw ppl7::Exception("Too many objects created, id counter overflow");
         }
     }
@@ -155,13 +160,10 @@ void ObjectSystem::update(const GameClock& clock, TileTypePlane& ttplane, Player
     }
 }
 
-void ObjectSystem::draw(GPUBatcher& batcher,
-                        const ppl7::grafix::Rect& viewport,
-                        const ppl7::grafix::Point& worldcoords,
-                        Objects::Object::Layer layer) const
+void ObjectSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const
 {
     std::map<uint64_t, Objects::Object*>::const_iterator it;
-    ppl7::grafix::Point coords(viewport.x1 - worldcoords.x, viewport.y1 - worldcoords.y);
+    ppl7::grafix::Point coords(-worldcoords.x, -worldcoords.y);
     uint8_t dm = getDifficultyMatrix();
     for (it = visible_object_map.begin(); it != visible_object_map.end(); ++it) {
         const Objects::Object* object = it->second;
@@ -185,13 +187,10 @@ static void drawId(GPUBatcher& batcher, SpriteTexture* spriteset, int x, int y, 
     }
 }
 
-void ObjectSystem::drawEditMode(GPUBatcher& batcher,
-                                const ppl7::grafix::Rect& viewport,
-                                const ppl7::grafix::Point& worldcoords,
-                                Objects::Object::Layer layer) const
+void ObjectSystem::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const
 {
     std::map<uint64_t, Objects::Object*>::const_iterator it;
-    ppl7::grafix::Point coords(viewport.x1 - worldcoords.x, viewport.y1 - worldcoords.y);
+    ppl7::grafix::Point coords(-worldcoords.x, -worldcoords.y);
     for (it = visible_object_map.begin(); it != visible_object_map.end(); ++it) {
         const Objects::Object* object = it->second;
         if (object->type() == Objects::Type::Projectile) {
@@ -365,7 +364,7 @@ void ObjectSystem::load(const ppl7::ByteArrayPtr& ba)
         Objects::Object* object = getInstance(type);
         if (object) {
             if (object->load(buffer + p + 4, save_size - 4)) {
-                if (object->id >= nextid) nextid = object->id + 1;
+                if ((object->id & 0xffffff) >= nextid) nextid = (object->id & 0xffffff) + 1;
                 object->texture = spritesets->getSpriteset(object->sprite_set);
                 object->updateBoundary();
                 object_list.insert(std::pair<uint32_t, Objects::Object*>(object->id, object));
@@ -375,7 +374,6 @@ void ObjectSystem::load(const ppl7::ByteArrayPtr& ba)
         }
         p += save_size;
     }
-    // printf ("nextid=%d\n",nextid);
 }
 
 ppl7::grafix::Point ObjectSystem::findPlayerStart() const

@@ -492,6 +492,7 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
     level.setShowTileGrid(editor.mainmenue->visibility_grid);
     level.setShowTileTypes(editor.mainmenue->visibility_tiletypes);
     level.setShowCollisions(editor.mainmenue->visibility_collision);
+    level.setShowTiles(editor.mainmenue->visibility_tiles);
     level.setShowSprites(editor.mainmenue->visibility_sprites);
     level.setShowObjects(editor.mainmenue->visibility_objects);
     level.setShowParticles(editor.mainmenue->visibility_particles);

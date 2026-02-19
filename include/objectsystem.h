@@ -231,6 +231,7 @@ private:
     uint32_t next_spawn_id;
     int player_start;
     ParallaxLayerId myParallaxLayer;
+    float scale_factor;
     std::map<uint32_t, Objects::Object*> object_list;
     std::map<uint64_t, Objects::Object*> visible_object_map;
     ObjectSpritesets* spritesets;
@@ -244,7 +245,7 @@ private:
 public:
     ObjectSystem();
     ~ObjectSystem();
-    void init(ParallaxLayerId parallaxLayer);
+    void init(ParallaxLayerId parallaxLayer, float scale_factor);
     void setSpritesetResources(ObjectSpritesets* spritesets);
     void clear();
     // void setWaynet(Waynet* waynet);
@@ -253,14 +254,8 @@ public:
     Objects::Object* getInstance(Objects::Type object_type) const;
     void update(const GameClock& clock, TileTypePlane& ttplane, Player& player);
     void updateVisibleObjectList(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
-    void draw(GPUBatcher& batcher,
-              const ppl7::grafix::Rect& viewport,
-              const ppl7::grafix::Point& worldcoords,
-              Objects::Object::Layer layer) const;
-    void drawEditMode(GPUBatcher& batcher,
-                      const ppl7::grafix::Rect& viewport,
-                      const ppl7::grafix::Point& worldcoords,
-                      Objects::Object::Layer layer) const;
+    void draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const;
+    void drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const;
     void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const;
     void load(const ppl7::ByteArrayPtr& ba);
     Objects::Object* getObject(uint32_t object_id);
