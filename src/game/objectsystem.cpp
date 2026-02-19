@@ -186,7 +186,7 @@ static void drawId(GPUBatcher& batcher, SpriteTexture* spriteset, int x, int y, 
         if (s[p] == ' ')
             w += 12;
         else
-            w += spriteset->spriteSize(s[p], 1.0f).width - 4;
+            w += spriteset->spriteSize(s[p], 1.0f).width - 2;
     }
     x -= w / 2;
     for (size_t p = 0; p < s.size(); p++) {
@@ -195,7 +195,7 @@ static void drawId(GPUBatcher& batcher, SpriteTexture* spriteset, int x, int y, 
         if (s[p] == ' ')
             x += 12;
         else
-            x += spriteset->spriteSize(num, 1.0f).width - 4;
+            x += spriteset->spriteSize(num, 1.0f).width - 2;
     }
 }
 

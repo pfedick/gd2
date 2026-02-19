@@ -1,6 +1,21 @@
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 
+ppl7::grafix::Drawable GetBoundary(const ppl7::grafix::Drawable& draw)
+{
+    int left = draw.width(), right = 0, bottom = 0;
+    for (int y = 0; y < draw.height(); y++) {
+        for (int x = 0; x < draw.width(); x++) {
+            if (draw.getPixel(x, y).alpha() > 0) {
+                if (x < left) left = x;
+                if (x > right) right = x;
+                if (y > bottom) bottom = y;
+            }
+        }
+    }
+    return draw.getDrawable(left, 0, right, bottom);
+}
+
 int main(int argc, char* argv[])
 {
     ppl7::WideString letters = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ÄÖÜäöüß,.-;:_#'+*~^°!§$%&/()[]\\=?<>|@€";
@@ -33,7 +48,8 @@ int main(int argc, char* argv[])
         }
         font.setColor(ppl7::grafix::Color(255, 255, 255, 255));
         img.print(font, 2, font_size + 2, s);
-        png.saveFile(ppl7::ToString("res/fonts/scp/frame_%05u.png", s[0]), img);
+        ppl7::grafix::Drawable boundary = GetBoundary(img);
+        png.saveFile(ppl7::ToString("res/fonts/scp/frame_%05u.png", s[0]), boundary);
     }
 
     return 0;

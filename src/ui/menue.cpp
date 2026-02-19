@@ -25,6 +25,7 @@ MainMenue::MainMenue(int x, int y, int width, int height, Game* game)
     visibility_hud = true;
     visibility_blur = true;
     controlsEnabled = true;
+    ppl7::PrintDebug("MainMenue created\n");
 }
 
 void MainMenue::update()
@@ -42,11 +43,13 @@ ppl7::String MainMenue::widgetType() const
 
 void MainMenue::resize(int x, int y, int width, int height)
 {
+    if (this->size().width == width && this->size().height == height && this->pos().x == x && this->pos().y == y) return;
     this->setPos(x, y);
     this->setSize(width, height);
     this->destroyChilds();
     setupUi();
     needsRedraw();
+    ppl7::PrintDebug("MainMenue resized to %dx%d\n", width, height);
 }
 
 void MainMenue::setupUi()
