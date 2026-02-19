@@ -157,10 +157,13 @@ void StatusBar::setPlayerState(const ppl7::String& state)
     player_state->setText(state);
 }
 
-void StatusBar::setSelectedObject(int id)
+void StatusBar::setSelectedObject(uint32_t id)
 {
-    if (id >= 0) {
-        object_id->setText(ppl7::ToString("%d", id));
+    if (id > 0) {
+        uint32_t lid = id & 0xffffff;
+        bool spawned = (id & (1 << 31)) != 0;
+        int layer = (id >> 24) & 0x7f;
+        object_id->setText(ppl7::ToString("%s%d:%d", (spawned ? "=>" : ""), layer, lid));
     } else {
         object_id->setText("-");
     }

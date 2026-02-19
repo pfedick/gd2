@@ -94,7 +94,11 @@ void ParallaxLayer::draw(RenderState& renderstate,
     }
     if (bShowObjects) {
         metrics.time_objects.start();
-        objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
+        if (objectEditMode) {
+            objects.drawEditMode(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
+        } else {
+            objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
+        }
         metrics.time_objects.stop();
     }
     if (bShowTiles) {
@@ -109,7 +113,11 @@ void ParallaxLayer::draw(RenderState& renderstate,
     }
     if (bShowObjects) {
         metrics.time_objects.start();
-        objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
+        if (objectEditMode) {
+            objects.drawEditMode(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
+        } else {
+            objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
+        }
         metrics.time_objects.stop();
     }
 
@@ -118,7 +126,11 @@ void ParallaxLayer::draw(RenderState& renderstate,
     }
     if (bShowObjects) {
         metrics.time_objects.start();
-        objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
+        if (objectEditMode) {
+            objects.drawEditMode(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
+        } else {
+            objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
+        }
         metrics.time_objects.stop();
     }
 

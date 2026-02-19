@@ -38,7 +38,7 @@ public:
     void setWorldCoords(const ppl7::grafix::Point& p);
     void setPlayerCoords(const ppl7::grafix::Point& p);
     void setPlayerState(const ppl7::String& state);
-    void setSelectedObject(int id);
+    void setSelectedObject(uint32_t id);
 
     // Events
     void timerEvent(ppltk::Event* event);

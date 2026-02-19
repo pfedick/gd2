@@ -525,7 +525,7 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
     if (editor.selected_object) {
         editor.statusbar->setSelectedObject(editor.selected_object->id);
     } else {
-        editor.statusbar->setSelectedObject(-1);
+        editor.statusbar->setSelectedObject(0);
     }
 }
 

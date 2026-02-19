@@ -26,7 +26,7 @@ Level::Level(Game* game)
 {
     // objects = new Decker::Objects::ObjectSystem(&waynet);
     //  particles = new ParticleSystem();
-    editMode = false;
+    objectEditMode = false;
     bShowGrid = false;
     bShowTileTypes = false;
     showSprites = true;
@@ -79,9 +79,12 @@ void Level::clear()
     // TODO: GetGame().texture_cache.clear();
 }
 
-void Level::setEditmode(bool enabled)
+void Level::setObjectEditmode(bool enabled)
 {
-    editMode = enabled;
+    objectEditMode = enabled;
+    for (auto& pl : parallax_layers) {
+        pl.objectEditMode = enabled;
+    }
 }
 
 void Level::updateVisibility()

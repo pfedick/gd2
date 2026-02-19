@@ -133,6 +133,7 @@ public:
     bool bShowObjects = true;
     bool bShowParticles = true;
     bool isEditLayer = false;
+    bool objectEditMode = false;
     Game* game = NULL;
 
     TileGrid tiles;
@@ -189,7 +190,7 @@ private:
     // SDL_GPUTexture* tex_render_target;
     ppl7::grafix::Size render_target_size;
 
-    bool editMode;
+    bool objectEditMode;
     bool showSprites;
     bool showTiles;
     bool showObjects;
@@ -228,7 +229,7 @@ public:
     Level(Game* game);
     ~Level();
     void setPlayer(Player* player);
-    void setEditmode(bool enabled);
+    void setObjectEditmode(bool enabled);
     void setTileset(int no, SpriteTexture* tileset);
     void setSpriteset(int no, SpriteTexture* spriteset);
     void setSpritesetResources(ObjectSpritesets* spriteset);

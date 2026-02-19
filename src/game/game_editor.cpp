@@ -71,6 +71,7 @@ void GameEditor::closeAll()
         delete object_selection;
         object_selection = NULL;
         selected_object = NULL;
+        game->level.setObjectEditmode(false);
     }
     if (sprite_selection) {
         history.SpriteLayer = sprite_selection->currentSpriteLayer();
@@ -162,6 +163,7 @@ void GameEditor::showObjectSelection()
     game->viewport.x1 = 300;
     game->world_widget->setViewport(game->viewport);
     game->game_viewport.setViewport(game->viewport);
+    game->level.setObjectEditmode(true);
 }
 
 void GameEditor::updateDifficultyForSelectedObject(uint8_t dificulty)

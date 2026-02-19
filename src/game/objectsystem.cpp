@@ -177,13 +177,25 @@ void ObjectSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoo
 static void drawId(GPUBatcher& batcher, SpriteTexture* spriteset, int x, int y, uint32_t as)
 {
     ppl7::WideString s;
-    s.setf("%d", as);
-    int w = (int)s.size() * 12;
+    uint32_t id = as & 0xffffff;
+    bool spawned = (as & (1 << 31)) != 0;
+    int layer = (as >> 24) & 0x7f;
+    s.setf("%s%d:%d", (spawned ? "=>" : ""), layer, id);
+    int w = 0;
+    for (size_t p = 0; p < s.size(); p++) {
+        if (s[p] == ' ')
+            w += 12;
+        else
+            w += spriteset->spriteSize(s[p], 1.0f).width - 4;
+    }
     x -= w / 2;
     for (size_t p = 0; p < s.size(); p++) {
         int num = s[p];
-        batcher.addSprite(*spriteset, num, x, y, 0.5f, 0.5f);
-        x += 12;
+        batcher.addSprite(*spriteset, num, x, y);
+        if (s[p] == ' ')
+            x += 12;
+        else
+            x += spriteset->spriteSize(num, 1.0f).width - 4;
     }
 }
 
