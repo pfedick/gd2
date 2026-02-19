@@ -776,9 +776,10 @@ void Game::resizeEvent(ppltk::ResizeEvent* event)
 
 void Game::gameControllerButtonDownEvent(ppltk::GameControllerButtonEvent* event)
 {
+    /* TODO:
     GameControllerMapping::Button b = controller.mapping.getButton(event);
     // ppl7::PrintDebugTime("gameControllerButtonDownEvent b=%d\n", (int)b);
-    /* TODO:
+
     if (b == GameControllerMapping::Button::Menu) {
         if (settings_screen) {
             delete settings_screen;

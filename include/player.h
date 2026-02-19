@@ -263,7 +263,7 @@ public:
     bool isPetrified() const;
     void addPowerCell();
     void setBatteryDrainRate(float rate);
-    void takeAllItems(int type);
+    void takeAllItems(Objects::Type type);
     void drainBatteryCompletely();
     void enableControl();
     void disableControl();

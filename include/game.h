@@ -147,7 +147,7 @@ private:
         int lastTileColor;
         int lastTileLayer;
         int lastTileType = 1;
-        int ObjectType = 0;
+        Objects::Type ObjectType = Objects::Type::Invalid;
         int ObjectDifficulty = 0xff;
         int ObjectLayer = 0;
         // Sprites

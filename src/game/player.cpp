@@ -1965,14 +1965,14 @@ void Player::drainBatteryCompletely()
     drainBattery();
 }
 
-void Player::takeAllItems(int type)
+void Player::takeAllItems(Objects::Type type)
 {
     if (type == Objects::Type::ExtraLife) {
         lifes = 1;
         //} else if (type == Objects::Type::PowerCell) {
         //    powercells = 0;
     } else {
-        SpecialObjects.erase(type);
+        SpecialObjects.erase(static_cast<int>(type));
     }
 }
 

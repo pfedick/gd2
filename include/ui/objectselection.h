@@ -14,18 +14,18 @@ class ObjectsFrame : public ppltk::Frame
 private:
     SpriteTexture* spriteset;
     ppltk::Scrollbar* scrollbar;
-    int selected_object;
+    Objects::Type selected_object;
     bool playerPlaneObjectsVisible;
     class Item
     {
     public:
-        int id;
+        Objects::Type id;
         ppl7::String name;
         int sprite_no;
-        Item(int id, const ppl7::String& name, int sprite_no);
+        Item(Objects::Type id, const ppl7::String& name, int sprite_no);
     };
     std::map<size_t, Item> object_map;
-    void addObject(int id, const ppl7::String& name, int sprite_no);
+    void addObject(Objects::Type id, const ppl7::String& name, int sprite_no);
 
 public:
     ObjectsFrame(int x, int y, int width, int height);
@@ -33,8 +33,8 @@ public:
     void showPlayerPlaneObjects();
 
     void setSpriteSet(SpriteTexture* texture);
-    int selectedObjectType() const;
-    void setObjectType(int type);
+    Objects::Type selectedObjectType() const;
+    void setObjectType(Objects::Type type);
 
     ppl7::String widgetType() const override;
     void paint(ppl7::grafix::Drawable& draw) override;
@@ -70,10 +70,10 @@ private:
 public:
     ObjectSelection(int x, int y, int width, int height, Game* game);
     void setSpriteSet(SpriteTexture* texture);
-    int selectedObjectType() const;
+    Objects::Type selectedObjectType() const;
     int currentLayer() const;
     void setLayer(int layer);
-    void setObjectType(int type);
+    void setObjectType(Objects::Type type);
     void setObjectDifficulty(uint8_t matrix);
     uint8_t getDifficulty() const;
     ppl7::String widgetType() const override;

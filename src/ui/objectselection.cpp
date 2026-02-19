@@ -4,7 +4,7 @@
 #include "level.h"
 #include "game.h"
 
-ObjectsFrame::Item::Item(int id, const ppl7::String& name, int sprite_no)
+ObjectsFrame::Item::Item(Objects::Type id, const ppl7::String& name, int sprite_no)
 {
     this->id = id;
     this->name = name;
@@ -16,7 +16,7 @@ ObjectsFrame::ObjectsFrame(int x, int y, int width, int height)
 {
     ppl7::grafix::Rect client = this->clientRect();
     // setBorderStyle(ppltk::Frame::Inset);
-    selected_object = 0;
+    selected_object = Objects::Type::Invalid;
     spriteset = NULL;
     playerPlaneObjectsVisible = false;
 
@@ -33,7 +33,7 @@ void ObjectsFrame::showPlayerPlaneObjects()
     if (playerPlaneObjectsVisible) return;
     playerPlaneObjectsVisible = true;
     object_map.clear();
-    selected_object = 0;
+    selected_object = Objects::Type::Invalid;
 
     addObject(Objects::Type::PlayerStartpoint, "Player start", 0);
     addObject(Objects::Type::SpawnPoint, "Player SpawnPoint", 1);
@@ -59,12 +59,12 @@ void ObjectsFrame::showPlayerPlaneObjects()
     scrollbar->setVisibleItems((height() - 44) / 160 / 2);
 }
 
-int ObjectsFrame::selectedObjectType() const
+Objects::Type ObjectsFrame::selectedObjectType() const
 {
     return selected_object;
 }
 
-void ObjectsFrame::setObjectType(int type)
+void ObjectsFrame::setObjectType(Objects::Type type)
 {
     if (type != selected_object) {
         selected_object = type;
@@ -81,7 +81,7 @@ void ObjectsFrame::setObjectType(int type)
     }
 }
 
-void ObjectsFrame::addObject(int id, const ppl7::String& name, int sprite_no)
+void ObjectsFrame::addObject(Objects::Type id, const ppl7::String& name, int sprite_no)
 {
     object_map.insert(std::pair<size_t, Item>(object_map.size(), Item(id, name, sprite_no)));
 }
@@ -117,7 +117,7 @@ void ObjectsFrame::mouseDownEvent(ppltk::MouseEvent* event)
             // game->setSpriteModeToDraw();
             ppltk::Event event(ppltk::Event::ValueChanged);
             event.setWidget(this);
-            getParent()->valueChangedEvent(&event, selected_object);
+            getParent()->valueChangedEvent(&event, static_cast<int>(selected_object));
             needsRedraw();
         }
     }
@@ -227,12 +227,12 @@ ObjectSelection::ObjectSelection(int x, int y, int width, int height, Game* game
     this->addChild(objects_frame);
 }
 
-int ObjectSelection::selectedObjectType() const
+Objects::Type ObjectSelection::selectedObjectType() const
 {
     return objects_frame->selectedObjectType();
 }
 
-void ObjectSelection::setObjectType(int type)
+void ObjectSelection::setObjectType(Objects::Type type)
 {
     objects_frame->setObjectType(type);
 }

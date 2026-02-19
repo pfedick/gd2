@@ -2,58 +2,82 @@
 #include <ppl7-grafix.h>
 #include "objectsystem.h"
 #include "level.h"
+#include "objects/generic.h"
 
 namespace Objects
 {
 
-Representation::Representation(int sprite_set, int sprite_no)
+Representation::Representation(Objects::SpritesetId sprite_set, int sprite_no)
 {
     this->sprite_set = sprite_set;
     this->sprite_no = sprite_no;
 }
 
-ppl7::String Type::name(Type::ObjectType type)
+ppl7::String ObjectName(Type type)
 {
     switch (type) {
-    case ObjectType::PlayerStartpoint:
+    case Type::PlayerStartpoint:
         return ppl7::String("PlayerStartpoint");
-    case ObjectType::Savepoint:
+    case Type::SpawnPoint:
+        return ppl7::String("SpawnPoint");
+    case Type::Savepoint:
         return ppl7::String("Savepoint");
-    case ObjectType::Medikit:
+    case Type::Medikit:
         return ppl7::String("Medikit");
-
-    case ObjectType::Crystal:
+    case Type::Crystal:
         return ppl7::String("Crystal");
-    case ObjectType::Diamond:
+    case Type::Diamond:
         return ppl7::String("Diamond");
-    case ObjectType::Coin:
+    case Type::Coin:
         return ppl7::String("Coin");
-    case ObjectType::ParticleEmitter:
-        return ppl7::String("ParticleEmitter");
-    case ObjectType::Speaker:
+    case Type::Speaker:
         return ppl7::String("Speaker");
-    case ObjectType::Projectile:
-        return ppl7::String("Projectile");
-    case ObjectType::ExtraLife:
+    case Type::ExtraLife:
         return ppl7::String("ExtraLife");
+    case Type::ParticleEmitter:
+        return ppl7::String("ParticleEmitter");
+    case Type::Projectile:
+        return ppl7::String("Projectile");
+    case Type::TouchEmitter:
+        return ppl7::String("TouchEmitter");
+    case Type::RainEmitter:
+        return ppl7::String("RainEmitter");
+    case Type::VoiceTrigger:
+        return ppl7::String("VoiceTrigger");
+    case Type::ObjectWatcher:
+        return ppl7::String("ObjectWatcher");
+    case Type::Trigger:
+        return ppl7::String("Trigger");
+    case Type::LightTrigger:
+        return ppl7::String("LightTrigger");
+    case Type::PlayerTrigger:
+        return ppl7::String("PlayerTrigger");
+    case Type::LevelModificator:
+        return ppl7::String("LevelModificator");
+    case Type::GlimmerNode:
+        return ppl7::String("GlimmerNode");
+    case Type::ItemTaker:
+        return ppl7::String("ItemTaker");
+    case Type::CameraControl:
+        return ppl7::String("CameraControl");
     default:
         return ppl7::String("unknown object type: %d", static_cast<int>(type));
     }
 }
 
-Representation getRepresentation(int object_type)
+Representation getRepresentation(Type object_type)
 {
     switch (object_type) {
     case Type::PlayerStartpoint:
-        // return PlayerStartPoint::representation(); //TODO
-        return Object::representation();
-
+        return Objects::PlayerStartPoint::representation();
+    case Type::Coin:
+        return Objects::CoinReward::representation();
     default:
         return Object::representation();
     }
 }
 
-Object::Object(Type::ObjectType type)
+Object::Object(Type type)
 {
     myPlane = ParallaxLayerId::Player;
     myType = type;
@@ -82,14 +106,14 @@ Object::~Object()
 {
 }
 
-Type::ObjectType Object::type() const
+Type Object::type() const
 {
     return myType;
 }
 
 ppl7::String Object::typeName() const
 {
-    return Type::name(myType);
+    return ObjectName(myType);
 }
 
 void Object::updateBoundary()
@@ -102,7 +126,7 @@ void Object::updateBoundary()
 
 Representation Object::representation()
 {
-    return Representation(-1, 0);
+    return Representation(Objects::SpritesetId::GenericObjects, 0);
 }
 
 void Object::update(const GameClock&, TileTypePlane&, Player& player)
@@ -113,7 +137,7 @@ size_t Object::save(unsigned char* buffer, size_t size) const
 {
     if (size < 17) return 0;
     ppl7::Poke8(buffer + 0, 3); // Object-Header-Version
-    ppl7::Poke16(buffer + 1, myType);
+    ppl7::Poke16(buffer + 1, static_cast<uint16_t>(myType));
     ppl7::Poke8(buffer + 3, static_cast<int>(myLayer));
     ppl7::Poke32(buffer + 4, id);
     ppl7::Poke32(buffer + 8, initial_p.x);

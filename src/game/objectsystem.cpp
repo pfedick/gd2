@@ -4,6 +4,7 @@
 #include "player.h"
 #include "game.h"
 #include "sprite.h"
+#include "objects/generic.h"
 
 static uint8_t getDifficultyMatrix()
 {
@@ -255,31 +256,28 @@ Objects::Object* ObjectSystem::getObject(uint32_t object_id)
     return NULL;
 }
 
-void ObjectSystem::drawSelectedSpriteOutline(GPUBatcher& batcher,
-                                             const ppl7::grafix::Rect& viewport,
-                                             const ppl7::grafix::Point& worldcoords,
-                                             int id)
+void ObjectSystem::drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, int id)
 {
     std::map<uint32_t, Objects::Object*>::const_iterator it;
     it = object_list.find(id);
     if (it != object_list.end()) {
         const Objects::Object* item = it->second;
         if (item->texture) {
-            item->texture->drawOutlines(batcher, item->initial_p.x + viewport.x1 - worldcoords.x,
-                                        item->initial_p.y + viewport.y1 - worldcoords.y, item->sprite_no_representation, item->scale);
+            item->texture->drawOutlines(batcher, item->initial_p.x - worldcoords.x, item->initial_p.y - worldcoords.y,
+                                        item->sprite_no_representation, item->scale);
         }
     }
 }
 
-SpriteTexture* ObjectSystem::getTexture(int sprite_set) const
+SpriteTexture* ObjectSystem::getTexture(Objects::SpritesetId sprite_set) const
 {
     return spritesets->getSpriteset(sprite_set);
 }
 
-void ObjectSystem::drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::Point& p, int object_type)
+void ObjectSystem::drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::Point& p, Objects::Type object_type)
 {
     Objects::Representation repr = Objects::getRepresentation(object_type);
-    if (repr.sprite_set >= 0) {
+    if (repr.sprite_set < Objects::SpritesetId::MaxSpritesets) {
         SpriteTexture* texture = getTexture(repr.sprite_set);
         if (texture) {
             texture->draw(batcher, p.x, p.y, repr.sprite_no);
@@ -288,12 +286,16 @@ void ObjectSystem::drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::P
     }
 }
 
-Objects::Object* ObjectSystem::getInstance(int object_type) const
+Objects::Object* ObjectSystem::getInstance(Objects::Type object_type) const
 {
+    if (object_type == Objects::Type::Invalid) return NULL;
     switch (object_type) {
+    case Objects::Type::PlayerStartpoint:
+        return new Objects::PlayerStartPoint();
     case Objects::Type::Coin:
-        // return new CoinReward();
-        return NULL;
+        return new Objects::CoinReward();
+    default:
+        break;
     }
     return NULL;
 }
@@ -338,7 +340,7 @@ void ObjectSystem::load(const ppl7::ByteArrayPtr& ba)
     // printf("chunk size=%zd\n",ba.size());
     while (p < ba.size()) {
         int save_size = ppl7::Peek32(buffer + p);
-        int type = ppl7::Peek16(buffer + p + 5);
+        Objects::Type type = static_cast<Objects::Type>(ppl7::Peek16(buffer + p + 5));
         Objects::Object* object = getInstance(type);
         if (object) {
             if (object->load(buffer + p + 4, save_size - 4)) {
@@ -405,7 +407,7 @@ void ObjectSystem::getObjectCounter(std::map<int, size_t>& object_counter) const
     for (it = object_list.begin(); it != object_list.end(); ++it) {
         const Objects::Object* obj = (*it).second;
         if (obj) {
-            object_counter[obj->type()]++;
+            object_counter[static_cast<int>(obj->type())]++;
             /*
             if (obj->type() == Objects::Type::ObjectType::TouchEmitter) {
                 int t = ((const TouchEmitter*)obj)->emitted_object;

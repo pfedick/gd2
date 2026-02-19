@@ -284,7 +284,7 @@ void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Poi
     ParallaxLayerId currentParalaxLayer = mainmenue->currentLayer();
     ParallaxLayer& layer = game->level.layer(currentParalaxLayer);
     ppl7::grafix::PointF parallax_worldcoords = game->WorldCamera * layer.speed_factor * layer.size_factor;
-    ParallaxLayer::SpritePosition sprite_layer = sprite_selection->currentSpriteLayer();
+    // ParallaxLayer::SpritePosition sprite_layer = sprite_selection->currentSpriteLayer();
     if (sprite_mode == SpriteMode::Edit && selected_sprite.id >= 0 && selected_sprite_system != NULL) {
 
         selected_sprite_system->drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_sprite.id, layer.size_factor);
@@ -346,18 +346,17 @@ void GameEditor::drawSelectedObject(GPUBatcher& batcher, const ppl7::grafix::Poi
 {
     if (!object_selection) return;
     ParallaxLayer& layer = game->level.layer(mainmenue->currentLayer());
-    /*
+    ppl7::grafix::PointF parallax_worldcoords = game->WorldCamera * layer.speed_factor * layer.size_factor;
+
     if (sprite_mode == SpriteMode::Edit && selected_object != NULL) {
-        layer.objects.drawSelectedSpriteOutline(batcher, game_viewport,
-                                                WorldCoords * planeFactor[static_cast<int>(selected_object->myPlane)], selected_object->id);
-    } else if (sprite_mode == spriteModeDraw) {
-        if (!mouse.inside(game_viewport)) return;
-        int object_type = object_selection->selectedObjectType();
-        if (object_type < 0) return;
-        ppl7::grafix::Point tmouse = game_viewport.translate(mouse);
-        level.objects->drawPlaceSelection(renderer, tmouse, object_type);
+        // selected_sprite_system->drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_sprite.id, layer.size_factor);
+        layer.objects.drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_object->id);
+    } else if (sprite_mode == SpriteMode::Draw) {
+        Objects::Type object_type = object_selection->selectedObjectType();
+        if (object_type == Objects::Type::Invalid) return;
+        ppl7::grafix::PointF tmouse = game->game_viewport.translate(mouse);
+        layer.objects.drawPlaceSelection(batcher, tmouse, object_type);
     }
-        */
 }
 
 void GameEditor::mouseDownEventOnObject(ppltk::MouseEvent* event)

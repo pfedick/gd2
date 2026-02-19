@@ -33,37 +33,34 @@ enum class ParallaxLayerId;
 namespace Objects
 {
 
-class Type
+enum class Type : uint16_t
 {
-public:
-    // ID must be <256
-    enum ObjectType
-    {
-        PlayerStartpoint = 1,
-        SpawnPoint = 2,
-        Savepoint = 3,
-        Medikit = 4,
-        Crystal = 5,
-        Diamond = 6,
-        Coin = 7,
-        Speaker = 8,
-        ExtraLife = 9,
-        ParticleEmitter = 10,
-        Projectile = 11,
-        TouchEmitter = 12,
-        RainEmitter = 13,
-        VoiceTrigger = 14,
-        ObjectWatcher = 15,
-        Trigger = 16,
-        LightTrigger = 17,
-        PlayerTrigger = 18,
-        LevelModificator = 19,
-        GlimmerNode = 20,
-        ItemTaker = 21,
-        CameraControl = 22,
-    };
-    static ppl7::String name(Type::ObjectType type);
+    Invalid = 0,
+    PlayerStartpoint = 1,
+    SpawnPoint = 2,
+    Savepoint = 3,
+    Medikit = 4,
+    Crystal = 5,
+    Diamond = 6,
+    Coin = 7,
+    Speaker = 8,
+    ExtraLife = 9,
+    ParticleEmitter = 10,
+    Projectile = 11,
+    TouchEmitter = 12,
+    RainEmitter = 13,
+    VoiceTrigger = 14,
+    ObjectWatcher = 15,
+    Trigger = 16,
+    LightTrigger = 17,
+    PlayerTrigger = 18,
+    LevelModificator = 19,
+    GlimmerNode = 20,
+    ItemTaker = 21,
+    CameraControl = 22,
 };
+
+ppl7::String ObjectName(Type type);
 
 enum class SpritesetId
 {
@@ -74,12 +71,12 @@ enum class SpritesetId
 class Representation
 {
 public:
-    Representation(int sprite_set, int sprite_no);
-    int sprite_set;
+    Representation(SpritesetId sprite_set, int sprite_no);
+    SpritesetId sprite_set;
     int sprite_no;
 };
 
-Representation getRepresentation(int object_type);
+Representation getRepresentation(Type object_type);
 
 class Object;
 class Collision
@@ -150,7 +147,7 @@ public:
     };
 
 private:
-    Type::ObjectType myType;
+    Type myType;
 
 public:
     Layer myLayer;
@@ -177,9 +174,9 @@ public:
     bool alwaysUpdate;
     bool isInViewport; // not saved, indicates, if the object gets drawn in the current frame
 
-    explicit Object(Type::ObjectType type);
+    explicit Object(Type type);
     virtual ~Object();
-    Type::ObjectType type() const;
+    Type type() const;
     ppl7::String typeName() const;
     void updateBoundary();
     void updateSpriteset(SpritesetId spriteset);
@@ -252,7 +249,7 @@ public:
     // void setWaynet(Waynet* waynet);
     // void loadSpritesets(SDL& sdl);   // TODO: Wir brauchen globale Spritesets, die jedem ObjectSystem zur Verfügung stehen
     void addObject(Objects::Object* object);
-    Objects::Object* getInstance(int object_type) const;
+    Objects::Object* getInstance(Objects::Type object_type) const;
     void update(const GameClock& clock, TileTypePlane& ttplane, Player& player);
     void updateVisibleObjectList(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
     void draw(GPUBatcher& batcher,
@@ -272,13 +269,13 @@ public:
     void detectObjectCollision(const Objects::Object* object, std::list<Objects::Object*>& collision_object_list);
     void detectObjectCollision(const ppl7::grafix::Rect& boundary, std::list<Objects::Object*>& collision_object_list);
 
-    void drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Rect& viewport, const ppl7::grafix::Point& worldcoords, int id);
-    void drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::Point& p, int object_type);
+    void drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, int id);
+    void drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::Point& p, Objects::Type object_type);
     void deleteObject(int id);
     bool findObjectsInRange(const ppl7::grafix::PointF& p, double range, std::list<Objects::Object*>& objects);
     ppl7::grafix::Point findPlayerStart() const;
     ppl7::grafix::Point nextPlayerStart();
-    SpriteTexture* getTexture(int sprite_set) const;
+    SpriteTexture* getTexture(Objects::SpritesetId sprite_set) const;
     void resetPlayerStart();
     size_t count() const;
     size_t countVisible() const;
