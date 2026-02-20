@@ -42,14 +42,14 @@ public:
     void handleCollision(Player* player, const Collision& collision) override;
 };
 
-class CrystalReward : public Object
+class Crystal : public Object
 {
 private:
     AnimationCycle animation;
     // LightObject light_glow;
 
 public:
-    CrystalReward();
+    Crystal();
     static Representation representation();
     void update(const GameClock& clock, TileTypePlane& ttplane, Player& player) override;
     void handleCollision(Player* player, const Collision& collision) override;

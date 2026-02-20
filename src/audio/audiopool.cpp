@@ -84,13 +84,16 @@ void AudioPool::load()
         sample[AudioClip::coin4].load("res/audio/effect/coin4.mp3");
         sample[AudioClip::coin5].load("res/audio/effect/coin5.mp3");
         sample[AudioClip::coin6].load("res/audio/effect/coin6.mp3");
+        sample[AudioClip::crystal1].load("res/audio/effect/crystal1.mp3");
+        sample[AudioClip::crystal2].load("res/audio/effect/crystal2.mp3");
+        sample[AudioClip::crystal3].load("res/audio/effect/crystal3.mp3");
 
         sample[AudioClip::wind1].load("res/audio/loop/wind1.ogg");
         sample[AudioClip::wind2].load("res/audio/loop/wind2.ogg");
         sample[AudioClip::wind3].load("res/audio/loop/wind3.ogg");
         sample[AudioClip::wind4].load("res/audio/loop/wind4.ogg");
         sample[AudioClip::wind_strong].load("res/audio/loop/wind_strong.ogg");
-        }
+    }
     catch (const ppl7::Exception& exp) {
         exp.print();
         throw;

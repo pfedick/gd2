@@ -325,6 +325,9 @@ Objects::Object* ObjectSystem::getInstance(Objects::Type object_type) const
         return new Objects::PlayerStartPoint();
     case Objects::Type::Coin:
         return new Objects::Coin();
+    case Objects::Type::Crystal:
+        return new Objects::Crystal();
+
     default:
         break;
     }
