@@ -418,13 +418,11 @@ void SpriteTexture::drawScaledWithAngle(
 
 void SpriteTexture::drawOutlines(GPUBatcher& gpu, int x, int y, int id, float scale_factor)
 {
-    if (!bOutlinesEnabled) return;
     gpu.addSpriteOutline(*this, id, (float)x, (float)y, scale_factor, scale_factor);
 }
 
 void SpriteTexture::drawOutlinesWithAngle(GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle)
 {
-    if (!bOutlinesEnabled) return;
     gpu.addSpriteOutline(*this, id, (float)x, (float)y, scale_x, scale_y, angle);
 }
 

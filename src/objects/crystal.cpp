@@ -20,6 +20,8 @@ Crystal::Crystal()
     : Object(Type::Crystal)
 {
     sprite_set = SpritesetId::GenericObjects;
+    sprite_no = 45;
+    sprite_no_representation = 45;
     animation.startRandom(crystal_rotate);
     collisionDetection = true;
     alwaysUpdate = false;

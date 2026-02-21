@@ -28,7 +28,7 @@ ParticleEmitter::ParticleEmitter()
     sprite_no = 8;
     collisionDetection = false;
     visibleAtPlaytime = false;
-    sprite_no_representation = 302;
+    sprite_no_representation = 8;
     next_birth = 0.0f;
     particle_type = Particle::Type::RotatingParticleWhite;
     emitter_type = EmitterType::Point;

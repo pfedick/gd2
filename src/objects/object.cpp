@@ -106,7 +106,8 @@ size_t Object::load(const unsigned char* buffer, size_t size)
 void Object::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const
 {
     if (!spawned) {
-        batcher.addSprite(*texture, sprite_no, initial_p.x + coords.x, initial_p.y + coords.y, scale, scale, rotation, color_mod);
+        batcher.addSprite(*texture, sprite_no_representation, initial_p.x + coords.x, initial_p.y + coords.y, scale, scale, rotation,
+                          color_mod);
     }
 
     ppl7::grafix::Color c = color_mod;
