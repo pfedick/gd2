@@ -1047,6 +1047,17 @@ ppl7::grafix::Rect Level::getOccupiedAreaFromTileTypePlane(ParallaxLayerId layer
     return parallax_layers[static_cast<int>(layer)].TileTypeMatrix.getOccupiedArea();
 }
 
+Objects::Object* Level::findMatchingObject(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Point& p) const
+{
+    for (auto& layer : parallax_layers) {
+        if (!layer.isVisible) continue;
+        ppl7::grafix::Point coords = p + worldcoords * layer.speed_factor * layer.size_factor;
+        Objects::Object* obj = layer.objects.findMatchingObject(coords);
+        if (obj) return obj;
+    }
+    return nullptr;
+}
+
 #ifdef TODO
 LevelStats::LevelStats()
 {

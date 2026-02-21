@@ -278,6 +278,7 @@ public:
                     SpriteSystem::Item& item,
                     ParallaxLayerId& parallax_layer,
                     ParallaxLayer::SpritePosition& layer_position) const;
+    Objects::Object* findMatchingObject(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Point& p) const;
     size_t countSprites() const;
     size_t countVisibleSprites() const;
     size_t countLights() const;

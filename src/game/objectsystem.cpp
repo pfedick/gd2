@@ -224,7 +224,7 @@ void ObjectSystem::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& 
     }
 }
 
-Objects::Object* ObjectSystem::findMatchingObject(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Point& p) const
+Objects::Object* ObjectSystem::findMatchingObject(const ppl7::grafix::Point& p) const
 {
     Objects::Object* found_object = NULL;
     std::map<uint64_t, Objects::Object*>::const_iterator it;

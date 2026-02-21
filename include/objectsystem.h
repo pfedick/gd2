@@ -266,7 +266,7 @@ public:
     void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const;
     void load(const ppl7::ByteArrayPtr& ba);
     Objects::Object* getObject(uint32_t object_id) const;
-    Objects::Object* findMatchingObject(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Point& p) const;
+    Objects::Object* findMatchingObject(const ppl7::grafix::Point& p) const;
     void detectCollision(const std::list<ppl7::grafix::Point>& checkpoints, std::list<Objects::Object*>& object_list);
     static bool checkCollisionWithObject(const std::list<ppl7::grafix::Point>& checkpoints, const Objects::Object* object);
     void detectObjectCollision(const Objects::Object* object, std::list<Objects::Object*>& collision_object_list);

@@ -765,6 +765,17 @@ void Game::mouseMoveEvent(ppltk::MouseEvent* event)
             // printf("Move: %d, %d\n", diff.x, diff.y);
             editor.sprite_move_start = event->p;
         }
+    } else if (editor.object_selection != NULL) {
+        if (event->widget() == world_widget && event->buttonMask == ppltk::MouseState::Left &&
+            editor.sprite_mode == GameEditor::SpriteMode::Edit && editor.selected_object != NULL) {
+            game_viewport.translateMouseEvent(event);
+            ppl7::grafix::Point diff = event->p - editor.sprite_move_start;
+            editor.selected_object->initial_p.x += diff.x;
+            editor.selected_object->initial_p.y += diff.y;
+            editor.selected_object->p = editor.selected_object->initial_p;
+            editor.selected_object->updateBoundary();
+            editor.sprite_move_start = event->p;
+        }
     }
 }
 
