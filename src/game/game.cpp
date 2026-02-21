@@ -706,6 +706,13 @@ void Game::keyDownEvent(ppltk::KeyEvent* event)
                 editor.selected_sprite.id = -1;
                 editor.selected_sprite_system = NULL;
             }
+        } else if (editor.sprite_mode == GameEditor::SpriteMode::Edit && editor.object_selection != NULL &&
+                   editor.selected_object != NULL) {
+            if (event->key == ppltk::KeyEvent::KEY_DELETE && (event->modifier & ppltk::KeyEvent::KEYMOD_MODIFIER) == 0) {
+                ParallaxLayer& layer = level.layer(editor.selected_object->myParallaxLayer);
+                layer.objects.deleteObject(editor.selected_object->id);
+                editor.selected_object = NULL;
+            }
         }
     }
     if (event->key == ppltk::KeyEvent::KEY_F9) {
