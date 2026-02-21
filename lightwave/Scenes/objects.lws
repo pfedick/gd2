@@ -2,15 +2,15 @@ LWSC
 8
 
 RenderRangeType 0
-FirstFrame 45
-LastFrame 75
+FirstFrame 0
+LastFrame 112
 FrameStep 1
 RenderRangeObject 0
 RenderRangeArbitrary 0-120
 PreviewFirstFrame 0
 PreviewLastFrame 120
 PreviewFrameStep 1
-CurrentFrame 52
+CurrentFrame 112
 FramesPerSecond 30
 AutoKeyFixedFrame 0
 Preferences
@@ -2202,7 +2202,7 @@ Channel 1
   4
   Key -20 0 0 0 0 0 0 0 0
   Key -20 0.033333333333333325932 0 0 0 0 0 0 0
-  Key -0.46739825606346130371 0.066666666666666651864 0 0 0 0 0 0 0
+  Key -0.40749692916870117188 0.066666666666666651864 0 0 0 0 0 0 0
   Key -20 0.10000000000000000555 0 0 0 0 -19.834710743801647226 0 0
   Behaviors 1 1
 }
@@ -2850,7 +2850,7 @@ Channel 1
   Key -20 0 0 0 0 0 0 -2.1906764873330524246 0
   Key -22.199804306030273438 0.066666666666666651864 0 0 0 0 0 0 0
   Key -20 0.10000000000000000555 0 0 0 0 14.672822825610639441 0 0
-  Key -0.43623623251914983578 0.13333333333333330373 0 0 0 0 0 0 0
+  Key 0 0.13333333333333330373 0 0 0 0 0 0 0
   Key -20 0.16666666666666662966 0 0 0 0 -19.834710743801647226 0 0
   Behaviors 1 1
 }
@@ -3179,8 +3179,8 @@ Channel 1
 { Envelope
   4
   Key -20 0 0 0 0 0 0 0 0
-  Key -20 0.13333333333333330373 0 0 0 0 15.626873707771299138 0 0
-  Key -0.46640786528587357962 0.16666666666666662966 0 0 0 0 0 0 0
+  Key -20 0.13333333333333330373 0 0 0 0 15.674273657798766024 0 0
+  Key -0.4071579277515411377 0.16666666666666662966 0 0 0 0 0 0 0
   Key -20 0.2000000000000000111 0 0 0 0 -19.834710743801647226 0 0
   Behaviors 1 1
 }
@@ -3502,8 +3502,8 @@ Channel 1
 { Envelope
   4
   Key -20 0 0 0 0 0 0 0 0
-  Key -20 0.16666666666666662966 0 0 0 0 16.279342497388519462 0 0
-  Key -0.4647890031337737482 0.2000000000000000111 0 0 0 0 0 0 0
+  Key -20 0.16666666666666662966 0 0 0 0 16.341540391246475394 0 0
+  Key -0.39015153050422668457 0.2000000000000000111 0 0 0 0 0 0 0
   Key -20 0.23333333333333328152 0 0 0 0 -19.834710743801647226 0 0
   Behaviors 1 1
 }
@@ -4176,8 +4176,8 @@ Channel 6
 { Envelope
   4
   Key 1 0 0 0 0 0 0 0 0
-  Key 1 0.2000000000000000111 0 0 0 0 -0.33599971021924701642 0 0
-  Key 0.60800033807754527704 0.23333333333333328152 0 0 0 0 0 0 0
+  Key 1 0.2000000000000000111 0 0 0 0 0 0 0
+  Key 1 0.23333333333333328152 0 0 0 0 0 0 0
   Key 1 0.26666666666666660745 0 0 0 0 0 0 0
   Behaviors 1 1
 }
@@ -4185,8 +4185,8 @@ Channel 7
 { Envelope
   4
   Key 1 0 0 0 0 0 0 0 0
-  Key 1 0.2000000000000000111 0 0 0 0 -0.33599971021924701642 0 0
-  Key 0.60800033807754527704 0.23333333333333328152 0 0 0 0 0 0 0
+  Key 1 0.2000000000000000111 0 0 0 0 0 0 0
+  Key 1 0.23333333333333328152 0 0 0 0 0 0 0
   Key 1 0.26666666666666660745 0 0 0 0 0 0 0
   Behaviors 1 1
 }
@@ -4194,8 +4194,8 @@ Channel 8
 { Envelope
   4
   Key 1 0 0 0 0 0 0 0 0
-  Key 1 0.2000000000000000111 0 0 0 0 -0.33599971021924701642 0 0
-  Key 0.60800033807754527704 0.23333333333333328152 0 0 0 0 0 0 0
+  Key 1 0.2000000000000000111 0 0 0 0 0 0 0
+  Key 1 0.23333333333333328152 0 0 0 0 0 0 0
   Key 1 0.26666666666666660745 0 0 0 0 0 0 0
   Behaviors 1 1
 }
@@ -5468,8 +5468,8 @@ Channel 6
 { Envelope
   4
   Key 1 0 0 0 0 0 0 0 0
-  Key 1 0.33333333333333325932 0 0 0 0 -0.33272699876265104946 0 0
-  Key 0.63400030136108398438 0.36666666666666647423 0 0 0 0 0 0 0
+  Key 1 0.33333333333333325932 0 0 0 0 0 0 0
+  Key 1 0.36666666666666647423 0 0 0 0 0 0 0
   Key 1 0.4000000000000000222 0 0 0 0 0 0 0
   Behaviors 1 1
 }
@@ -5477,8 +5477,8 @@ Channel 7
 { Envelope
   4
   Key 1 0 0 0 0 0 0 0 0
-  Key 1 0.33333333333333325932 0 0 0 0 -0.33272699876265104946 0 0
-  Key 0.63400030136108398438 0.36666666666666647423 0 0 0 0 0 0 0
+  Key 1 0.33333333333333325932 0 0 0 0 0 0 0
+  Key 1 0.36666666666666647423 0 0 0 0 0 0 0
   Key 1 0.4000000000000000222 0 0 0 0 0 0 0
   Behaviors 1 1
 }
@@ -5486,8 +5486,8 @@ Channel 8
 { Envelope
   4
   Key 1 0 0 0 0 0 0 0 0
-  Key 1 0.33333333333333325932 0 0 0 0 -0.33272699876265104946 0 0
-  Key 0.63400030136108398438 0.36666666666666647423 0 0 0 0 0 0 0
+  Key 1 0.33333333333333325932 0 0 0 0 0 0 0
+  Key 1 0.36666666666666647423 0 0 0 0 0 0 0
   Key 1 0.4000000000000000222 0 0 0 0 0 0 0
   Behaviors 1 1
 }
@@ -6398,7 +6398,7 @@ Channel 1
   Key 0 0.46666666666666656305 5 -0.1790958906679550322 1.0125297407813342508e-06 0.1790958906679550322 -1.0125297407813342508e-06 18.751949999568751082 0
   Key 0.14425425231456756592 0.966666666666666341 5 -0.16666500000000000759 -0 0.16666500000000000759 0 0 0
   Key 0 1.466666666666666341 5 -0.20856649480269376373 5.6469335990533110902e-06 0.20856649480269376373 -5.6469335990533110902e-06 -1.2501299999712500721 0
-  Key -20 1.5 0 0 0 0 -19.834710743801650779 0 0
+  Key -20 1.5 0 0 0 0 -19.834710743801647226 0 0
   Behaviors 1 1
 }
 Channel 2
@@ -6740,7 +6740,7 @@ Channel 1
   Key 0 1.5 5 -0.1925652784230571235 1.012529740781293805e-06 0.1925652784230571235 -1.012529740781293805e-06 18.751949999568751082 0
   Key 0.17825245857238769531 1.9999999999999984457 5 -0.16666500000000000759 -0 0.16666500000000000759 0 0 0
   Key 0 2.4999999999999968914 5 -0.21904268527888445806 0.00062031058384866603027 0.21904268527888445806 -0.00062031058384866603027 -1.2501299999712500721 0
-  Key -20 2.5333333333333301063 0 0 0 0 -19.834710743801650779 0 0
+  Key -20 2.5333333333333301063 0 0 0 0 -19.834710743801647226 0 0
   Behaviors 1 1
 }
 Channel 2
@@ -8035,7 +8035,7 @@ NumChannels 9
 Channel 0
 { Envelope
   1
-  Key -0.33005553483963012695 0 0 0 0 0 0 -0.56918036694569140721 0
+  Key -0.33005553483963007144 0 0 0 0 0 0 -0.56918036694569140721 0
   Behaviors 1 1
 }
 Channel 1
@@ -8084,6 +8084,356 @@ Channel 8
 { Envelope
   1
   Key 1 0 0 0 0 0 0 0 0
+  Behaviors 1 1
+}
+RotationOrder 3
+IKInitCustomFrame 0
+GoalStrength 1
+IKFKBlending 0
+IKSoftMin 0.25
+IKSoftMax 0.75
+CtrlPosItemBlend 1
+CtrlRotItemBlend 1
+CtrlScaleItemBlend 1
+
+PathAlignLookAhead 0.033
+PathAlignMaxLookSteps 10
+PathAlignReliableDist 0.001
+PivotPosition 0 0 0
+PivotRotation 0 0 0
+SplineFlags 0
+SplineFit 0
+IKInitialState 0
+UseIKChainValues 1
+SubPatchLevel 3 3
+APSDisplay
+{ APS
+  Version 1
+  Method 0
+  { VParm
+    { ObjectLevel
+      0
+      { VariantParameter
+        3
+        0
+        { ParameterValue
+          3
+          0
+        }
+      }
+    }
+    { PolygonLevel
+      0
+      { VariantParameter
+        3
+        0
+        { ParameterValue
+          3
+          0
+        }
+      }
+    }
+    { PolygonPixelSize
+      0
+      { VariantParameter
+        3
+        0
+        { ParameterValue
+          256
+          0
+        }
+      }
+    }
+  }
+}
+APSRender
+{ APS
+  Version 1
+  Method 0
+  { VParm
+    { ObjectLevel
+      0
+      { VariantParameter
+        3
+        0
+        { ParameterValue
+          3
+          0
+        }
+      }
+    }
+    { PolygonLevel
+      0
+      { VariantParameter
+        3
+        0
+        { ParameterValue
+          3
+          0
+        }
+      }
+    }
+    { PolygonPixelSize
+      0
+      { VariantParameter
+        3
+        0
+        { ParameterValue
+          256
+          0
+        }
+      }
+    }
+  }
+}
+BoneMode 2
+NumLimitedBones 4
+EndBones
+Plugin MeshDeformerHandler 1 _Morphing
+{ Morphing
+  Version 1
+  { MorphAmount
+    MorphAmountValue 0
+  }
+  MorphTarget 0
+  MorphSurfaces 0
+  MTSEMorphing 0
+}
+EndPlugin
+PluginEnabled 0
+Plugin MeshDeformerHandler 2 _Bones
+EndPlugin
+Plugin MeshModifierHandler 3 _Subdivision
+EndPlugin
+Plugin MeshDeformerHandler 4 _NodalDisplacement
+{ NodalDisplacement
+  Version 1
+  { Nodes
+    { Root
+      Location 0 0
+      Zoom 1
+      Disabled 1
+    }
+    Version 1
+    { Nodes
+      Server "Displacement"
+      { Tag
+        RealName "Displacement"
+        Name "Displacement"
+        Coordinates -10 -10
+        Mode 1
+        Selected 0
+        { Data
+        }
+        Preview ""
+        Placement 2
+        Color 5f 64 78
+      }
+      Server "Input"
+      { Tag
+        RealName "Input"
+        Name "Input"
+        Coordinates -30 -10
+        Mode 1
+        Selected 0
+        { Data
+        }
+        Preview "Object Position"
+        Placement 1
+        Color 5f 64 78
+      }
+    }
+    { Connections
+    }
+    { Frames
+    }
+  }
+  Mode 0
+  CurPosInWorld 1
+}
+EndPlugin
+PluginEnabled 0
+Plugin MeshDeformerHandler 5 _SurfaceDisplacement
+{ SurfaceDisplacement
+  Version 1
+  BumpDistance 0
+}
+EndPlugin
+PluginEnabled 0
+Plugin MeshDeformerHandler 6 _DisplacementMap
+{ DisplacementMap
+  Version 1
+}
+EndPlugin
+PluginEnabled 0
+UseObjGI 0
+ObjGIBruteForceRays 1
+ObjGIRadiosityRays 128
+ObjGISecondaryBounceRays 64
+ObjGIRadiosityTolerance 0.060307
+ObjGIMinPixelSpacing 2.000000
+ObjGIMaxPixelSpacing 64.000000
+ShadowOptions 7
+PolygonEdgeFlags 0
+PolygonEdgeThickness 1 1 1 1 1 1 1
+PolygonEdgeColor 0 0 0
+PolygonEdgesZScale 1
+NodeEdges 0
+{ NodalEdge_Block
+  { Root
+    Location 0 0
+    Zoom 1
+    Disabled 1
+  }
+  Version 1
+  { Nodes
+    Server "Edge"
+    { Tag
+      RealName "Edge"
+      Name "Edge"
+      Coordinates -10 -10
+      Mode 1
+      Selected 0
+      { Data
+      }
+      Preview ""
+      Placement 2
+      Color 5f 64 78
+    }
+    Server "Input"
+    { Tag
+      RealName "Input"
+      Name "Input"
+      Coordinates -30 -10
+      Mode 1
+      Selected 0
+      { Data
+      }
+      Preview "Item ID"
+      Placement 1
+      Color 5f 64 78
+    }
+  }
+  { Connections
+  }
+  { Frames
+  }
+}
+Plugin PrimitiveHandler 1 MeshPrimitive
+EndPlugin
+
+LoadObjectLayer 1 10000016 Objects/objects/arrow1.lwo
+ChangeObject 0
+ShowObject 7 7
+Group 0
+ObjectMotion
+NumChannels 9
+Channel 0
+{ Envelope
+  7
+  Key 0 0 0 0 0 0 0 0 0
+  Key 0 3.6000000000000000888 0 0 0 0 0 0 0
+  Key 0 3.6333333333333324155 0 0 0 0 0 0 0
+  Key 0 3.6666666666666660745 0 0 0 0 0 0 0
+  Key 0 3.7000000000000001776 0 0 0 0 0 0 0
+  Key 0 3.7333333333333329485 0 0 0 0 0 0 0
+  Key 0 3.7666666666666657193 0 0 0 0 0 0 0
+  Behaviors 1 1
+}
+Channel 1
+{ Envelope
+  7
+  Key -20 0 0 0 0 0 0 0 0
+  Key -20 3.6000000000000000888 0 0 0 0 19.816513761467895449 0 0
+  Key 0 3.6333333333333324155 0 0 0 0 0 0 0
+  Key 0 3.6666666666666660745 0 0 0 0 0 0 0
+  Key 0 3.7000000000000001776 0 0 0 0 0 0 0
+  Key 0 3.7333333333333329485 0 0 0 0 0 0 0
+  Key -20 3.7666666666666657193 0 0 0 0 -19.834710743801650779 0 0
+  Behaviors 1 1
+}
+Channel 2
+{ Envelope
+  7
+  Key 0 0 0 0 0 0 0 0 0
+  Key 0 3.6000000000000000888 0 0 0 0 0 0 0
+  Key 0 3.6333333333333324155 0 0 0 0 0 0 0
+  Key 0 3.6666666666666660745 0 0 0 0 0 0 0
+  Key 0 3.7000000000000001776 0 0 0 0 0 0 0
+  Key 0 3.7333333333333329485 0 0 0 0 0 0 0
+  Key 0 3.7666666666666657193 0 0 0 0 0 0 0
+  Behaviors 1 1
+}
+Channel 3
+{ Envelope
+  7
+  Key 0 0 0 0 0 0 0 0 0
+  Key 0 3.6000000000000000888 0 0 0 0 0 0 0
+  Key 0 3.6333333333333324155 0 0 0 0 0 0 0
+  Key 0 3.6666666666666660745 0 0 0 0 0 0 0
+  Key 0 3.7000000000000001776 0 0 0 0 0 0 0
+  Key 0 3.7333333333333329485 0 0 0 0 0 0 0
+  Key 0 3.7666666666666657193 0 0 0 0 0 0 0
+  Behaviors 1 1
+}
+Channel 4
+{ Envelope
+  7
+  Key 0 0 0 0 0 0 0 0 0
+  Key 0 3.6000000000000000888 0 0 0 0 0 0 0
+  Key 0 3.6333333333333324155 0 0 0 0 0 0 0
+  Key 0 3.6666666666666660745 0 0 0 0 0 0 0
+  Key 0 3.7000000000000001776 0 0 0 0 0 0 0
+  Key 0 3.7333333333333329485 0 0 0 0 0 0 0
+  Key 0 3.7666666666666657193 0 0 0 0 0 0 0
+  Behaviors 1 1
+}
+Channel 5
+{ Envelope
+  7
+  Key 0 0 0 0 0 0 0 0 0
+  Key 0 3.6000000000000000888 0 0 0 0 0 0 0
+  Key 0 3.6333333333333324155 0 0 0 0 0 0 0
+  Key 4.7123889923095694243 3.6666666666666660745 0 0 0 0 0 0 0
+  Key 3.141592741012572354 3.7000000000000001776 0 0 0 0 0 0 0
+  Key 1.5707963705062866211 3.7333333333333329485 0 0 0 0 0 0 0
+  Key 0 3.7666666666666657193 0 0 0 0 0 0 0
+  Behaviors 1 1
+}
+Channel 6
+{ Envelope
+  7
+  Key 1 0 0 0 0 0 0 0 0
+  Key 1 3.6000000000000000888 0 0 0 0 0 0 0
+  Key 1 3.6333333333333324155 0 0 0 0 0 0 0
+  Key 1 3.6666666666666660745 0 0 0 0 0 0 0
+  Key 1 3.7000000000000001776 0 0 0 0 0 0 0
+  Key 1 3.7333333333333329485 0 0 0 0 0 0 0
+  Key 1 3.7666666666666657193 0 0 0 0 0 0 0
+  Behaviors 1 1
+}
+Channel 7
+{ Envelope
+  7
+  Key 1 0 0 0 0 0 0 0 0
+  Key 1 3.6000000000000000888 0 0 0 0 0 0 0
+  Key 1 3.6333333333333324155 0 0 0 0 0 0 0
+  Key 1 3.6666666666666660745 0 0 0 0 0 0 0
+  Key 1 3.7000000000000001776 0 0 0 0 0 0 0
+  Key 1 3.7333333333333329485 0 0 0 0 0 0 0
+  Key 1 3.7666666666666657193 0 0 0 0 0 0 0
+  Behaviors 1 1
+}
+Channel 8
+{ Envelope
+  7
+  Key 1 0 0 0 0 0 0 0 0
+  Key 1 3.6000000000000000888 0 0 0 0 0 0 0
+  Key 1 3.6333333333333324155 0 0 0 0 0 0 0
+  Key 1 3.6666666666666660745 0 0 0 0 0 0 0
+  Key 1 3.7000000000000001776 0 0 0 0 0 0 0
+  Key 1 3.7333333333333329485 0 0 0 0 0 0 0
+  Key 1 3.7666666666666657193 0 0 0 0 0 0 0
   Behaviors 1 1
 }
 RotationOrder 3
@@ -8387,13 +8737,13 @@ Channel 0
 Channel 1
 { Envelope
   1
-  Key 0.28480559587478643246 0 0 0 0 0 0 -0.11857313733872539008 0
+  Key 0.28480559587478643246 0 0 0 0 0 0 -0.28433170969196647215 0
   Behaviors 1 1
 }
 Channel 2
 { Envelope
   1
-  Key -0.36493024230003362485 0 0 0 0 0 0 5.5280814504157179119e-17 0
+  Key -0.36493024230003362485 0 0 0 0 0 0 2.3802187603035640252e-07 0
   Behaviors 1 1
 }
 Channel 3
@@ -8696,8 +9046,8 @@ Channel 0
 Channel 1
 { Envelope
   2
-  Key 0.21749271452426913176 0 0 0 0 0 0 -0.10692911045658572144 0
-  Key 0.11054380238056181474 1.5 0 0 0 0 -0.10692911045658572144 0 0
+  Key 0.21749271452426915952 0 0 0 0 0 0 -0.10692911045658576308 0
+  Key 0.11054380238056180086 1.5 0 0 0 0 -0.10692911045658576308 0 0
   Behaviors 1 1
 }
 Channel 2
@@ -8900,7 +9250,7 @@ UseIKChainValues 1
 ZoomFactor 3.2
 ZoomType 1
 ResolutionMultiplier 1.0
-FrameSize 1000 512
+FrameSize 1000 600
 OverscanMode 0
 OverscanSize 0 0 0 0
 PixelAspect 1
@@ -9140,8 +9490,8 @@ Plugin VirtualStudio 1 VirtualStudio
 }
 EndPlugin
 
-CurrentObject 21
-CurrentLight 2
+CurrentObject 22
+CurrentLight 0
 CurrentCamera 0
 GraphEditorData
 { GraphEd_Favorites

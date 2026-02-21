@@ -61,6 +61,7 @@ OBJECTS=compile/main.o \
 	compile/particlesystem.o \
 	compile/particleupdatethread.o \
 	compile/objectsystem.o \
+	compile/objectfactory.o \
 	compile/objectspritesets.o \
 	compile/collision.o \
 	compile/soundtrack.o \
@@ -280,6 +281,10 @@ compile/physic.o: src/game/physic.cpp Makefile
 compile/objectsystem.o: src/game/objectsystem.cpp Makefile
 	- @mkdir -p compile
 	$(CXX) -o compile/objectsystem.o -c src/game/objectsystem.cpp $(CFLAGS)
+
+compile/objectfactory.o: src/game/objectfactory.cpp Makefile
+	- @mkdir -p compile
+	$(CXX) -o compile/objectfactory.o -c src/game/objectfactory.cpp $(CFLAGS)
 
 compile/objectspritesets.o: src/game/objectspritesets.cpp Makefile
 	- @mkdir -p compile

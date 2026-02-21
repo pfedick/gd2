@@ -52,6 +52,7 @@ Level::Level(Game* game)
         layer.front_sprites.setColorPalette(palette);
         layer.tiles.setColorPalette(palette);
         layer.game = game;
+        layer.level = this;
     }
 }
 
@@ -1024,6 +1025,12 @@ size_t Level::tileCount() const
         count += layer.tiles.tileCount();
     }
     return count;
+}
+
+Objects::Object* Level::getObject(uint32_t object_id) const
+{
+    ParallaxLayerId layer = static_cast<ParallaxLayerId>((object_id >> 24) & 0x7f);
+    return parallax_layers[static_cast<int>(layer)].objects.getObject(object_id);
 }
 
 /*

@@ -26,6 +26,8 @@ ObjectSystem::ObjectSystem()
     player_start = 0;
     spritesets = NULL;
     scale_factor = 1.0f;
+    game = NULL;
+    level = NULL;
 }
 
 ObjectSystem::~ObjectSystem()
@@ -33,10 +35,12 @@ ObjectSystem::~ObjectSystem()
     clear();
 }
 
-void ObjectSystem::init(ParallaxLayerId parallaxLayer, float scale_factor)
+void ObjectSystem::init(ParallaxLayerId parallaxLayer, float scale_factor, Game* game, Level* level)
 {
     this->myParallaxLayer = parallaxLayer;
     this->scale_factor = scale_factor;
+    this->game = game;
+    this->level = level;
 }
 
 void ObjectSystem::setSpritesetResources(ObjectSpritesets* spritesets)
@@ -278,9 +282,11 @@ void ObjectSystem::detectCollision(const std::list<ppl7::grafix::Point>& checkpo
     }
 }
 
-Objects::Object* ObjectSystem::getObject(uint32_t object_id)
+Objects::Object* ObjectSystem::getObject(uint32_t object_id) const
 {
-    std::map<uint32_t, Objects::Object*>::iterator it;
+    ParallaxLayerId layer = static_cast<ParallaxLayerId>((object_id >> 24) & 0x7f);
+    if (layer != myParallaxLayer) return level->getObject(object_id);
+    std::map<uint32_t, Objects::Object*>::const_iterator it;
     it = object_list.find(object_id);
     if (it != object_list.end()) return it->second;
     return NULL;
@@ -315,23 +321,6 @@ void ObjectSystem::drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::P
             texture->drawOutlines(batcher, p.x, p.y, repr.sprite_no, 1.0f);
         }
     }
-}
-
-Objects::Object* ObjectSystem::getInstance(Objects::Type object_type) const
-{
-    if (object_type == Objects::Type::Invalid) return NULL;
-    switch (object_type) {
-    case Objects::Type::PlayerStartpoint:
-        return new Objects::PlayerStartPoint();
-    case Objects::Type::Coin:
-        return new Objects::Coin();
-    case Objects::Type::Crystal:
-        return new Objects::Crystal();
-
-    default:
-        break;
-    }
-    return NULL;
 }
 
 void ObjectSystem::save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const

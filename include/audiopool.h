@@ -112,6 +112,7 @@ public:
         earthquake,
         rumble,
         waterpuddle,
+        arrow_hit_wall,
 
         // this must always be the last entry!
         maxClips

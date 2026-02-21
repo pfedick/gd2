@@ -2,6 +2,7 @@
 #define INCLUDE_PHYSIC_H_
 
 #include "tiletypes.h"
+#include "game.h"
 
 class TileTypePlane;
 

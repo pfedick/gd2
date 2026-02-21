@@ -37,7 +37,7 @@ void ObjectsFrame::showPlayerPlaneObjects()
 
     addObject(Objects::Type::PlayerStartpoint, "Player start", 0);
     addObject(Objects::Type::SpawnPoint, "Object SpawnPoint", 1);
-    addObject(Objects::Type::Savepoint, "Savepoint", 2);
+    addObject(Objects::Type::SavePoint, "Savepoint", 2);
     addObject(Objects::Type::Medikit, "Medikit", 3);
     addObject(Objects::Type::Crystal, "Crystal", 15);
     addObject(Objects::Type::Coin, "Coin", 16);
@@ -54,6 +54,7 @@ void ObjectsFrame::showPlayerPlaneObjects()
     addObject(Objects::Type::PlayerTrigger, "Player Trigger", 7);
     addObject(Objects::Type::LevelModificator, "Level Modificator", 8);
     addObject(Objects::Type::CameraControl, "Camera Control", 17);
+    addObject(Objects::Type::Arrow, "Arrow", 18);
     scrollbar->setPosition(0);
     scrollbar->setSize(object_map.size() / 2);
     scrollbar->setVisibleItems((height() - 44) / 160 / 2);

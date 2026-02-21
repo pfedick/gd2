@@ -873,7 +873,7 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
     dropHealth(detectFallingDamage(time, frame_rate_compensation), HealthDropReason::FallingDeep);
     updateMovement(frame_rate_compensation);
     player_stands_on_object = NULL;
-    checkCollisionWithObjects(objects, frame_rate_compensation);
+    checkCollisionWithObjects(clock, objects, frame_rate_compensation);
 
     if (movement == Hacking) return;
     if (movement == Dead) return;
@@ -1331,7 +1331,7 @@ void Player::checkCollisionWithWorld(const TileTypePlane& world)
     }
 }
 
-void Player::checkCollisionWithObjects(ObjectSystem* objects, float frame_rate_compensation)
+void Player::checkCollisionWithObjects(const GameClock& clock, ObjectSystem* objects, float frame_rate_compensation)
 {
     // we try to find existing pixels inside the player boundary
     // to build a list with points we want to check against the
@@ -1364,7 +1364,7 @@ void Player::checkCollisionWithObjects(ObjectSystem* objects, float frame_rate_c
     if (object_list.empty()) return;
     std::list<Objects::Object*>::iterator it;
     for (it = object_list.begin(); it != object_list.end(); ++it) {
-        Objects::Collision col(this, (*it), frame_rate_compensation);
+        Objects::Collision col(clock, this, (*it));
         col.detect((*it), collision_checkpoints, *this);
         (*it)->handleCollision(this, col);
     }

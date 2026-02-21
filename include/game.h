@@ -1,4 +1,5 @@
-
+#ifndef INCLUDE_GAME_H_
+#define INCLUDE_GAME_H_
 #include <ppl7-grafix.h>
 #include <ppl7.h>
 
@@ -344,3 +345,5 @@ public:
 
 Game& GetGame();
 ppltk::Window* GetGameWindow();
+
+#endif /* INCLUDE_GAME_H_ */

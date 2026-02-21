@@ -7,24 +7,25 @@
 namespace Objects
 {
 
-Collision::Collision()
+Collision::Collision(const GameClock& clock)
+    : clock(clock)
 {
     object = NULL;
 }
 
 Collision::Collision(const Collision& other)
+    : clock(other.clock)
 {
     object = other.object;
     collision_points = other.collision_points;
     bounding_box_object = other.bounding_box_object;
     bounding_box_player = other.bounding_box_player;
     bounding_box_intersection = other.bounding_box_intersection;
-    frame_rate_compensation = other.frame_rate_compensation;
 }
 
-Collision::Collision(const Player* player, const Object* object, float frame_rate_compensation)
+Collision::Collision(const GameClock& clock, const Player* player, const Object* object)
+    : clock(clock)
 {
-    this->frame_rate_compensation = frame_rate_compensation;
     bounding_box_player = player->getBoundingBox();
     bounding_box_object = object->boundary;
     bounding_box_intersection = bounding_box_player.intersected(bounding_box_object);

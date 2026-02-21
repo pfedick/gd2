@@ -18,6 +18,9 @@ class SpriteTexture;
 class Player;
 class TileTypePlane;
 class Waynet;
+class Game;
+class Level;
+class GameClock;
 
 namespace ppl7::tk
 {
@@ -39,7 +42,7 @@ enum class Type : uint16_t
     Invalid = 0,
     PlayerStartpoint = 1,
     SpawnPoint = 2,
-    Savepoint = 3,
+    SavePoint = 3,
     Medikit = 4,
     Crystal = 5,
     Diamond = 6,
@@ -59,6 +62,7 @@ enum class Type : uint16_t
     GlimmerNode = 20,
     ItemTaker = 21,
     CameraControl = 22,
+    Arrow = 23,
 };
 
 ppl7::String ObjectName(Type type);
@@ -90,10 +94,11 @@ public:
     ppl7::grafix::Rect bounding_box_object;
     ppl7::grafix::Rect bounding_box_player;
     ppl7::grafix::Rect bounding_box_intersection;
-    float frame_rate_compensation;
-    Collision();
+    const GameClock& clock;
+
+    Collision(const GameClock& clock);
     Collision(const Collision& other);
-    Collision(const Player* player, const Object* object, float frame_rate_compensation);
+    Collision(const GameClock& clock, const Player* player, const Object* object);
     void detect(Object* object, const std::list<ppl7::grafix::Point>& checkpoints, const Player& player);
     const std::list<ppl7::grafix::Point>& getCollisionPoints() const;
     Object* getObject() const;
@@ -235,6 +240,8 @@ private:
     std::map<uint32_t, Objects::Object*> object_list;
     std::map<uint64_t, Objects::Object*> visible_object_map;
     ObjectSpritesets* spritesets;
+    Game* game;
+    Level* level;
     // SpriteTexture* spriteset[Spriteset::MaxSpritesets];
     // SpriteTexture* light_objects;
     // Waynet* waynet;
@@ -245,7 +252,7 @@ private:
 public:
     ObjectSystem();
     ~ObjectSystem();
-    void init(ParallaxLayerId parallaxLayer, float scale_factor);
+    void init(ParallaxLayerId parallaxLayer, float scale_factor, Game* game, Level* level);
     void setSpritesetResources(ObjectSpritesets* spritesets);
     void clear();
     // void setWaynet(Waynet* waynet);
@@ -258,7 +265,7 @@ public:
     void drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const;
     void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const;
     void load(const ppl7::ByteArrayPtr& ba);
-    Objects::Object* getObject(uint32_t object_id);
+    Objects::Object* getObject(uint32_t object_id) const;
     Objects::Object* findMatchingObject(const ppl7::grafix::Point& worldcoords, const ppl7::grafix::Point& p) const;
     void detectCollision(const std::list<ppl7::grafix::Point>& checkpoints, std::list<Objects::Object*>& object_list);
     static bool checkCollisionWithObject(const std::list<ppl7::grafix::Point>& checkpoints, const Objects::Object* object);

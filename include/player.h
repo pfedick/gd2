@@ -171,7 +171,7 @@ private:
     void emmitParticles(double time);
 
     void moveOutOfWater(float angel, float speed);
-    void checkCollisionWithObjects(ObjectSystem* objects, float frame_rate_compensation);
+    void checkCollisionWithObjects(const GameClock& clock, ObjectSystem* objects, float frame_rate_compensation);
     void checkCollisionWithWorld(const TileTypePlane& world);
 
     void handleDiving(double time, const TileTypePlane& world, ObjectSystem* objects, float frame_rate_compensation);

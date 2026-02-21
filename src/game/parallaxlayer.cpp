@@ -18,7 +18,7 @@ void ParallaxLayer::init(ParallaxLayerId parallaxLayer, float blur, float speed,
     blur_factor = blur;
     speed_factor = speed;
     size_factor = size;
-    objects.init(parallaxLayer, size_factor);
+    objects.init(parallaxLayer, size_factor, game, level);
     background_sprites.setScaleFactor(size_factor);
     front_sprites.setScaleFactor(size_factor);
 }

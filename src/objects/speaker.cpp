@@ -201,7 +201,7 @@ void Speaker::fillComboBoxWithEffects(ppltk::ComboBox* combobox, int selected_sa
     combobox->add("Big Crash", ppl7::ToString("%d", AudioClip::big_crash));
     combobox->add("Trap 1", ppl7::ToString("%d", AudioClip::trap1));
     combobox->add("Trap 1", ppl7::ToString("%d", AudioClip::trap2));
-    combobox->add("Crystal", ppl7::ToString("%d", AudioClip::crystal));
+    combobox->add("Crystal", ppl7::ToString("%d", AudioClip::crystal1));
     combobox->add("Coin 1", ppl7::ToString("%d", AudioClip::coin1));
     combobox->add("Coin 2", ppl7::ToString("%d", AudioClip::coin2));
     combobox->add("Arrow swoosh", ppl7::ToString("%d", AudioClip::arrow_swoosh));

@@ -188,6 +188,165 @@ public:
     void test();
 };
 
+class Arrow : public Object
+{
+private:
+    int state;
+    double next_state;
+    double min_cooldown_state;
+
+    void fire();
+
+public:
+    int direction; // 0=up, 1=right, 2=down, 3=left
+    int player_activation_distance;
+    bool current_state_on;
+    bool initial_state_on;
+
+    float min_cooldown_time;
+    float max_cooldown_time;
+
+    Arrow();
+    static Representation representation();
+    void changeDirection(int new_direction);
+    void update(const GameClock& clock, TileTypePlane& ttplane, Player& player) override;
+    size_t save(unsigned char* buffer, size_t size) const override;
+    size_t saveSize() const override;
+    size_t load(const unsigned char* buffer, size_t size) override;
+    void toggle(bool enable, Object* source = NULL) override;
+    void trigger(Object* source = NULL) override;
+
+    void openUi() override;
+};
+
+class ObjectWatcher : public Object
+{
+private:
+public:
+    class WatchObject
+    {
+    public:
+        uint16_t object_id = 0;
+        bool expectedState = false;
+    };
+
+    class TriggerObject
+    {
+    public:
+        uint16_t object_id = 0;
+    };
+    WatchObject watchObjects[10];
+    TriggerObject triggerObjects[5];
+
+    ObjectWatcher();
+    ~ObjectWatcher();
+    static Representation representation();
+    void update(const GameClock& clock, TileTypePlane& ttplane, Player& player) override;
+    size_t save(unsigned char* buffer, size_t size) const override;
+    size_t saveSize() const override;
+    size_t load(const unsigned char* buffer, size_t size) override;
+    void reset();
+    void notifyTargets() const;
+    // virtual void toggle(bool enable, Object* source=NULL) override;
+    // virtual void trigger(Object* source=NULL) override;
+    void openUi() override;
+};
+
+class Trigger : public Object
+{
+private:
+    enum class State
+    {
+        waiting_for_activation,
+        activated,
+        waiting_for_trigger_delay,
+        finished,
+        disabled
+    };
+    State state;
+    double cooldown;
+    double triggerDeleayTime;
+    int trigger_count;
+    double last_collision_time;
+    uint64_t last_collision_frame;
+    void notifyTargets() const;
+
+public:
+    ppl7::grafix::Point range;
+    bool multiTrigger;
+    bool triggeredByCollision;
+    bool initialStateEnabled;
+    float cooldownUntilNextTrigger;
+    float triggerDeleay;
+    uint16_t maxTriggerCount;
+
+    enum class TargetState
+    {
+        disable = 0,
+        enable = 1,
+        trigger = 2
+    };
+
+    class TargetObject
+    {
+    public:
+        uint16_t object_id = 0;
+        TargetState state = TargetState::trigger;
+    };
+    TargetObject triggerObjects[10];
+
+    Trigger();
+    ~Trigger();
+    static Representation representation();
+    void update(const GameClock& clock, TileTypePlane& ttplane, Player& player) override;
+    void handleCollision(Player* player, const Collision& collision) override;
+    size_t save(unsigned char* buffer, size_t size) const override;
+    size_t saveSize() const override;
+    size_t load(const unsigned char* buffer, size_t size) override;
+    void reset();
+    virtual void toggle(bool enable, Object* source = NULL) override;
+    virtual void trigger(Object* source = NULL) override;
+    void drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const override;
+    void openUi() override;
+
+    void test();
+};
+
+class TouchEmitter : public Object
+{
+private:
+    unsigned char toogle_count;
+    double next_touch_time;
+    enum class State
+    {
+        waiting,
+        triggered
+    };
+
+    void emmitObject(double time);
+
+public:
+    State state;
+    unsigned char max_toggles;
+    unsigned char direction; // 0=up, 1=right, 2=down, 3=left
+    unsigned char touchtype; // Bit 0-3: Type, Bit 4-7: activation
+                             // Bit 4: top, Bit 5: right, Bit 6: bottom, Bit 7: left
+    Type emitted_object;
+
+    TouchEmitter();
+    ~TouchEmitter();
+    static Representation representation();
+    void init();
+    void handleCollision(Player* player, const Collision& collision) override;
+    void update(const GameClock& clock, TileTypePlane& ttplane, Player& player) override;
+    void trigger(Object* source = NULL);
+    size_t save(unsigned char* buffer, size_t size) const override;
+    size_t saveSize() const override;
+    size_t load(const unsigned char* buffer, size_t size) override;
+    void openUi() override;
+    void reset() override;
+};
+
 } // namespace Objects
 
 #endif // INCLUDE_OBJECTS_GENERIC_H_

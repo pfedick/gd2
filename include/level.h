@@ -16,6 +16,8 @@
 #include "metrics.h"
 
 class Game;
+class Level;
+class Player;
 
 class ModifiableParameter
 {
@@ -135,6 +137,7 @@ public:
     bool isEditLayer = false;
     bool objectEditMode = false;
     Game* game = NULL;
+    Level* level = NULL;
 
     TileGrid tiles;
     enum class SpritePosition
@@ -292,6 +295,8 @@ public:
     void updateParticles(double time); // Wird vom ParticleUpdateThread aufgerufen!
 
     ppl7::grafix::Image getScreenshot(int width, int height);
+
+    Objects::Object* getObject(uint32_t object_id) const;
 };
 
 #endif
