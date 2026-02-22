@@ -428,6 +428,7 @@ void Game::run()
 
         // Frame done
         SDL_SubmitGPUCommandBuffer(cmdbuf);
+        gpu_batcher.resetContextSwitchCount(); // For debugging: Count how many times we switch GPU context (render pass)
 
         // Hinweis: SDL_WaitForGPUFences blockiert die CPU nicht nur, bis die GPU fertig mit dem CommandBuffer ist,
         // sondern wartet auch die VSync ab

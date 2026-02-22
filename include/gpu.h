@@ -243,9 +243,15 @@ private:
     std::list<PrimitiveCommand> primitiveCommands;
     std::map<SpriteBatchKey, std::list<SpriteCommand>> spriteCommands;
 
+    uint32_t contextSwitchCount; // For debugging: Count how many times we switch GPU context (render pass)
+    uint32_t totalSpriteCount;
+    uint32_t totalPrimitivesCount;
+    SDL_GPUTexture* lasttexture = nullptr;
+
 public:
     GPUBatcher();
     ~GPUBatcher();
+    void resetContextSwitchCount();
     void init(GPUContext* gpu);
     void updateMatrices(int screenWidth, int screenHeight);
     void updateMatrices(const ppl7::grafix::Size& size);

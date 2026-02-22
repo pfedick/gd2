@@ -28,12 +28,25 @@ GPUBatcher::GPUBatcher()
     storageBufferCapacity = 0;
     primitiveVertexCapacity = 0;
     uniformBuffer = nullptr;
+    contextSwitchCount = 0;
+    totalPrimitivesCount = 0;
+    totalSpriteCount = 0;
     memset(&currentUniforms, 0, sizeof(UniformData));
 }
 
 GPUBatcher::~GPUBatcher()
 {
     cleanup();
+}
+
+void GPUBatcher::resetContextSwitchCount()
+{
+    ppl7::PrintDebug("GPUBatcher: Total Sprites drawn: %u, Total Primitives drawn: %u, Context Switches: %u\n", totalSpriteCount,
+                     totalPrimitivesCount, contextSwitchCount);
+    totalSpriteCount = 0;
+    totalPrimitivesCount = 0;
+    contextSwitchCount = 0;
+    lasttexture = nullptr;
 }
 
 void GPUBatcher::init(GPUContext* gpu)
@@ -397,6 +410,8 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
     for (const auto& [textureId, spriteList] : spriteCommands) {
         totalSprites += spriteList.size();
     }
+    totalSpriteCount += (uint32_t)totalSprites;
+    totalPrimitivesCount += (uint32_t)primitiveCommands.size();
 
     if (totalSprites) {
 
@@ -481,7 +496,10 @@ void GPUBatcher::addSprite(const SpriteTexture& sprite,
     if (!item || !item->tex) {
         return;
     }
-
+    if (item->tex != lasttexture) {
+        contextSwitchCount++;
+        lasttexture = item->tex;
+    }
     SpriteCommand cmd;
     cmd.texture = item->tex;
     cmd.x = x;
@@ -520,6 +538,10 @@ void GPUBatcher::addSpriteOutline(const SpriteTexture& sprite,
     const SpriteTexture::SpriteIndexItem* item = sprite.getSpriteIndex(sprite_id);
     if (!item || !item->tex) {
         return;
+    }
+    if (item->tex != lasttexture) {
+        contextSwitchCount++;
+        lasttexture = item->tex;
     }
 
     SpriteCommand cmd;
