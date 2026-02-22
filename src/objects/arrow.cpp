@@ -47,7 +47,7 @@ void ArrowFired::update(const GameClock& clock, TileTypePlane& ttplane, Player& 
     TileType::Type t1 = ttplane.getType(ppl7::grafix::Point(p.x, p.y));
     if (t1 == TileType::Blocking) {
         deleteDefered = true;
-        getAudioPool().playOnce(AudioClip::arrow_hit_wall, p, 1600, 0.4f);
+        getAudioPool().playOnce(AudioEffect::arrow_hit_wall, p, 1600, 0.4f);
 
     } else if (p.x < 0.0f || p.x > 65535.0f || p.y < 0.0f || p.y > 65535.0f) {
         deleteDefered = true;
@@ -151,7 +151,7 @@ void Arrow::fire()
         break;
     }
     objectSystem->addObject(particle);
-    getAudioPool().playOnce(AudioClip::arrow_swoosh, p, 1600, 0.4f);
+    getAudioPool().playOnce(AudioEffect::arrow_swoosh, p, 1600, 0.4f);
 }
 
 void Arrow::toggle(bool enable, Object* source)

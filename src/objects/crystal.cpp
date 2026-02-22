@@ -72,13 +72,13 @@ void Crystal::handleCollision(Player* player, const Collision&)
     int sample = ppl7::rand(0, 2);
     switch (sample) {
     case 0:
-        audio.playOnce(AudioClip::crystal2, 0.4f);
+        audio.playOnce(AudioEffect::crystal2, 0.4f);
         break;
     case 1:
-        audio.playOnce(AudioClip::crystal3, 0.4f);
+        audio.playOnce(AudioEffect::crystal3, 0.4f);
         break;
     case 2:
-        audio.playOnce(AudioClip::crystal1, 0.4f);
+        audio.playOnce(AudioEffect::crystal1, 0.4f);
     }
 }
 

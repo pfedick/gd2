@@ -44,13 +44,22 @@ void Coin::handleCollision(Player* player, const Collision&)
     player->countObject(type());
     AudioPool& audio = getAudioPool();
 
-    int sample = ppl7::rand(0, 1);
+    int sample = ppl7::rand(0, 5);
     switch (sample) {
     case 1:
-        audio.playOnce(AudioClip::coin2, 0.3f);
+        audio.playOnce(AudioEffect::coin2, 0.3f);
+        break;
+    case 2:
+        audio.playOnce(AudioEffect::coin3, 0.3f);
+        break;
+    case 3:
+        audio.playOnce(AudioEffect::coin4, 0.3f);
+        break;
+    case 4:
+        audio.playOnce(AudioEffect::coin5, 0.3f);
         break;
     default:
-        audio.playOnce(AudioClip::coin1, 0.3f);
+        audio.playOnce(AudioEffect::coin1, 0.3f);
         break;
     }
 }

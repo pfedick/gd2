@@ -490,4 +490,4 @@ genscpfonts: tools/gentexturefonts.cpp Makefile
 	./genscpfonts.exe
 	texmaker -s res/fonts/scp/ -t res/fonts/scp_24.tex -w 256 -h 256 -pd fixed -px 2 -py 2 -i -x tmp/scp_24
 
--include $(OBJECTS:.o=.d) $(UI:.o=.d) $(WIDGETS:.o=.d) $(OBJ_OBJECTS:.o=.d) compile/genscpfonts.d
+-include $(OBJECTS:.o=.d) $(UI:.o=.d) $(WIDGETS:.o=.d) $(GAME_OBJ_OBJECTS:.o=.d) compile/genscpfonts.d

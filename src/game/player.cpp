@@ -627,12 +627,12 @@ void Player::dropHealth(float points, HealthDropReason reason)
         } else if (reason == Smashed) {
             animation.startSequence(403, 408, false, 408);
             ppl7::grafix::Point p(x, y);
-            getAudioPool().playOnce(AudioClip::stamper_squish, p, 1600, 1.0f);
+            getAudioPool().playOnce(AudioEffect::stamper_squish, p, 1600, 1.0f);
             startEmittingParticles(time + 1.0f, ParticleReason::Smashed);
         } else if (reason == SmashedSideways) {
             animation.startSequence(409, 414, false, 414);
             ppl7::grafix::Point p(x, y);
-            getAudioPool().playOnce(AudioClip::stamper_squish, p, 1600, 1.0f);
+            getAudioPool().playOnce(AudioEffect::stamper_squish, p, 1600, 1.0f);
             startEmittingParticles(time + 1.0f, ParticleReason::Smashed);
 
         } else if (reason == Burned) {
@@ -717,17 +717,17 @@ void Player::handleDiving(double time, const TileTypePlane& world, ObjectSystem*
 {
     AudioPool& ap = getAudioPool();
     if (isDiving()) {
-        if (ambient_sound != NULL && ambient_playing != AudioClip::underwaterloop1) {
+        if (ambient_sound != NULL && ambient_playing != AudioLoop::underwaterloop1) {
             ambient_sound->setAutoDelete(true);
             ambient_sound->fadeout(1.0f);
             ambient_sound = NULL;
         }
         if (!ambient_sound) {
-            ambient_sound = ap.getInstance(AudioClip::underwaterloop1, AudioClass::Ambience);
+            ambient_sound = ap.getInstance(AudioLoop::underwaterloop1, AudioClass::Ambience);
             ambient_sound->setLoop(true);
             ambient_sound->setVolume(0.8);
             ap.playInstance(ambient_sound);
-            ambient_playing = AudioClip::underwaterloop1;
+            ambient_playing = AudioLoop::underwaterloop1;
         }
         if (last_aircheck > 0.0f) {
             if (air > 0.0f) air -= time - last_aircheck;
@@ -738,7 +738,7 @@ void Player::handleDiving(double time, const TileTypePlane& world, ObjectSystem*
             }
         }
     } else {
-        if (ambient_sound != NULL && ambient_playing == AudioClip::underwaterloop1) {
+        if (ambient_sound != NULL && ambient_playing == AudioLoop::underwaterloop1) {
             ambient_sound->setAutoDelete(true);
             ambient_sound->fadeout(2.0f);
             ambient_sound = NULL;
@@ -754,22 +754,22 @@ static void play_step(AudioPool& ap)
     int r = ppl7::rand(1, 5);
     switch (r) {
     case 1:
-        ap.playOnce(AudioClip::player_step1, 0.5f);
+        ap.playOnce(AudioEffect::player_step1, 0.5f);
         break;
     case 2:
-        ap.playOnce(AudioClip::player_step2, 0.5f);
+        ap.playOnce(AudioEffect::player_step2, 0.5f);
         break;
     case 3:
-        ap.playOnce(AudioClip::player_step3, 0.5f);
+        ap.playOnce(AudioEffect::player_step3, 0.5f);
         break;
     case 4:
-        ap.playOnce(AudioClip::player_step4, 0.5f);
+        ap.playOnce(AudioEffect::player_step4, 0.5f);
         break;
     case 5:
-        ap.playOnce(AudioClip::player_step5, 0.5f);
+        ap.playOnce(AudioEffect::player_step5, 0.5f);
         break;
     default:
-        ap.playOnce(AudioClip::player_step1, 0.5f);
+        ap.playOnce(AudioEffect::player_step1, 0.5f);
         break;
     }
 }
@@ -779,25 +779,25 @@ static void play_ladder(AudioPool& ap)
     int r = ppl7::rand(1, 7);
     switch (r) {
     case 1:
-        ap.playOnce(AudioClip::ladder_step1, 0.5f);
+        ap.playOnce(AudioEffect::ladder_step1, 0.5f);
         break;
     case 2:
-        ap.playOnce(AudioClip::ladder_step2, 0.5f);
+        ap.playOnce(AudioEffect::ladder_step2, 0.5f);
         break;
     case 3:
-        ap.playOnce(AudioClip::ladder_step3, 0.5f);
+        ap.playOnce(AudioEffect::ladder_step3, 0.5f);
         break;
     case 4:
-        ap.playOnce(AudioClip::ladder_step4, 0.5f);
+        ap.playOnce(AudioEffect::ladder_step4, 0.5f);
         break;
     case 5:
-        ap.playOnce(AudioClip::ladder_step5, 0.5f);
+        ap.playOnce(AudioEffect::ladder_step5, 0.5f);
         break;
     case 6:
-        ap.playOnce(AudioClip::ladder_step6, 0.5f);
+        ap.playOnce(AudioEffect::ladder_step6, 0.5f);
         break;
     default:
-        ap.playOnce(AudioClip::ladder_step7, 0.5f);
+        ap.playOnce(AudioEffect::ladder_step7, 0.5f);
         break;
     }
 }
@@ -867,7 +867,7 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
         double volume = (time - airStart);
         if (volume > 1.0f) volume = 1.0f;
         airStart = 0.0f;
-        ap.playOnce(AudioClip::player_jump_land, volume);
+        ap.playOnce(AudioEffect::player_jump_land, volume);
     }
 
     dropHealth(detectFallingDamage(time, frame_rate_compensation), HealthDropReason::FallingDeep);
@@ -1432,20 +1432,20 @@ void Player::splashIntoWater(float gravity)
         ps->addParticle(particle);
     }
     AudioPool& audio = getAudioPool();
-    AudioClip::Id id = AudioClip::watersplash1;
+    AudioEffect id = AudioEffect::watersplash1;
     switch (ppl7::rand(0, 4)) {
     case 0:
     case 1:
-        id = AudioClip::watersplash1;
+        id = AudioEffect::watersplash1;
         break;
     case 2:
-        id = AudioClip::watersplash2;
+        id = AudioEffect::watersplash2;
         break;
     case 3:
-        id = AudioClip::watersplash3;
+        id = AudioEffect::watersplash3;
         break;
     case 4:
-        id = AudioClip::watersplash4;
+        id = AudioEffect::watersplash4;
         break;
     }
     audio.playOnce(id, gravity / 21.0f);
@@ -1455,9 +1455,9 @@ void Player::moveOutOfWater(float angel, float speed)
 {
     AudioPool& audio = getAudioPool();
     if (speed < 1.0f)
-        audio.playOnce(AudioClip::water_pouring2, 0.5f);
+        audio.playOnce(AudioEffect::water_pouring2, 0.5f);
     else
-        audio.playOnce(AudioClip::water_pouring1, 0.5f);
+        audio.playOnce(AudioEffect::water_pouring1, 0.5f);
     ppl7::grafix::PointF p(x, y - 2 * TILE_HEIGHT);
 
     ParticleSystem* ps = GetParticleSystem();

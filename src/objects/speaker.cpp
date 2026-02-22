@@ -23,7 +23,7 @@ Speaker::Speaker()
     visibleAtPlaytime = false;
     sprite_no_representation = 11;
     audio = NULL;
-    sample_id = AudioClip::none;
+    sample_id = AudioEffect::none;
     volume = 1.0f;
     max_distance = 1600;
     enabled = true;
@@ -44,7 +44,7 @@ void Speaker::update(const GameClock& clock, TileTypePlane& ttplane, Player& pla
 {
     if (enabled) {
         if (sample_type == SampleType::AudioLoop) {
-            if (audio == NULL && sample_id != AudioClip::none) {
+            if (audio == NULL && sample_id != AudioEffect::none) {
                 setSample(sample_id, volume, max_distance);
             } else if (audio) {
                 ParallaxLayer& layer = GetGame().level.layer(myParallaxLayer);
@@ -69,23 +69,23 @@ void Speaker::update(const GameClock& clock, TileTypePlane& ttplane, Player& pla
 
 size_t Speaker::saveSize() const
 {
-    return Object::saveSize() + 11;
+    return Object::saveSize() + 13;
 }
 
 size_t Speaker::save(unsigned char* buffer, size_t size) const
 {
     size_t bytes = Object::save(buffer, size);
     if (!bytes) return 0;
-    ppl7::Poke8(buffer + bytes, 2); // Object Version
+    ppl7::Poke8(buffer + bytes, 3); // Object Version
 
-    ppl7::Poke16(buffer + bytes + 1, sample_id);
-    ppl7::Poke16(buffer + bytes + 3, max_distance);
-    ppl7::PokeFloat(buffer + bytes + 5, volume);
+    ppl7::Poke32(buffer + bytes + 1, sample_id);
+    ppl7::Poke16(buffer + bytes + 5, max_distance);
+    ppl7::PokeFloat(buffer + bytes + 7, volume);
     int flags = 0;
     if (initial_state) flags |= 1;
     if (sample_type == SampleType::Effect) flags |= 2;
-    ppl7::Poke16(buffer + bytes + 9, flags);
-    return bytes + 11;
+    ppl7::Poke16(buffer + bytes + 11, flags);
+    return bytes + 13;
 }
 
 size_t Speaker::load(const unsigned char* buffer, size_t size)
@@ -93,15 +93,12 @@ size_t Speaker::load(const unsigned char* buffer, size_t size)
     size_t bytes = Object::load(buffer, size);
     if (bytes == 0 || size < bytes + 1) return 0;
     int version = ppl7::Peek8(buffer + bytes);
-    if (version < 1 || version > 2) return 0;
+    if (version < 3) return 0;
 
-    sample_id = 0;
-    volume = 1.0f;
-
-    sample_id = ppl7::Peek16(buffer + bytes + 1);
-    max_distance = ppl7::Peek16(buffer + bytes + 3);
-    volume = ppl7::PeekFloat(buffer + bytes + 5);
-    int flags = ppl7::Peek16(buffer + bytes + 9);
+    sample_id = static_cast<AudioEffect>(ppl7::Peek32(buffer + bytes + 1));
+    max_distance = ppl7::Peek16(buffer + bytes + 5);
+    volume = ppl7::PeekFloat(buffer + bytes + 7);
+    int flags = ppl7::Peek16(buffer + bytes + 11);
     if (version == 1 && flags > 3) flags = flags & 1;
     // ppl7::PrintDebug("Speaker::load, flags=%d\n", flags);
 
@@ -126,11 +123,11 @@ void Speaker::setSample(int id, float volume, int max_distance)
         pool.stopInstace(audio);
         delete audio;
         audio = NULL;
-        sample_id = 0;
+        sample_id = static_cast<AudioEffect>(0);
     }
     if (sample_type == SampleType::AudioLoop) {
         if (id > 0) {
-            audio = pool.getInstance((AudioClip::Id)id, AudioClass::Ambience);
+            audio = pool.getInstance(static_cast<AudioLoop>(id), AudioClass::Ambience);
             if (audio) {
                 audio->setVolume(volume);
                 audio->setAutoDelete(false);
@@ -138,11 +135,11 @@ void Speaker::setSample(int id, float volume, int max_distance)
                 audio->setPositional(p, max_distance);
                 audio->startRandom();
                 pool.playInstance(audio);
-                sample_id = id;
+                sample_id = static_cast<AudioLoop>(id);
             }
         }
     } else {
-        sample_id = id;
+        sample_id = static_cast<AudioEffect>(id);
     }
 }
 
@@ -151,7 +148,7 @@ void Speaker::toggle(bool enable, Object* source)
     if (sample_type == SampleType::AudioLoop) {
         this->enabled = enable;
     } else {
-        getAudioPool().playOnce(static_cast<AudioClip::Id>(sample_id), p, max_distance, volume);
+        getAudioPool().playOnce(sample_id, p, max_distance, volume);
     }
 }
 
@@ -165,7 +162,7 @@ void Speaker::test()
     if (sample_type == SampleType::AudioLoop) {
         setSample(sample_id, volume, max_distance);
     } else {
-        getAudioPool().playOnce(static_cast<AudioClip::Id>(sample_id), p, max_distance, volume);
+        getAudioPool().playOnce(sample_id, p, max_distance, volume);
     }
 }
 
@@ -196,15 +193,14 @@ public:
 void Speaker::fillComboBoxWithEffects(ppltk::ComboBox* combobox, int selected_sample)
 {
     combobox->clear();
-    combobox->add("no sound", ppl7::ToString("%d", AudioClip::none));
-    combobox->add("impact", ppl7::ToString("%d", AudioClip::impact));
-    combobox->add("Big Crash", ppl7::ToString("%d", AudioClip::big_crash));
-    combobox->add("Trap 1", ppl7::ToString("%d", AudioClip::trap1));
-    combobox->add("Trap 1", ppl7::ToString("%d", AudioClip::trap2));
-    combobox->add("Crystal", ppl7::ToString("%d", AudioClip::crystal1));
-    combobox->add("Coin 1", ppl7::ToString("%d", AudioClip::coin1));
-    combobox->add("Coin 2", ppl7::ToString("%d", AudioClip::coin2));
-    combobox->add("Arrow swoosh", ppl7::ToString("%d", AudioClip::arrow_swoosh));
+    combobox->add("no sound", ppl7::ToString("%d", AudioEffect::none));
+    combobox->add("impact", ppl7::ToString("%d", AudioEffect::impact1));
+    combobox->add("Trap 1", ppl7::ToString("%d", AudioEffect::trap1));
+    combobox->add("Trap 1", ppl7::ToString("%d", AudioEffect::trap2));
+    combobox->add("Crystal", ppl7::ToString("%d", AudioEffect::crystal1));
+    combobox->add("Coin 1", ppl7::ToString("%d", AudioEffect::coin1));
+    combobox->add("Coin 2", ppl7::ToString("%d", AudioEffect::coin2));
+    combobox->add("Arrow swoosh", ppl7::ToString("%d", AudioEffect::arrow_swoosh));
     combobox->sortItems();
     combobox->setCurrentIdentifier(ppl7::ToString("%d", selected_sample));
 }
@@ -280,85 +276,83 @@ SpeakerDialog::~SpeakerDialog()
 void SpeakerDialog::setupAudioLoop()
 {
     sample_name->clear();
-    sample_name->add("no sound", ppl7::ToString("%d", AudioClip::none));
-    sample_name->add("Birds 1", ppl7::ToString("%d", AudioClip::birds1));
-    sample_name->add("Birds 2", ppl7::ToString("%d", AudioClip::birds2));
-    sample_name->add("Birds 3", ppl7::ToString("%d", AudioClip::birds3));
-    sample_name->add("Birds in the rain", ppl7::ToString("%d", AudioClip::birds_in_rain));
-    sample_name->add("Cave 1", ppl7::ToString("%d", AudioClip::cave1));
-    sample_name->add("Cave 2", ppl7::ToString("%d", AudioClip::cave2));
-    sample_name->add("Cave 3", ppl7::ToString("%d", AudioClip::cave3));
-    sample_name->add("Cave 4", ppl7::ToString("%d", AudioClip::cave4));
-    sample_name->add("Desert at Night", ppl7::ToString("%d", AudioClip::desert_at_night));
-    sample_name->add("Electric", ppl7::ToString("%d", AudioClip::electric));
-    sample_name->add("Fire 1", ppl7::ToString("%d", AudioClip::fire1));
-    sample_name->add("Fire 2", ppl7::ToString("%d", AudioClip::fire2));
-    sample_name->add("Fire 3", ppl7::ToString("%d", AudioClip::fire3));
-    sample_name->add("Fire 4 - Gasburner", ppl7::ToString("%d", AudioClip::fire4));
-    sample_name->add("Fireworks loop", ppl7::ToString("%d", AudioClip::fireworks_loop));
-    sample_name->add("Jungle 1", ppl7::ToString("%d", AudioClip::jungle1));
-    sample_name->add("Jungle 2", ppl7::ToString("%d", AudioClip::jungle2));
+    sample_name->add("no sound", ppl7::ToString("%d", AudioLoop::none));
+    sample_name->add("Birds 1", ppl7::ToString("%d", AudioLoop::birds1));
+    sample_name->add("Birds 2", ppl7::ToString("%d", AudioLoop::birds2));
+    sample_name->add("Birds 3", ppl7::ToString("%d", AudioLoop::birds3));
+    sample_name->add("Birds in the rain", ppl7::ToString("%d", AudioLoop::birds_in_rain));
+    sample_name->add("Cave 1", ppl7::ToString("%d", AudioLoop::cave1));
+    sample_name->add("Cave 2", ppl7::ToString("%d", AudioLoop::cave2));
+    sample_name->add("Cave 3", ppl7::ToString("%d", AudioLoop::cave3));
+    sample_name->add("Cave 4", ppl7::ToString("%d", AudioLoop::cave4));
+    sample_name->add("Desert at Night", ppl7::ToString("%d", AudioLoop::desert_at_night));
+    sample_name->add("Electric", ppl7::ToString("%d", AudioLoop::electric));
+    sample_name->add("Fire 1", ppl7::ToString("%d", AudioLoop::fire1));
+    sample_name->add("Fire 2", ppl7::ToString("%d", AudioLoop::fire2));
+    sample_name->add("Fire 3", ppl7::ToString("%d", AudioLoop::fire3));
+    sample_name->add("Fire 4 - Gasburner", ppl7::ToString("%d", AudioLoop::fire4));
+    sample_name->add("Fireworks loop", ppl7::ToString("%d", AudioLoop::fireworks_loop));
+    sample_name->add("Jungle 1", ppl7::ToString("%d", AudioLoop::jungle1));
+    sample_name->add("Jungle 2", ppl7::ToString("%d", AudioLoop::jungle2));
 
-    sample_name->add("Lava loop 1", ppl7::ToString("%d", AudioClip::lavaloop1));
-    sample_name->add("Lava loop 2", ppl7::ToString("%d", AudioClip::lavaloop2));
-    sample_name->add("Lava bubbles", ppl7::ToString("%d", AudioClip::lavabubbles));
+    sample_name->add("Lava loop 1", ppl7::ToString("%d", AudioLoop::lavaloop1));
+    sample_name->add("Lava loop 2", ppl7::ToString("%d", AudioLoop::lavaloop2));
+    sample_name->add("Lava bubbles", ppl7::ToString("%d", AudioLoop::lavabubbles));
 
-    sample_name->add("Night 1", ppl7::ToString("%d", AudioClip::night1));
-    sample_name->add("Night 2", ppl7::ToString("%d", AudioClip::night2));
-    sample_name->add("Night 3", ppl7::ToString("%d", AudioClip::night3));
-    sample_name->add("Night 4", ppl7::ToString("%d", AudioClip::night4));
-    sample_name->add("Nightowl 1", ppl7::ToString("%d", AudioClip::nightowl1));
-    sample_name->add("Nightowl 2", ppl7::ToString("%d", AudioClip::nightowl2));
-    sample_name->add("Nightowl 3", ppl7::ToString("%d", AudioClip::nightowl3));
+    sample_name->add("Night 1", ppl7::ToString("%d", AudioLoop::night1));
+    sample_name->add("Night 2", ppl7::ToString("%d", AudioLoop::night2));
+    sample_name->add("Night 3", ppl7::ToString("%d", AudioLoop::night3));
+    sample_name->add("Night 4", ppl7::ToString("%d", AudioLoop::night4));
+    sample_name->add("Nightowl 1", ppl7::ToString("%d", AudioLoop::nightowl1));
+    sample_name->add("Nightowl 2", ppl7::ToString("%d", AudioLoop::nightowl2));
+    sample_name->add("Nightowl 3", ppl7::ToString("%d", AudioLoop::nightowl3));
 
-    sample_name->add("Rain 1", ppl7::ToString("%d", AudioClip::rain1));
-    sample_name->add("Rain 2", ppl7::ToString("%d", AudioClip::rain2));
-    sample_name->add("Rain 3", ppl7::ToString("%d", AudioClip::rain3));
+    sample_name->add("Rain 1", ppl7::ToString("%d", AudioLoop::rain1));
+    sample_name->add("Rain 2", ppl7::ToString("%d", AudioLoop::rain2));
+    sample_name->add("Rain 3", ppl7::ToString("%d", AudioLoop::rain3));
 
-    sample_name->add("Underwater", ppl7::ToString("%d", AudioClip::underwaterloop1));
-    sample_name->add("Vent 1", ppl7::ToString("%d", AudioClip::vent1));
-    sample_name->add("Vent 2", ppl7::ToString("%d", AudioClip::vent2));
+    sample_name->add("Underwater", ppl7::ToString("%d", AudioLoop::underwaterloop1));
 
-    sample_name->add("Waterflow 1", ppl7::ToString("%d", AudioClip::waterflow1));
-    sample_name->add("Waterflow 2", ppl7::ToString("%d", AudioClip::waterflow2));
-    sample_name->add("Waterflow 3", ppl7::ToString("%d", AudioClip::waterflow3));
-    sample_name->add("Waterdrips in a cave", ppl7::ToString("%d", AudioClip::waterdrips));
-    sample_name->add("Waterdrips 2", ppl7::ToString("%d", AudioClip::waterdrips2));
-    sample_name->add("Waterdrips 3", ppl7::ToString("%d", AudioClip::waterdrips3));
-    sample_name->add("Water Bubbles 1", ppl7::ToString("%d", AudioClip::water_bubble1));
-    sample_name->add("Water Bubbles 2", ppl7::ToString("%d", AudioClip::water_bubble2));
-    sample_name->add("Water Bubbles 3", ppl7::ToString("%d", AudioClip::water_bubble3));
-    sample_name->add("Water Bubbles 4", ppl7::ToString("%d", AudioClip::water_bubble4));
-    sample_name->add("Water Bubbles 5", ppl7::ToString("%d", AudioClip::water_bubble5));
+    sample_name->add("Waterflow 1", ppl7::ToString("%d", AudioLoop::waterflow1));
+    sample_name->add("Waterflow 2", ppl7::ToString("%d", AudioLoop::waterflow2));
+    sample_name->add("Waterflow 3", ppl7::ToString("%d", AudioLoop::waterflow3));
+    sample_name->add("Waterdrips in a cave", ppl7::ToString("%d", AudioLoop::waterdrips1));
+    sample_name->add("Waterdrips 2", ppl7::ToString("%d", AudioLoop::waterdrips2));
+    sample_name->add("Waterdrips 3", ppl7::ToString("%d", AudioLoop::waterdrips3));
+    sample_name->add("Water Bubbles 1", ppl7::ToString("%d", AudioLoop::water_bubble1));
+    sample_name->add("Water Bubbles 2", ppl7::ToString("%d", AudioLoop::water_bubble2));
+    sample_name->add("Water Bubbles 3", ppl7::ToString("%d", AudioLoop::water_bubble3));
+    sample_name->add("Water Bubbles 4", ppl7::ToString("%d", AudioLoop::water_bubble4));
+    sample_name->add("Water Bubbles 5", ppl7::ToString("%d", AudioLoop::water_bubble5));
 
-    sample_name->add("Waves 1", ppl7::ToString("%d", AudioClip::waves1));
-    sample_name->add("Waves 2", ppl7::ToString("%d", AudioClip::waves2));
-    sample_name->add("Waves 3", ppl7::ToString("%d", AudioClip::waves3));
-    sample_name->add("Waves 4", ppl7::ToString("%d", AudioClip::waves4));
+    sample_name->add("Waves 1", ppl7::ToString("%d", AudioLoop::waves1));
+    sample_name->add("Waves 2", ppl7::ToString("%d", AudioLoop::waves2));
+    sample_name->add("Waves 3", ppl7::ToString("%d", AudioLoop::waves3));
+    sample_name->add("Waves 4", ppl7::ToString("%d", AudioLoop::waves4));
 
-    sample_name->add("Gas 1", ppl7::ToString("%d", AudioClip::gas1));
-    sample_name->add("Gas 2", ppl7::ToString("%d", AudioClip::gas2));
-    sample_name->add("Gas 3", ppl7::ToString("%d", AudioClip::gas3));
+    sample_name->add("Gas 1", ppl7::ToString("%d", AudioLoop::gas1));
+    sample_name->add("Gas 2", ppl7::ToString("%d", AudioLoop::gas2));
+    sample_name->add("Gas 3", ppl7::ToString("%d", AudioLoop::gas3));
 
-    sample_name->add("Wind and grills", ppl7::ToString("%d", AudioClip::wind3));
-    sample_name->add("Wind strong", ppl7::ToString("%d", AudioClip::wind_strong));
-    sample_name->add("Wind Howling", ppl7::ToString("%d", AudioClip::wind1));
-    sample_name->add("Wind Desert", ppl7::ToString("%d", AudioClip::wind2));
-    sample_name->add("Wind soft 1", ppl7::ToString("%d", AudioClip::wind3));
-    sample_name->add("Wind soft 2", ppl7::ToString("%d", AudioClip::wind4));
+    sample_name->add("Wind and crickets", ppl7::ToString("%d", AudioLoop::wind_crickets));
+    sample_name->add("Wind strong", ppl7::ToString("%d", AudioLoop::wind_strong));
+    sample_name->add("Wind Howling", ppl7::ToString("%d", AudioLoop::wind1));
+    sample_name->add("Wind Desert", ppl7::ToString("%d", AudioLoop::wind2));
+    sample_name->add("Wind soft 1", ppl7::ToString("%d", AudioLoop::wind3));
+    sample_name->add("Wind soft 2", ppl7::ToString("%d", AudioLoop::wind4));
 
-    sample_name->add("Earthquake", ppl7::ToString("%d", AudioClip::earthquake));
-    sample_name->add("Rumble", ppl7::ToString("%d", AudioClip::rumble));
-    sample_name->add("Waterpuddle", ppl7::ToString("%d", AudioClip::waterpuddle));
+    sample_name->add("Earthquake", ppl7::ToString("%d", AudioLoop::earthquake));
+    sample_name->add("Rumble", ppl7::ToString("%d", AudioLoop::rumble));
+    sample_name->add("Waterpuddle", ppl7::ToString("%d", AudioLoop::waterpuddle));
 
     sample_name->sortItems();
-    sample_name->setCurrentIdentifier(ppl7::ToString("%d", AudioClip::none));
+    sample_name->setCurrentIdentifier(ppl7::ToString("%d", AudioLoop::none));
     if (object->sample_type == Speaker::SampleType::AudioLoop) sample_name->setCurrentIdentifier(ppl7::ToString("%d", object->sample_id));
 }
 
 void SpeakerDialog::setupEffect()
 {
-    Speaker::fillComboBoxWithEffects(sample_name, static_cast<int>(AudioClip::none));
+    Speaker::fillComboBoxWithEffects(sample_name, static_cast<int>(AudioEffect::none));
     if (object->sample_type == Speaker::SampleType::Effect) sample_name->setCurrentIdentifier(ppl7::ToString("%d", object->sample_id));
 }
 
@@ -372,13 +366,13 @@ void SpeakerDialog::toggledEvent(ppltk::Event* event, bool checked)
         if (object->sample_type != Speaker::SampleType::AudioLoop) {
             setupAudioLoop();
             object->sample_type = Speaker::SampleType::AudioLoop;
-            object->sample_id = 0;
+            object->sample_id = AudioLoop::none;
         }
     } else if (event->widget() == type_effect && checked == true) {
         if (object->sample_type != Speaker::SampleType::Effect) {
             setupEffect();
             object->sample_type = Speaker::SampleType::Effect;
-            object->sample_id = 0;
+            object->sample_id = AudioEffect::none;
         }
     }
 }
@@ -387,7 +381,7 @@ void SpeakerDialog::valueChangedEvent(ppltk::Event* event, int value)
 {
     // ppl7::PrintDebugTime("SpeakerDialog::valueChangedEvent (int): >>%d<<", value);
     if (event->widget() == sample_name) {
-        object->sample_id = sample_name->currentIdentifier().toInt();
+        object->sample_id = static_cast<AudioEffect>(sample_name->currentIdentifier().toInt());
         object->test();
     }
 }

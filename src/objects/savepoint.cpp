@@ -44,7 +44,7 @@ void SavePoint::handleCollision(Player* player, const Collision&)
     enabled = false;
     collisionDetection = false;
     AudioPool& audio = getAudioPool();
-    audio.playOnce(AudioClip::fanfare1, 0.7f);
+    audio.playOnce(AudioEffect::fanfare1, 0.7f);
 }
 
 } // namespace Objects

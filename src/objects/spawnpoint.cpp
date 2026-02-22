@@ -26,7 +26,7 @@ SpawnPoint::SpawnPoint()
     pixelExactCollision = false;
     collisionDetection = false;
     next_touch_time = 0.0f;
-    sample_id = 0;
+    sample_id = AudioEffect::none;
     max_distance = 1600;
     volume = 1.0f;
     visibleAtPlaytime = false;
@@ -47,7 +47,7 @@ void SpawnPoint::emmitObject()
 {
     if (!objectSystem) return;
     AudioPool& audio = getAudioPool();
-    if (sample_id != AudioClip::none) audio.playOnce(static_cast<AudioClip::Id>(sample_id), p, max_distance, volume);
+    if (sample_id != AudioEffect::none) audio.playOnce(sample_id, p, max_distance, volume);
     // next_touch_time=time + ppl7::randf(0.1f, 1.0f);
 
     Object* object = objectSystem->getInstance(emitted_object);
@@ -78,7 +78,7 @@ size_t SpawnPoint::save(unsigned char* buffer, size_t size) const
 
     ppl7::Poke8(buffer + bytes + 1, max_toggles);
     ppl7::Poke8(buffer + bytes + 2, static_cast<int>(emitted_object));
-    ppl7::Poke16(buffer + bytes + 3, sample_id);
+    ppl7::Poke16(buffer + bytes + 3, static_cast<uint32_t>(sample_id));
     ppl7::Poke16(buffer + bytes + 5, max_distance);
     ppl7::PokeFloat(buffer + bytes + 7, volume);
     return bytes + 11;
@@ -93,7 +93,7 @@ size_t SpawnPoint::load(const unsigned char* buffer, size_t size)
 
     max_toggles = ppl7::Peek8(buffer + bytes + 1);
     emitted_object = (Type)ppl7::Peek8(buffer + bytes + 2);
-    sample_id = ppl7::Peek16(buffer + bytes + 3);
+    sample_id = static_cast<AudioEffect>(ppl7::Peek16(buffer + bytes + 3));
     max_distance = ppl7::Peek16(buffer + bytes + 5);
     volume = ppl7::PeekFloat(buffer + bytes + 7);
     return size;
@@ -142,7 +142,7 @@ SpawnPointDialog::SpawnPointDialog(SpawnPoint* object)
     object_type->setEventHandler(this);
     object_type->add("Medikit", ppl7::ToString("%d", Type::Medikit));
     object_type->add("ExtraLife", ppl7::ToString("%d", Type::ExtraLife));
-    object_type->add("Savepoint", ppl7::ToString("%d", Type::Savepoint));
+    object_type->add("Savepoint", ppl7::ToString("%d", Type::SavePoint));
     object_type->add("Crystal", ppl7::ToString("%d", Type::Crystal));
     object_type->add("Diamond", ppl7::ToString("%d", Type::Diamond));
     object_type->add("Coin", ppl7::ToString("%d", Type::Coin));
@@ -160,7 +160,7 @@ SpawnPointDialog::SpawnPointDialog(SpawnPoint* object)
     y += 35;
     addChild(new ppltk::Label(0, y, 120, 30, "Audio sample: "));
     audio_sample = new ppltk::ComboBox(120, y, 400, 30);
-    Speaker::fillComboBoxWithEffects(audio_sample, object->sample_id);
+    Speaker::fillComboBoxWithEffects(audio_sample, static_cast<int>(object->sample_id));
     audio_sample->setEventHandler(this);
     addChild(audio_sample);
 
@@ -206,7 +206,7 @@ void SpawnPointDialog::valueChangedEvent(ppltk::Event* event, int value)
     if (event->widget() == object_type) {
         object->emitted_object = (Type)object_type->currentIdentifier().toInt();
     } else if (event->widget() == audio_sample) {
-        object->sample_id = audio_sample->currentIdentifier().toInt();
+        object->sample_id = static_cast<AudioEffect>(audio_sample->currentIdentifier().toInt());
     }
 }
 
@@ -228,8 +228,8 @@ void SpawnPointDialog::valueChangedEvent(ppltk::Event* event, double value)
 
 void SpawnPointDialog::mouseDownEvent(ppltk::MouseEvent* event)
 {
-    if (event->widget() == test_audio_button && object->sample_id != AudioClip::none) {
-        getAudioPool().playOnce(static_cast<AudioClip::Id>(object->sample_id), object->p, object->max_distance, object->volume);
+    if (event->widget() == test_audio_button && object->sample_id != AudioEffect::none) {
+        getAudioPool().playOnce(object->sample_id, object->p, object->max_distance, object->volume);
     }
     Dialog::mouseDownEvent(event);
 }

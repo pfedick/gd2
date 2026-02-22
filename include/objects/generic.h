@@ -4,6 +4,7 @@
 #include "objectsystem.h"
 #include "particle.h"
 #include <ppltk.h>
+#include "audiopool.h"
 
 namespace Objects
 {
@@ -132,7 +133,7 @@ private:
     double next_touch_time;
 
 public:
-    int sample_id;
+    AudioEffect sample_id;
     int max_distance;
     float volume;
     unsigned char max_toggles;
@@ -159,7 +160,7 @@ private:
     AudioInstance* audio;
 
 public:
-    int sample_id;
+    AudioClipId sample_id;
     int max_distance;
     float volume;
 

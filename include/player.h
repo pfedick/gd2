@@ -115,7 +115,7 @@ private:
     AudioInstance* ambient_sound;
     AudioInstance* voice;
     AudioSample voice_sample;
-    AudioClip::Id ambient_playing;
+    AudioLoop ambient_playing;
     // LightObject flashlight1, flashlight2, flashlight3, flashlight2_ladder;
 
     class AutoWalk
