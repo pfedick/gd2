@@ -11,6 +11,8 @@ Metroidvania-ähnliches 2D Jump'n'Run mit Fokus auf Erkundung, Level-Design und 
 ### Setting
 Eine fantasievolle Welt mit einer Mischung aus mittelalterlichen, magischen und technologischen Elementen.
 
+Weitere Informationen und Ideen zum Spiel sind in [concept.md](../concept.md) dokumentiert.
+
 ### Multiplayer
 Das Spiel wird einen Koop-Modus für 2 Spieler bieten, in dem beide Spieler gleichzeitig die Welt erkunden können. Die Spieler können sich gegenseitig helfen, Rätsel lösen und Gegner bekämpfen. Zum Spielen müssen beide Spieler über ein lokales Netzwerk (auch VPN) verbunden sein (LAN). Um das Spielen zu zweit interessant zu machen, werden die Fähigkeiten, die der Spieler im Singleplayer-Modus erlernen kann, auf beide Charaktere aufgeteilt. Beispielsweise könnte ein Spieler die Fähigkeit erlernen, höher zu springen, während der andere die Fähigkeit erhält, schwere Objekte zu bewegen. Dadurch müssen die Spieler zusammenarbeiten, um bestimmte Bereiche zu erreichen oder Rätsel zu lösen, was den Koop-Modus spannend und herausfordernd macht. Die Fähigkeiten sind jedoch an bestimmten Punkten im Spiel übertragbar, so dass die Spieler auch im Koop-Modus die Möglichkeit haben, ihre Fähigkeiten zu tauschen und gemeinsam zu entscheiden, welche Fähigkeiten sie für die bevorstehenden Herausforderungen benötigen.
 
@@ -33,19 +35,22 @@ Das Spiel wird in C++23 mit SDL3 und OpenGL/Vulkan/Metal (über SDL3 GPU API) en
 - In Lightwave 3D wird eine Orthogonale Kamera verwendet, die in ihrer horizontalen dem Raster der Welt entspricht, also 200 Pixel pro Meter
 - Alle Grafiken werden mit Normal Maps erstellt, um dynamische Beleuchtung zu ermöglichen.
 
-## Roadmap & Current Focus
-- Editor zum Erstellen von Level (done)
-- Parallax-Scrolling mit mehreren Ebenen (Hintergrund, Midground, Vordergrund) (done)
-- Gausscher Blur für entfernte Ebenen (done)
-- Tiles, Sprites, Objekte und Animationen (done)
+## Roadmap & Derzeitiger Fokus
 - Die verschiedenen GPU-spezifischen Klassen zusammenfassen und GPUBatcher ersetzen (in Arbeit)
 - Player-Mechaniken (Bewegung, Kollision, Kamera) (aus George Decker übernommen, Refakturierung steht noch aus)
 - 2D Deferred Lighting (Global/Spot/Point Lights + Shadows + Normal Maps)
 - Erstellung von Assets (Sprites, Normal Maps, Tilesets) in Lightwave 3D
 - Festlegung eines konsistenten visuellen Stils und einer Farbpalette
 
+### Abgeschlossene Schritte:
+- Editor zum Erstellen von Level: Ein einfacher Editor wurde implementiert, mit dem man Level erstellen und bearbeiten kann. Er unterstützt das Platzieren von Kacheln, Sprites und Objekten, sowie das Speichern und Laden von Leveln.
+- Parallax-Scrolling mit mehreren Ebenen: Es wurden mehrere Ebenen für den Hintergrund, Midground und Vordergrund erstellt, die sich mit unterschiedlichen Geschwindigkeiten bewegen, um einen Tiefeneffekt zu erzeugen.
+- Gausscher Blur für entfernte Ebenen: Ein einfacher Gausscher Blur wurde implementiert, um entfernte Ebenen unscharf zu machen und so die Tiefenwirkung zu verstärken.
+- Tiles, Sprites, Objekte und Animationen: Es wurden grundlegende Klassen für Tiles, Sprites und Objekte erstellt, die in den Leveln platziert werden können. Es gibt auch eine einfache Animationslogik für Sprites.
+- Einfache Kamera, die dem Spieler folgt: Eine Kamera wurde implementiert, die dem Spielercharakter folgt und den sichtbaren Bereich der Welt steuert.
+- Einfache Player-Mechaniken: Es wurden grundlegende Bewegungsmechaniken für den Spieler implementiert, einschließlich Laufen, Springen und Kollisionserkennung mit der Welt.
 
-### Derzeitiger Fokus: Die verschiedenen GPU-spezifischen Klassen zusammenfassen und GPUBatcher ersetzen
+### Derzeitiger Fokus: Zusammenfassen der GPU-spezifischen Klassen und GPUBatcher umschreiben
 **Ist-Zustand:**
 Für den ersten Prototypen des Spiels habe ich eine Reihe von Klassen erstellt, um die Grafik- und Renderlogik zu implementieren. Diese sind:
 
@@ -153,6 +158,7 @@ Camera handling:
 - Review and refactor together, not in isolation
 
 **Accuracy and verification**:
+- Be honest about uncertainties: If you're not sure about something, say so clearly.
 - If a solution is only a guess or hypothesis, communicate this immediately and clearly
 - Whenever possible, verify assumptions through code analysis or tool usage before suggesting them
 - Never invent API methods that don't exist; always verify against actual code, headers, or documentation
@@ -390,14 +396,7 @@ When rendering high-res assets into a smaller physical buffer, image stability i
   - `Entities[]`: free-placed sprites/objects with components: Transform (x,y,z), Render (atlas frame/albedo+normal), Collider (optional), Interaction (optional).
   - `Lights[]`: point/ambient lights with position, color, radius, intensity; optionally associated to a render layer.
 
-- Storage format (binary, chunk-based): reuse your DeckerGame-style chunk I/O.
-  - File = sequence of chunks: `[CHDR|PAYLOAD]*` with alignment (e.g., 4–16 bytes).
-  - `CHDR` fields: `tag` (FourCC), `version` (u16/u32), `size` (u32 payload bytes), optional `flags`.
-  - Suggested tags: `META` (level meta), `TILE` (tile layers), `COLL` (collision grid), `ENTS` (entities), `LGHT` (lights), `PARA` (parallax), `ATLS` (atlas refs).
-  - Endianness: little-endian across platforms; validate with a magic header.
-  - Compatibility: unknown chunks are skipped via `size` seek; version per-chunk enables selective migration.
-  - Compression (optional): allow `flags` to mark zlib-compressed payload; decode after read.
-  - Implementation: use PPL7 `File`, `ByteArray`, `String` for I/O; each data class exposes `writeChunk(File&)` / `readChunk(File&, CHDR)`.
+- Storage format (binary, chunk-based): reuse your DeckerGame-style chunk I/O. Level Format is documented in `level.md` and should be designed for
 
 - Render ordering (per frame):
   1) Background parallax layers → offscreen target (optional downsample) → blur passes
@@ -419,18 +418,5 @@ When rendering high-res assets into a smaller physical buffer, image stability i
   - One physics grid → less confusion; visuals decoupled from collision.
   - Entities carry `render_layer` and `z` for front/behind placement instead of duplicating structures per layer.
 
-## Roadmap:
 
-
-
-- Lighting: add a lit sprite pipeline (albedo + normal), start with ambient + 1–2 point lights; expose uniforms for light color/position.
-- **Visual Stability & PMA (TODO)**: 
-  - Re-implement Pre-multiplied Alpha (PMA) across the entire pipeline to fix dark blur borders.
-  - Implement Mipmapping (`SDL_GenerateMipmapsForGPUTexture`) and Anisotropic Filtering to stabilize 4K assets on 1080p targets.
-
-
-Notes
-- Assets are authored in Lightwave 3D, then imported as 2D sprites with normal maps.
-- Keep renderer GPU-first; avoid mixing SDL_Renderer with GPU API in a frame.
-- Favor small, focused changes and “Learning by Doing” over large code drops.
 

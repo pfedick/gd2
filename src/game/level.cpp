@@ -341,11 +341,9 @@ void Level::save(const ppl7::String& Filename)
         parallax_layers[layer].front_sprites.save(ff, static_cast<int>(ChunkId::Sprites), layer, 0);
         parallax_layers[layer].background_sprites.save(ff, static_cast<int>(ChunkId::Sprites), layer, 1);
         parallax_layers[layer].objects.save(ff, static_cast<int>(ChunkId::Objects), layer);
+        // parallax_layers[layer].waynet.save(ff, static_cast<int>(ChunkId::Waynet), layer);
+        // parallax_layers[layer].lights.save(ff, static_cast<int>(ChunkId::Lights), layer);
     }
-
-    // waynet.save(ff, LevelChunkId::chunkWayNet);
-    // lights.save(ff, LevelChunkId::chunkLights);
-
     ff.close();
 }
 
