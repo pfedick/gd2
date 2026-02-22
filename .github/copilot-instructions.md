@@ -396,7 +396,7 @@ When rendering high-res assets into a smaller physical buffer, image stability i
   - `Entities[]`: free-placed sprites/objects with components: Transform (x,y,z), Render (atlas frame/albedo+normal), Collider (optional), Interaction (optional).
   - `Lights[]`: point/ambient lights with position, color, radius, intensity; optionally associated to a render layer.
 
-- Storage format (binary, chunk-based): reuse your DeckerGame-style chunk I/O. Level Format is documented in `level.md` and should be designed for
+- Storage format (binary, chunk-based): Level Format is documented in [level.md](../level.md)
 
 - Render ordering (per frame):
   1) Background parallax layers → offscreen target (optional downsample) → blur passes
