@@ -1,21 +1,68 @@
-# AI Coding Guide for gd2 / PPL7 / PPLTK
+# AI Coding Guide
 
-## Current Focus: Implement a basic editor to create a simple level
-In this first step, an editor is implemented, which will be used to:
-- place information about the outlines and obstacles of a level into a grid. This grid is used internaly by the game mechanics, to simplyfy calculations of physic and collision detection, but is invisible to the player.
-- place actual graphic tiles into the grid, which are visible to the player
-- place additional sprites at any position, which can be outside the level grid
-- place objects into the level, which can be interacted with by the player (e.g. coins, power-ups, enemies, checkpoints, etc.)
+## Project Overview
 
-The game will use multiple parallax layers, which can be individually selected in the
-editor.
+**gd2** ist ein Platzhaltername für ein 2D Jump'n'Run-Spiel. Die Abkürzung "gd2" steht für "George Decker 2", als inoffizieller Nachfolger
+zu meinem früheren Projekt (siehe https://github.com/pfedick/DeckerGame). Das frühere Spiel nutzte Klemmbaustein-Optik und "Minifiguren" als Charaktere, inspiriert von klassischen Lego-Sets. Um rechtlichen Problemen mit der Marke "Lego" zu entgehen, wird das neue Projekt seine eigene visuelle Identität erhalten, mit neuen Charakteren, Umgebungen und Geschichten. Ziel ist es, das neue Spiel auf Steam und anderen Plattformen zu veröffentlichen.
 
-A level can be saved and loaded with the editor.
+### Genre
+Metroidvania-ähnliches 2D Jump'n'Run mit Fokus auf Erkundung, Level-Design und interessanten Charakteren. Es wird Elemente von Plattforming, Rätseln, Action und Magie enthalten.
 
-Besides the editor, the actual drawing methods for the level will also be implemented.
+### Setting
+Eine fantasievolle Welt mit einer Mischung aus mittelalterlichen, magischen und technologischen Elementen.
+
+### Multiplayer
+Das Spiel wird einen Koop-Modus für 2 Spieler bieten, in dem beide Spieler gleichzeitig die Welt erkunden können. Die Spieler können sich gegenseitig helfen, Rätsel lösen und Gegner bekämpfen. Zum Spielen müssen beide Spieler über ein lokales Netzwerk (auch VPN) verbunden sein (LAN). Um das Spielen zu zweit interessant zu machen, werden die Fähigkeiten, die der Spieler im Singleplayer-Modus erlernen kann, auf beide Charaktere aufgeteilt. Beispielsweise könnte ein Spieler die Fähigkeit erlernen, höher zu springen, während der andere die Fähigkeit erhält, schwere Objekte zu bewegen. Dadurch müssen die Spieler zusammenarbeiten, um bestimmte Bereiche zu erreichen oder Rätsel zu lösen, was den Koop-Modus spannend und herausfordernd macht. Die Fähigkeiten sind jedoch an bestimmten Punkten im Spiel übertragbar, so dass die Spieler auch im Koop-Modus die Möglichkeit haben, ihre Fähigkeiten zu tauschen und gemeinsam zu entscheiden, welche Fähigkeiten sie für die bevorstehenden Herausforderungen benötigen.
+
+### Technik
+Das Spiel wird in C++23 mit SDL3 und OpenGL/Vulkan/Metal (über SDL3 GPU API) entwickelt. Es nutzt die PPL7-Bibliothek für grundlegende Funktionen (Strings, Dateien, Grafix) und die PPLTK für die UI (Fenster, Widgets, Events). Alle Grafiken werden als 2D-Sprites mit Normal Maps für Beleuchtungseffekte gerendert. Das Ziel ist es, eine moderne, flexible Engine zu bauen, die auf verschiedenen Plattformen läuft und sowohl einfache als auch fortgeschrittene visuelle Effekte ermöglicht. Zielplattformen sind Windows und Linux, mit möglicher späterer Unterstützung für MacOS. Auch das SteamDeck soll unterstützt werden.
+
+### Darstellung der Welt:
+- Parallax-Scrolling mit mehreren Ebenen (Hintergrund, Midground, Vordergrund).
+- 2D Deferred Lighting mit Normal Maps für dynamische Beleuchtung und Schatten.
+- Depth Blur für atmosphärische Effekte auf entfernten Ebenen.
+- Atmosphärische Effekte wie Nebel, Partikel, Wetter pro Ebene.
+- Pixel-Shader- oder Grafik-Effekte für spezielle Aktionen (z.B. Sprinten, Magie).
+
+## Design-Entscheidungen
+- Die Welt basiert auf einem Raster von 0,5m x 0,5m großen Kacheln, welches 100 x 100 Pixeln bei einer Auflösung von 4k entspricht.
+- Tiles entsprechen dieser Größe oder sind ein vielfaches davon (z.B. 1x1, 2x1, 2x2).
+- Grafiken werden grundsätzlich für eine 4k-Auflösung vorgerendert, um eine hohe Detailgenauigkeit zu ermöglichen. Beim Rendern werden diese auf die tatsächliche Größe des Renderbuffers runterskaliert.
+- Es gibt einen logischen Viewport, der immer eine Auflösung von 3840x2160 hat (4K). Alle Berechnungen für Positionen, Größen, Kollisionen, Geschwindigkeiten, etc. erfolgen in diesem logischen 4K-Raum.
+- Die tatsächlichen Renderziele können niedriger sein (z.B. 1920x1080) für bessere Performance auf integrierten GPUs.
+- In Lightwave 3D wird eine Orthogonale Kamera verwendet, die in ihrer horizontalen dem Raster der Welt entspricht, also 200 Pixel pro Meter
+- Alle Grafiken werden mit Normal Maps erstellt, um dynamische Beleuchtung zu ermöglichen.
+
+## Roadmap & Current Focus
+- Editor zum Erstellen von Level (done)
+- Parallax-Scrolling mit mehreren Ebenen (Hintergrund, Midground, Vordergrund) (done)
+- Gausscher Blur für entfernte Ebenen (done)
+- Tiles, Sprites, Objekte und Animationen (done)
+- Die verschiedenen GPU-spezifischen Klassen zusammenfassen und GPUBatcher ersetzen (in Arbeit)
+- Player-Mechaniken (Bewegung, Kollision, Kamera) (aus George Decker übernommen, Refakturierung steht noch aus)
+- 2D Deferred Lighting (Global/Spot/Point Lights + Shadows + Normal Maps)
+- Erstellung von Assets (Sprites, Normal Maps, Tilesets) in Lightwave 3D
+- Festlegung eines konsistenten visuellen Stils und einer Farbpalette
 
 
-## Next Focus: Player mechanics and camera handling
+### Derzeitiger Fokus: Die verschiedenen GPU-spezifischen Klassen zusammenfassen und GPUBatcher ersetzen
+**Ist-Zustand:**
+Für den ersten Prototypen des Spiels habe ich eine Reihe von Klassen erstellt, um die Grafik- und Renderlogik zu implementieren. Diese sind:
+
+- GPUContext: Verwaltet die GPU-Ressourcen, Swapchain, Texturen und Shader-Pipelines.
+- GPUBatcher: Verantwortlich für das effiziente Zeichnen von Sprites, Kacheln und anderen Grafiken. Es organisiert die Daten in Vertex- und Index-Puffern, verwaltet Bind-Groups für Texturen und Shader-Uniforms und führt die eigentlichen Draw-Calls aus. Zur Vermeidung von Kontext-Switchen werden die Sprites in Batches organisiert, die nach Material (Atlas-Textur) und Renderzustand gruppiert sind.
+- RenderPipelines: Definieren die Shader-Programme und die Renderzustände für verschiedene Arten von Zeichnungen (z.B. unbeleuchtete Sprites, beleuchtete Sprites, UI).
+- RenderState: Enthält Instanzen der zuvor genannten Klassen, sowie eine Reihe von Buffern und Texturen für die verschiedenen Renderziele (G-Buffer, Lichtakkumulation, Tiefenunschärfe).
+
+Insbesondere die hohe Optimierung des GPUBatchers mit Sortierung nach Textur und Verwendung eines Depth-Buffer hat sich als suboptimal erwiesen, da er semitransparente Sprites, die übereinander liegen, nicht korrekt rendert. Es entstehen teilweise transparente Ränder. Ferner werden Sprites und Primitives nicht in der korrekten Reihenfolge gezeichnet.
+
+**Ziele für das Refactoring:**
+- Zusammenfassen der GPU-spezifischen Klassen in einer einzigen Klasse, um die Komplexität zu reduzieren und die Wartbarkeit zu verbessern.
+- Vereinfachung der Renderlogik, um die korrekte Reihenfolge von Sprites und Primitives zu gewährleisten, insbesondere bei semitransparenten Objekten. Der Fokus liegt dabei auf strikter Einhaltung des "Painter's Algorithm" für die Renderreihenfolge.
+- Erfassung von Metriken zur Renderleistung, um Engpässe zu identifizieren und gezielt zu optimieren.
+
+
+### Next Focus: Player mechanics and camera handling
 A player character will be added, which can be controlled by keyboard or gamepad.
 
 The basic mechanics of walking, running, jumping and falling will be implemented in this step, also camera handling.
@@ -52,7 +99,7 @@ Camera handling:
 - optional: cinematic camera movement for cutscenes or special events
 
 
-## Future Focus: 2D Deferred Lighting Roadmap
+### Future Focus: 2D Deferred Lighting Roadmap
 (Context from session: Jan 13 2026 - User wants Global/Spot/Point lights + Shadows + Normal Maps)
 
 **Phase 1: G-Buffer Setup (MRT)**
@@ -118,9 +165,6 @@ Camera handling:
 - When uncertain about SDL3 GPU API specifics, search the codebase for existing usage patterns or read relevant headers
 - For PPL7/PPLTK APIs, reference the actual source files in pplib/include or ppltk/include to confirm method signatures
 
-## Project Overview
-**gd2** is a **2D Jump'n'Run game** using **SDL3 GPU API** for advanced rendering (normal maps, parallax scrolling, per-layer blur). It targets **Windows (mingw64/msys), Linux, and FreeBSD** using C++23.
-The engine separates Game Logic (SDL3 GPU) and UI (PPLTK, using SDL3 GPU).
 
 ## Architecture & Key Files
 
@@ -149,7 +193,6 @@ The engine separates Game Logic (SDL3 GPU) and UI (PPLTK, using SDL3 GPU).
 - **Exceptions**: Use `throw ppl7::Exception("msg")` or `GPUException` for errors.
 - **SDL3**: 
   - Prefer `SDL_GPUDevice` pipelines for game rendering.
-  - Use `SDL_CreateRendererWithProperties` to share GPU context with PPLTK.
 - **Memory**: PPLTK widgets are owned by parents (`destroyChilds` handles cleanup).
 
 ## PPLTK Architecture & Integration
@@ -166,7 +209,7 @@ The engine separates Game Logic (SDL3 GPU) and UI (PPLTK, using SDL3 GPU).
 - **Implementation**: See the `GPUContext` class in [src/gpu.cpp](src/gpu.cpp) which wraps `SDL_CreateGPUDevice()` (Vulkan/SPIR-V preferred).
 - **Strategy**: Commit to GPU-first: Pipelines, Command Buffers, Bind Groups.
 
-**SDL3 Sources**: Include files can be found in tmp/SDL3
+**SDL3 Sources**: Include files can be found in "tmp/SDL3", which is a copy from the SDL3 source code.
 Refer to `SDL_gpu.h` for API details. Key concepts:
 - `SDL_GPUDevice`: Main GPU context (Vulkan/DirectX/Metal).
 - `SDL_GPUTexture`: Explicit GPU textures (no more implicit `SDL_Texture`).
@@ -213,9 +256,6 @@ SDL_PresentGPUWindow(window);
   - **Shader**: Sample Normal at screen pos; `lighting = dot(normalize(LightPos - PixelPos), Normal) * attenuation`.
 - **Composite Pass**:
   - `FinalColor = Albedo * LightMap`.
-
-**Assets**:
-- Start with 2 Textures per Sprite: `sprite_color.png` (RGBA) and `sprite_normal.png` (RGB, flat blue = `0.5, 0.5, 1.0`).
 
 **Shadows (Method A: 2D Raymarching)**
 - Requires an **Occlusion Map** (could be a separate low-res texture or the Alpha channel of the Normal Target).
@@ -295,7 +335,7 @@ To avoid dark borders during blurring, scaling, and transparency blending across
 
 When rendering high-res assets into a smaller physical buffer, image stability is key:
 
-**High-res sprites with Mipmapping (TODO)**
+**High-res sprites with Mipmapping**
 - Sprites are created at 4K resolution (or scaled from Lightwave assets).
 - **Mipmaps (Pending)**: Every GPU texture should have calculated mip-levels and be generated via `SDL_GenerateMipmapsForGPUTexture` to prevent flickering/shimmering (aliasing) when downscaling 4K assets to 1080p.
 - **Filtering (Pending)**: Use `SDL_GPU_SAMPLERMIPMAPMODE_LINEAR` and Anisotropic filtering (e.g. 8x).
@@ -379,21 +419,15 @@ When rendering high-res assets into a smaller physical buffer, image stability i
   - One physics grid → less confusion; visuals decoupled from collision.
   - Entities carry `render_layer` and `z` for front/behind placement instead of duplicating structures per layer.
 
-## Roadmap: Next Steps (execution order)
+## Roadmap:
 
-- Basic game loop + UI: create a minimal loop with ppltk-managed window, event pump, and a simple top menu bar (pause, options, quit). Keep UI on a separate unlit pipeline.
-- World building blocks: design core tiles/props in Lightwave 3D, render sprite sheets; define per-asset albedo + normal (and optional gloss/emissive) outputs.
-- Player character: design and render the hero sprite set (idle/run/jump/land), with matching normal maps.
-- Level data model: define data objects and serialization for worlds/levels (tiles, entities, layers, parallax factors, light sources). Target a human-editable format first (e.g., ppl7::AssocArray/JSON) and evolve to a packed binary if needed.
-- In-UI editor: integrate a simple level editor in ppltk (tile palette, layer panel, painting tools, save/load), leveraging widget tree and redraw lifecycle.
-- Asset loading: implement loaders for pre-rendered sprites with normal maps (and optional highlights), build GPU textures and samplers, batch by atlas when possible.
-- Character rendering + movement: render the hero, add basic movement/animation state machine; verify input mapping via ppltk events.
+
+
 - Lighting: add a lit sprite pipeline (albedo + normal), start with ambient + 1–2 point lights; expose uniforms for light color/position.
 - **Visual Stability & PMA (TODO)**: 
   - Re-implement Pre-multiplied Alpha (PMA) across the entire pipeline to fix dark blur borders.
   - Implement Mipmapping (`SDL_GenerateMipmapsForGPUTexture`) and Anisotropic Filtering to stabilize 4K assets on 1080p targets.
-- Parallax: add multiple layers with per-layer parallax factors; order draw calls back-to-front.
-- Depth blur: render distant layers to an offscreen target and apply separable Gaussian blur (small kernel), then composite with sharp near layers.
+
 
 Notes
 - Assets are authored in Lightwave 3D, then imported as 2D sprites with normal maps.
