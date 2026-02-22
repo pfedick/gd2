@@ -7,24 +7,30 @@
 #include "constants.h"
 #include "translate.h"
 
-ppl7::grafix::Point GetViewPos()
-{
-    // TODO, wird von AudioInstance benutzt
-    return ppl7::grafix::Point(0, 0);
-}
-
-static Game* game = NULL;
+static Game* GameInstance = NULL;
 
 Game& GetGame()
 {
-    if (!game) throw ppl7::Exception("Game not initialized!");
-    return *game;
+    if (!GameInstance) throw ppl7::Exception("Game not initialized!");
+    return *GameInstance;
 }
 
 ppltk::Window* GetGameWindow()
 {
-    if (!game) throw ppl7::Exception("Game not initialized!");
-    return &game->window();
+    if (!GameInstance) throw ppl7::Exception("Game not initialized!");
+    return &GameInstance->window();
+}
+
+ppl7::grafix::Point GetViewPos()
+{
+    // TODO, wird von AudioInstance benutzt, um die Position von Audioobjekten zu berechnen.
+    const ppl7::grafix::PointF& worldcoords = GameInstance->getWorldCoords();
+    const GameViewport& viewport = GameInstance->getGameViewport();
+    ppl7::grafix::Point p = worldcoords;
+    ppl7::grafix::Size render_size = viewport.getRenderSize();
+    p.x += render_size.width / 2;
+    p.y += render_size.height / 2;
+    return p;
 }
 
 Game::Game(GPUContext& gpu)
@@ -32,7 +38,7 @@ Game::Game(GPUContext& gpu)
       gpu(gpu)
 {
     SDL_SetHint(SDL_HINT_TIMER_RESOLUTION, "1");
-    game = this;
+    GameInstance = this;
     wm = (ppltk::WindowManager_SDL3*)ppltk::GetWindowManager();
     // wm->enableGPURenderer(gpu.gpu);
     Style.setStyle(ppltk::WidgetStyle::Dark);
@@ -457,6 +463,16 @@ void Game::run()
 }
 
 const ppl7::grafix::PointF& Game::getWorldCoords() const
+{
+    return WorldCamera;
+}
+
+const GameViewport& Game::getGameViewport() const
+{
+    return game_viewport;
+}
+
+const Camera& Game::getCamera() const
 {
     return WorldCamera;
 }

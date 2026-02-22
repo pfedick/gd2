@@ -311,6 +311,8 @@ public:
 
     // const ppl7::grafix::Rect& getViewport() const;
     const ppl7::grafix::PointF& getWorldCoords() const;
+    const GameViewport& getGameViewport() const;
+    const Camera& getCamera() const;
 
     void enableControls(bool enable);
     bool getControlsEnabled() const;

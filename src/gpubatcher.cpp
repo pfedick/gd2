@@ -41,8 +41,8 @@ GPUBatcher::~GPUBatcher()
 
 void GPUBatcher::resetContextSwitchCount()
 {
-    ppl7::PrintDebug("GPUBatcher: Total Sprites drawn: %u, Total Primitives drawn: %u, Context Switches: %u\n", totalSpriteCount,
-                     totalPrimitivesCount, contextSwitchCount);
+    // ppl7::PrintDebug("GPUBatcher: Total Sprites drawn: %u, Total Primitives drawn: %u, Context Switches: %u\n", totalSpriteCount,
+    //                  totalPrimitivesCount, contextSwitchCount);
     totalSpriteCount = 0;
     totalPrimitivesCount = 0;
     contextSwitchCount = 0;

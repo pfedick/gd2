@@ -6,6 +6,17 @@
 #include "widgets.h"
 #include "audiopool.h"
 
+/*
+ * TODO:
+ * - Die Verwendung von Pixel-Koordinaten für den maximalen Abstand ist nicht ideal,
+ *   der der Autor nicht wissen sollte, wie groß die logische Renderseize ist.
+ *   Besser wäre es, den Abstand in Weltkoordinaten anzugeben, zum Beispiel Tile-With, bzw. Meter!
+ *   Wir haben ein Tile als 100x100 Pixel definiert, was 0,5 Meter entspricht, also könnte man den
+ *   den Abstand in doppelter Tile-Size angeben, also 200 Pixel, was 1 Meter entspricht. Das wäre auch
+ *   einfacher zu verstehen.
+ * - Die Berechnung des Abstands zur Bildschirmmitte im AudioSystem scheint falsch zu sein.
+ */
+
 namespace Objects
 {
 
@@ -25,7 +36,7 @@ Speaker::Speaker()
     audio = NULL;
     sample_id = AudioEffect::none;
     volume = 1.0f;
-    max_distance = 1600;
+    max_distance = 3840;
     enabled = true;
     initial_state = true;
     sample_type = SampleType::AudioLoop;
@@ -55,6 +66,7 @@ void Speaker::update(const GameClock& clock, TileTypePlane& ttplane, Player& pla
                     ppl7::grafix::Point pp = ppl7::grafix::Point(p) - coords;
                     audio->setPositional(pp + worldcoords, max_distance);
                 } else {
+                    // ppl7::PrintDebug("Speaker: setPositional %0f,%0f\n", p.x, p.y);
                     audio->setPositional(p, max_distance);
                 }
                 audio->setVolume(volume);
@@ -261,7 +273,7 @@ SpeakerDialog::SpeakerDialog(Speaker* object)
 
     addChild(new ppltk::Label(0, y, 120, 30, "max_distance: "));
     max_distance = new ppltk::HorizontalSlider(120, y, client.width() - 120, 30);
-    max_distance->setLimits(800, 3000);
+    max_distance->setLimits(800, 8000);
     max_distance->enableSpinBox(true, 100, 80);
     max_distance->setValue(object->max_distance);
     max_distance->setEventHandler(this);
