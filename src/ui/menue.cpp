@@ -25,7 +25,7 @@ MainMenue::MainMenue(int x, int y, int width, int height, Game* game)
     visibility_hud = true;
     visibility_blur = true;
     controlsEnabled = true;
-    ppl7::PrintDebug("MainMenue created\n");
+    // ppl7::PrintDebug("MainMenue created\n");
 }
 
 void MainMenue::update()
@@ -49,7 +49,7 @@ void MainMenue::resize(int x, int y, int width, int height)
     this->destroyChilds();
     setupUi();
     needsRedraw();
-    ppl7::PrintDebug("MainMenue resized to %dx%d\n", width, height);
+    // ppl7::PrintDebug("MainMenue resized to %dx%d\n", width, height);
 }
 
 void MainMenue::setupUi()

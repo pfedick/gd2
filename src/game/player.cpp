@@ -1949,10 +1949,10 @@ void Player::drainBattery()
             if (powercells > 0) {
                 powercells--;
                 energylevel = 100.0f;
-                getAudioPool().playOnce(AudioClip::powercell_change, 1.0f);
+                // getAudioPool().playOnce(AudioClip::powercell_change, 1.0f);
             } else {
                 energylevel = 0.0f;
-                getAudioPool().playOnce(AudioClip::powercells_depleted, 1.0f);
+                // getAudioPool().playOnce(AudioClip::powercells_depleted, 1.0f);
                 flashlightOn = false;
             }
         }

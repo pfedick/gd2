@@ -17,7 +17,7 @@ Representation SavePoint::representation()
 }
 
 SavePoint::SavePoint()
-    : Object(Type::Savepoint)
+    : Object(Type::SavePoint)
 {
     sprite_set = SpritesetId::GenericObjects;
     animation.startRandom(savepoint_animation);
@@ -44,7 +44,7 @@ void SavePoint::handleCollision(Player* player, const Collision&)
     enabled = false;
     collisionDetection = false;
     AudioPool& audio = getAudioPool();
-    audio.playOnce(AudioClip::savepoint_collected, 0.7f);
+    audio.playOnce(AudioClip::fanfare1, 0.7f);
 }
 
 } // namespace Objects

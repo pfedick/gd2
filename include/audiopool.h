@@ -22,7 +22,6 @@ public:
         coin4,
         coin5,
         coin6,
-        stamper_squish,
         player_step1,
         player_step2,
         player_step3,
@@ -42,11 +41,7 @@ public:
         watersplash4,
         water_pouring1,
         water_pouring2,
-        powercell_change,
-        powercells_depleted,
-        savepoint_collected,
-        impact,
-        big_crash,
+        impact1,
         crystal1,
         crystal2,
         crystal3,
@@ -68,6 +63,7 @@ public:
         fire3,
         fire4,
         fireworks_loop,
+        fireball_fly,
         jungle1,
         jungle2,
         lavaloop1,
@@ -83,12 +79,11 @@ public:
         rain1,
         rain2,
         rain3,
-        vent1,
-        vent2,
+        soft_rain,
         waterflow1,
         waterflow2,
         waterflow3,
-        waterdrips,
+        waterdrips1,
         waterdrips2,
         waterdrips3,
         water_bubble1,
@@ -113,6 +108,27 @@ public:
         rumble,
         waterpuddle,
         arrow_hit_wall,
+        crate_loop,
+        thruster,
+        wind_grillen,
+        bat,
+        break1,
+        bullet_hits_player,
+        bullet_hits_wall,
+        stamper_down,
+        stamper_up,
+        stamper_echo,
+        stamper_squish,
+        crunch,
+        explosion1,
+        fabric,
+        fall,
+        fanfare1,
+        fanfare2,
+        fanfare3,
+        fanfare4,
+        fireball_impact,
+        squash1,
 
         // this must always be the last entry!
         maxClips
@@ -159,6 +175,8 @@ public:
     ~AudioPool();
     void load();
     void load_speech(const ppl7::String& lang);
+    void loadLoops();
+    void loadEffects();
     void setAudioSystem(AudioSystem* audio);
     size_t size() const;
     AudioInstance* getInstance(AudioClip::Id id, AudioClass a = AudioClass::Effect);
