@@ -631,6 +631,9 @@ void GPUBatcher::createPipeline()
         .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
         .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
         .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        .max_anisotropy = 8.0f,
+        .max_lod = 1000.0f,
+        .enable_anisotropy = true,
     };
     sampler = SDL_CreateGPUSampler(gpu->gpu, &samplerInfo);
     if (!sampler) {
