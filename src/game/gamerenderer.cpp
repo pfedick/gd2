@@ -203,6 +203,18 @@ void GameRenderer::copyTextureToSwapchain(SDL_GPUTexture* source, const SDL_FRec
     SDL_EndGPURenderPass(renderPass);
 }
 
+void GameRenderer::clearTexture(SDL_GPUTexture* texture, const ppl7::grafix::Color& color)
+{
+    SDL_GPUColorTargetInfo rtInfo = {0};
+    rtInfo.texture = texture;
+    rtInfo.clear_color = toSDLFColor(color);
+    rtInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+    rtInfo.store_op = SDL_GPU_STOREOP_STORE;
+    rtInfo.cycle = false;
+    SDL_GPURenderPass* rtClearPass = SDL_BeginGPURenderPass(cmdbuf, &rtInfo, 1, NULL);
+    SDL_EndGPURenderPass(rtClearPass);
+}
+
 void GameRenderer::copyTexture(SDL_GPUTexture* source, SDL_GPUTexture* target, bool alphablend)
 {
     SDL_GPUColorTargetInfo targetInfo = {};
@@ -288,4 +300,48 @@ void GameRenderer::blur(SDL_GPUTexture* source, SDL_GPUTexture* target, float bl
 
     SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
     SDL_EndGPURenderPass(renderPass);
+}
+
+bool GameRenderer::accuireGPUCommandBuffer()
+{
+    if (cmdbuf) {
+        SDL_SubmitGPUCommandBuffer(cmdbuf);
+        cmdbuf = nullptr;
+    }
+    cmdbuf = SDL_AcquireGPUCommandBuffer(gpu->gpu);
+    if (cmdbuf == NULL) {
+        SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
+        return false;
+    }
+    SDL_GPUTexture* swapchainTexture;
+    if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, window, &swapchainTexture, NULL, NULL)) {
+        SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
+        SDL_SubmitGPUCommandBuffer(cmdbuf);
+        cmdbuf = nullptr;
+        return false;
+    }
+    if (swapchainTexture == NULL) {
+        // Das kann passieren, wenn das Fenster minimiert ist
+        SDL_SubmitGPUCommandBuffer(cmdbuf);
+        return false;
+    }
+    return true;
+}
+
+void GameRenderer::submitGPUCommandBuffer()
+{
+    if (cmdbuf) {
+        SDL_SubmitGPUCommandBuffer(cmdbuf);
+        cmdbuf = nullptr;
+    }
+}
+
+SDL_GPUCommandBuffer* GameRenderer::getCommandBuffer()
+{
+    return cmdbuf;
+}
+
+SDL_GPUTexture* GameRenderer::getSwapchainTexture()
+{
+    return swapchainTexture;
 }

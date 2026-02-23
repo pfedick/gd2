@@ -50,15 +50,17 @@ public:
 
     void resizeRenderBuffer(const ppl7::grafix::Size& size);
 
-    void accuireGPUCommandBuffer();
+    bool accuireGPUCommandBuffer();
     void submitGPUCommandBuffer();
     SDL_GPUCommandBuffer* getCommandBuffer();
     SDL_GPUTexture* getSwapchainTexture();
 
+    void clearTexture(SDL_GPUTexture* texture, const ppl7::grafix::Color& color);
     void copyTexture(SDL_GPUTexture* source, SDL_GPUTexture* target, bool alphablend = true);
     void copyTextureToSwapchain(SDL_GPUTexture* source,
                                 const SDL_FRect& destRect); // Clears swapchain and copies source to destRect inside the swapchain
     void blur(SDL_GPUTexture* source, SDL_GPUTexture* target, float blur_factor); // source and target can be the same
+    // Draw functions
     void setRenderTarget(SDL_GPUTexture* texture);
     void beginRenderPass();
     void endRenderPass();
