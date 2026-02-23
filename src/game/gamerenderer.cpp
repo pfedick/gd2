@@ -1,0 +1,291 @@
+#include "gamerenderer.h"
+#include "gpu.h"
+#include "SDL3/SDL.h"
+
+GameRenderer::GameRenderer()
+{
+    gpu = nullptr;
+    window = nullptr;
+    cmdbuf = nullptr;
+    swapchainTexture = nullptr;
+
+    blurHorizontalShader = nullptr;
+    blurVerticalShader = nullptr;
+    copyShader = nullptr;
+    vertexShader = nullptr;
+
+    blurHorizontalPipeline = nullptr;
+    blurVerticalPipeline = nullptr;
+    copyPipeline = nullptr;
+    copyWithAlphablendingPipeline = nullptr;
+
+    samplerClamp = nullptr;
+}
+
+GameRenderer::~GameRenderer()
+{
+    if (gpu) {
+        gpu->releaseShader(blurHorizontalShader);
+        gpu->releaseShader(blurVerticalShader);
+        gpu->releaseShader(copyShader);
+        gpu->releaseShader(vertexShader);
+
+        if (blurHorizontalPipeline) {
+            SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, blurHorizontalPipeline);
+        }
+        if (blurVerticalPipeline) {
+            SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, blurVerticalPipeline);
+        }
+        if (copyPipeline) {
+            SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, copyPipeline);
+        }
+        if (copyWithAlphablendingPipeline) {
+            SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, copyWithAlphablendingPipeline);
+        }
+
+        if (samplerClamp) {
+            SDL_ReleaseGPUSampler(gpu->gpu, samplerClamp);
+        }
+        if (render_target) gpu->destroyGPUTexture(render_target);
+        if (render_layer) gpu->destroyGPUTexture(render_layer);
+        if (render_lightmap) gpu->destroyGPUTexture(render_lightmap);
+        if (blur_temp) gpu->destroyGPUTexture(blur_temp);
+        if (render_normal) gpu->destroyGPUTexture(render_normal);
+        if (depth_buffer) gpu->destroyGPUTexture(depth_buffer);
+        render_target_size.setSize(0, 0);
+    }
+}
+
+void GameRenderer::init(GPUContext& gpu, SDL_Window* window)
+{
+    this->gpu = &gpu;
+    this->window = window;
+    loadShaders();
+    createPipelines();
+    createSamplers();
+}
+
+void GameRenderer::loadShaders()
+{
+    if (!gpu) return;
+    vertexShader = gpu->loadShader("res/shaders/vulkan/ndc_textured.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 0);
+    blurHorizontalShader = gpu->loadShader("res/shaders/vulkan/blur_horizontal.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 1);
+    blurVerticalShader = gpu->loadShader("res/shaders/vulkan/blur_vertical.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 1);
+    copyShader = gpu->loadShader("res/shaders/vulkan/copy.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 0);
+}
+
+void GameRenderer::createPipelines()
+{
+    // Zielformat definieren (muss zum Framebuffer/Texture passen, auf die gerendert wird)
+    SDL_GPUColorTargetDescription targetDesc = {};
+    targetDesc.format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM; // Standardformat angenommen
+    targetDesc.blend_state.enable_blend = false;              // Blur ersetzt meist den Inhalt
+    targetDesc.blend_state.color_write_mask = 0xF;
+
+    SDL_GPUGraphicsPipelineCreateInfo pipelineInfo = {};
+    pipelineInfo.vertex_shader = vertexShader;
+    pipelineInfo.fragment_shader = blurHorizontalShader;
+    pipelineInfo.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+    pipelineInfo.target_info.num_color_targets = 1;
+    pipelineInfo.target_info.color_target_descriptions = &targetDesc;
+
+    // Pipeline erstellen für horizontalen Blur
+    blurHorizontalPipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
+    if (!blurHorizontalPipeline) {
+        ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for horizontal blur: %s\n", SDL_GetError());
+        throw GPUException("SDL_CreateGPUGraphicsPipeline failed for horizontal blur: %s", SDL_GetError());
+    }
+
+    // Pipeline erstellen für vertikalen Blur
+    pipelineInfo.fragment_shader = blurVerticalShader;
+    blurVerticalPipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
+    if (!blurVerticalPipeline) {
+        ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for vertical blur: %s\n", SDL_GetError());
+        throw GPUException("SDL_CreateGPUGraphicsPipeline failed for vertical blur: %s", SDL_GetError());
+    }
+
+    // Pipeline erstellen für Copy
+    // targetDesc.format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM; // Standardformat angenommen
+    targetDesc.format = SDL_GetGPUSwapchainTextureFormat(gpu->gpu, window);
+    targetDesc.blend_state.enable_blend = false; // Blur ersetzt meist den Inhalt
+    targetDesc.blend_state.color_write_mask = 0xF;
+
+    pipelineInfo.fragment_shader = copyShader;
+    copyPipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
+    if (!copyPipeline) {
+        ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for copy: %s\n", SDL_GetError());
+        throw GPUException("SDL_CreateGPUGraphicsPipeline failed for copy: %s", SDL_GetError());
+    }
+
+    // Pipeline für UI (Copy mit Blending)
+    targetDesc.blend_state.enable_blend = true;
+    targetDesc.blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+    targetDesc.blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+    targetDesc.blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
+    targetDesc.blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
+    targetDesc.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+    targetDesc.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
+
+    copyWithAlphablendingPipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
+    if (!copyWithAlphablendingPipeline) {
+        ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for UI: %s\n", SDL_GetError());
+        throw GPUException("SDL_CreateGPUGraphicsPipeline failed for UI: %s", SDL_GetError());
+    }
+}
+
+void GameRenderer::createSamplers()
+{
+    SDL_GPUSamplerCreateInfo samplerInfo = {
+        .min_filter = SDL_GPU_FILTER_LINEAR,
+        .mag_filter = SDL_GPU_FILTER_LINEAR,
+        .mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+        .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+        .max_anisotropy = 8.0f,
+        .max_lod = 1000.0f,
+        .enable_anisotropy = true,
+    };
+    samplerClamp = SDL_CreateGPUSampler(gpu->gpu, &samplerInfo);
+    if (!samplerClamp) {
+        ppl7::PrintDebug("Failed to create sampler: %s\n", SDL_GetError());
+        throw GPUException("Failed to create sampler: %s", SDL_GetError());
+    }
+}
+
+void GameRenderer::resizeRenderBuffer(const ppl7::grafix::Size& size)
+{
+    if (!gpu) return;
+    if (size != render_target_size) {
+        // ppl7::PrintDebug("Resizing Level Render Targets to %dx%d\n", size.width, size.height);
+        if (render_target) gpu->destroyGPUTexture(render_target);
+        render_target = gpu->createRenderTarget(size.width, size.height);
+        if (render_layer) gpu->destroyGPUTexture(render_layer);
+        render_layer = gpu->createRenderTarget(size.width, size.height);
+        if (render_lightmap) gpu->destroyGPUTexture(render_lightmap);
+        render_lightmap = gpu->createRenderTarget(size.width, size.height);
+        if (blur_temp) gpu->destroyGPUTexture(blur_temp);
+        blur_temp = gpu->createRenderTarget(size.width, size.height);
+        if (depth_buffer) gpu->destroyGPUTexture(depth_buffer);
+        depth_buffer = gpu->createDepthBuffer(size.width, size.height);
+        render_target_size = size;
+    }
+}
+
+void GameRenderer::copyTextureToSwapchain(SDL_GPUTexture* source, const SDL_FRect& destRect)
+{
+    SDL_GPUColorTargetInfo colorTargetInfo = {0};
+    colorTargetInfo.texture = swapchainTexture;
+    colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 1.0f}; // Black background
+    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+    colorTargetInfo.cycle = false;
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
+
+    // Hier setzen wir den Viewport auf die Zielgröße im Fenster
+    SDL_GPUViewport gpuViewport = {
+        .x = destRect.x, .y = destRect.y, .w = destRect.w, .h = destRect.h, .min_depth = 0.0f, .max_depth = 1.0f};
+
+    SDL_SetGPUViewport(renderPass, &gpuViewport);
+    SDL_SetGPUScissor(renderPass, NULL);
+
+    SDL_BindGPUGraphicsPipeline(renderPass, copyPipeline);
+    SDL_GPUTextureSamplerBinding binding = {};
+
+    binding.texture = source;
+    binding.sampler = samplerClamp; // Einen Clamp-Sampler benutzen!
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+
+    SDL_EndGPURenderPass(renderPass);
+}
+
+void GameRenderer::copyTexture(SDL_GPUTexture* source, SDL_GPUTexture* target, bool alphablend)
+{
+    SDL_GPUColorTargetInfo targetInfo = {};
+    SDL_GPUTextureSamplerBinding binding = {};
+    targetInfo.texture = target;
+    targetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
+
+    if (alphablend)
+        SDL_BindGPUGraphicsPipeline(renderPass, copyWithAlphablendingPipeline);
+    else
+        SDL_BindGPUGraphicsPipeline(renderPass, copyPipeline);
+
+    binding.texture = source;
+    binding.sampler = samplerClamp; // Einen Clamp-Sampler benutzen!
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+
+    SDL_EndGPURenderPass(renderPass);
+}
+
+struct BlurParams
+{
+    float blurStrength;
+    float padding; // WICHTIG: 4 Bytes Füllmaterial für std140 Alignment
+    float texelSizeX;
+    float texelSizeY;
+};
+
+void GameRenderer::blur(SDL_GPUTexture* source, SDL_GPUTexture* target, float blur_factor)
+{
+    SDL_GPUColorTargetInfo targetInfo = {};
+    SDL_GPUTextureSamplerBinding binding = {};
+
+    BlurParams params;
+    float scale = (float)render_target_size.width / 3840.0f;
+    params.blurStrength = blur_factor * scale;
+    params.padding = 0.0f;                                       // Egal was hier steht
+    params.texelSizeX = 1.0f / (float)render_target_size.width;  // Breite der Textur
+    params.texelSizeY = 1.0f / (float)render_target_size.height; // Höhe der Textur
+
+    // Slot Index 0 (passend zu binding = 0 im Shader, Set 3 ist implizit für Fragment Uniforms)
+    SDL_PushGPUFragmentUniformData(cmdbuf, 0, &params, sizeof(BlurParams));
+
+    targetInfo.texture = blur_temp; // Ziel: Temp Textur
+    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE;
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
+
+    SDL_BindGPUGraphicsPipeline(renderPass, blurHorizontalPipeline);
+    binding.texture = source;
+    binding.sampler = samplerClamp; // Einen Clamp-Sampler benutzen!
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+
+    SDL_EndGPURenderPass(renderPass);
+
+    targetInfo.texture = target;
+    targetInfo.load_op = SDL_GPU_LOADOP_DONT_CARE; // Wir überschreiben alles
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    renderPass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
+
+    SDL_BindGPUGraphicsPipeline(renderPass, blurVerticalPipeline);
+
+    // Eingabe-Textur binden (das Bild aus Pass 2)
+    binding.texture = blur_temp;
+    binding.sampler = samplerClamp;
+    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
+
+    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+    SDL_EndGPURenderPass(renderPass);
+}

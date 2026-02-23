@@ -57,11 +57,9 @@ public:
     ~GPUContext();
 
     void initializeGPUDevice();
-
     void initializeWindow(SDL_Window* window);
     void shutdown();
 
-    void initGPUDevice();
     SDL_GPUTexture* createGPUTexture(const ppl7::grafix::Drawable& surface);
     void destroyGPUTexture(SDL_GPUTexture* texture);
     void updateGPUTexture(SDL_GPUTexture* texture, const ppl7::grafix::Drawable& surface);

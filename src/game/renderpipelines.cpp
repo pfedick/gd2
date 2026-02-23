@@ -1,9 +1,10 @@
 #include "renderpipelines.h"
 #include "sdl.h"
+#include "gpu.h"
 
 RenderPipelines::RenderPipelines()
 {
-    gpu_device = nullptr;
+    gpu = nullptr;
     window = nullptr;
     vertexShader = nullptr;
     blurHorizontalShader = nullptr;
@@ -18,26 +19,28 @@ RenderPipelines::RenderPipelines()
 RenderPipelines::~RenderPipelines()
 {
     if (samplerClamp) {
-        SDL_ReleaseGPUSampler(gpu_device, samplerClamp);
+        SDL_ReleaseGPUSampler(gpu->gpu, samplerClamp);
     }
     if (blurHorizontalPipeline) {
-        SDL_ReleaseGPUGraphicsPipeline(gpu_device, blurHorizontalPipeline);
+        SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, blurHorizontalPipeline);
     }
     if (blurVerticalPipeline) {
-        SDL_ReleaseGPUGraphicsPipeline(gpu_device, blurVerticalPipeline);
+        SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, blurVerticalPipeline);
     }
     if (copyPipeline) {
-        SDL_ReleaseGPUGraphicsPipeline(gpu_device, copyPipeline);
+        SDL_ReleaseGPUGraphicsPipeline(gpu->gpu, copyPipeline);
     }
-    releaseShader(copyShader);
-    releaseShader(vertexShader);
-    releaseShader(blurHorizontalShader);
-    releaseShader(blurVerticalShader);
+    if (gpu) {
+        gpu->releaseShader(copyShader);
+        gpu->releaseShader(vertexShader);
+        gpu->releaseShader(blurHorizontalShader);
+        gpu->releaseShader(blurVerticalShader);
+    }
 }
 
-void RenderPipelines::init(SDL_GPUDevice* gpu, SDL_Window* window)
+void RenderPipelines::init(GPUContext& gpu, SDL_Window* window)
 {
-    gpu_device = gpu;
+    this->gpu = &gpu;
     this->window = window;
     loadShaders();
     createPipelines();
@@ -46,62 +49,16 @@ void RenderPipelines::init(SDL_GPUDevice* gpu, SDL_Window* window)
 
 SDL_GPUDevice* RenderPipelines::getGPUDevice()
 {
-    return gpu_device;
-}
-
-SDL_GPUShader* RenderPipelines::loadShader(const ppl7::String& filename,
-                                           SDL_GPUShaderStage stage,
-                                           int num_samplers,
-                                           int num_storage_textures,
-                                           int num_storage_buffers,
-                                           int num_uniform_buffers)
-{
-    if (!gpu_device) {
-        ppl7::PrintDebug("GPU device is not initialized\n");
-        throw SDLException("GPU device is not initialized");
-    }
-
-    ppl7::ByteArray buffer;
-
-    try {
-        buffer = ppl7::File::load(filename);
-    }
-    catch (const ppl7::Exception& e) {
-        ppl7::PrintDebug("Failed to load shader file: %s: %s\n", (const char*)filename, e.what());
-        throw SDLException("Failed to load shader file: %s", (const char*)filename);
-    }
-
-    SDL_GPUShaderCreateInfo shaderInfo = {.code_size = (size_t)buffer.size(),
-                                          .code = (const Uint8*)buffer.adr(),
-                                          .entrypoint = "main",
-                                          .format = SDL_GPU_SHADERFORMAT_SPIRV,
-                                          .stage = stage,
-                                          .num_samplers = (Uint32)num_samplers,
-                                          .num_storage_textures = (Uint32)num_storage_textures,
-                                          .num_storage_buffers = (Uint32)num_storage_buffers,
-                                          .num_uniform_buffers = (Uint32)num_uniform_buffers};
-
-    SDL_GPUShader* shader = SDL_CreateGPUShader(gpu_device, &shaderInfo);
-    if (!shader) {
-        ppl7::PrintDebug("SDL_CreateGPUShader failed for %s: %s\n", (const char*)filename, SDL_GetError());
-        throw SDLException("SDL_CreateGPUShader failed for %s: %s", (const char*)filename, SDL_GetError());
-    }
-    return shader;
-}
-
-void RenderPipelines::releaseShader(SDL_GPUShader* shader)
-{
-    if (gpu_device && shader) {
-        SDL_ReleaseGPUShader(gpu_device, shader);
-    }
+    return gpu->gpu;
 }
 
 void RenderPipelines::loadShaders()
 {
-    vertexShader = loadShader("res/shaders/vulkan/ndc_textured.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 0);
-    blurHorizontalShader = loadShader("res/shaders/vulkan/blur_horizontal.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 1);
-    blurVerticalShader = loadShader("res/shaders/vulkan/blur_vertical.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 1);
-    copyShader = loadShader("res/shaders/vulkan/copy.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 0);
+    if (!gpu) return;
+    vertexShader = gpu->loadShader("res/shaders/vulkan/ndc_textured.vert.spv", SDL_GPU_SHADERSTAGE_VERTEX, 0, 0, 0, 0);
+    blurHorizontalShader = gpu->loadShader("res/shaders/vulkan/blur_horizontal.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 1);
+    blurVerticalShader = gpu->loadShader("res/shaders/vulkan/blur_vertical.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 1);
+    copyShader = gpu->loadShader("res/shaders/vulkan/copy.frag.spv", SDL_GPU_SHADERSTAGE_FRAGMENT, 1, 0, 0, 0);
 }
 
 void RenderPipelines::createPipelines()
@@ -120,7 +77,7 @@ void RenderPipelines::createPipelines()
     pipelineInfo.target_info.color_target_descriptions = &targetDesc;
 
     // Pipeline erstellen für horizontalen Blur
-    blurHorizontalPipeline = SDL_CreateGPUGraphicsPipeline(gpu_device, &pipelineInfo);
+    blurHorizontalPipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
     if (!blurHorizontalPipeline) {
         ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for horizontal blur: %s\n", SDL_GetError());
         throw SDLException("SDL_CreateGPUGraphicsPipeline failed for horizontal blur: %s", SDL_GetError());
@@ -128,7 +85,7 @@ void RenderPipelines::createPipelines()
 
     // Pipeline erstellen für vertikalen Blur
     pipelineInfo.fragment_shader = blurVerticalShader;
-    blurVerticalPipeline = SDL_CreateGPUGraphicsPipeline(gpu_device, &pipelineInfo);
+    blurVerticalPipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
     if (!blurVerticalPipeline) {
         ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for vertical blur: %s\n", SDL_GetError());
         throw SDLException("SDL_CreateGPUGraphicsPipeline failed for vertical blur: %s", SDL_GetError());
@@ -136,12 +93,12 @@ void RenderPipelines::createPipelines()
 
     // Pipeline erstellen für Copy
     // targetDesc.format = SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM; // Standardformat angenommen
-    targetDesc.format = SDL_GetGPUSwapchainTextureFormat(gpu_device, window);
+    targetDesc.format = SDL_GetGPUSwapchainTextureFormat(gpu->gpu, window);
     targetDesc.blend_state.enable_blend = false; // Blur ersetzt meist den Inhalt
     targetDesc.blend_state.color_write_mask = 0xF;
 
     pipelineInfo.fragment_shader = copyShader;
-    copyPipeline = SDL_CreateGPUGraphicsPipeline(gpu_device, &pipelineInfo);
+    copyPipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
     if (!copyPipeline) {
         ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for copy: %s\n", SDL_GetError());
         throw SDLException("SDL_CreateGPUGraphicsPipeline failed for copy: %s", SDL_GetError());
@@ -156,7 +113,7 @@ void RenderPipelines::createPipelines()
     targetDesc.blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
     targetDesc.blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
 
-    uiPipeline = SDL_CreateGPUGraphicsPipeline(gpu_device, &pipelineInfo);
+    uiPipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
     if (!uiPipeline) {
         ppl7::PrintDebug("SDL_CreateGPUGraphicsPipeline failed for UI: %s\n", SDL_GetError());
         throw SDLException("SDL_CreateGPUGraphicsPipeline failed for UI: %s", SDL_GetError());
@@ -176,7 +133,7 @@ void RenderPipelines::createSamplers()
         .max_lod = 1000.0f,
         .enable_anisotropy = true,
     };
-    samplerClamp = SDL_CreateGPUSampler(gpu_device, &samplerInfo);
+    samplerClamp = SDL_CreateGPUSampler(gpu->gpu, &samplerInfo);
     if (!samplerClamp) {
         ppl7::PrintDebug("Failed to create sampler: %s\n", SDL_GetError());
         throw SDLException("Failed to create sampler: %s", SDL_GetError());

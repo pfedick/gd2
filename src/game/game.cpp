@@ -92,7 +92,7 @@ void Game::init()
     sdl.setGPUDevice(gpu.gpu);
     gpu_batcher.init(&gpu); // Now using Storage Buffers instead of vertex buffer instancing
 
-    renderPipelines.init(gpu.gpu, (SDL_Window*)getSDLWindow());
+    renderPipelines.init(gpu, (SDL_Window*)getSDLWindow());
     // Initialize projection/view matrices for rendering
     gpu_batcher.updateMatrices(game_viewport.getLogicalSize());
     level.initialize(gpu, renderPipelines, gpu_batcher);
