@@ -237,12 +237,12 @@ void GPUBatcher::addSpriteInternal(const SpriteTexture& sprite,
     float sh = (float)item->r.h * scale_y;
 
     SpriteInstance inst;
-    inst.pos_x = (x * 2.0f / screenWidth) - 1.0f;
-    inst.pos_y = 1.0f - (y * 2.0f / screenHeight);
-    inst.m00 = (2.0f / screenWidth) * sw * c;
-    inst.m01 = (2.0f / screenWidth) * sh * (-s);
-    inst.m10 = (-2.0f / screenHeight) * sw * s;
-    inst.m11 = (-2.0f / screenHeight) * sh * c;
+    inst.pos_x = (x * 2.0f / (float)screenWidth) - 1.0f;
+    inst.pos_y = 1.0f - (y * 2.0f / (float)screenHeight);
+    inst.m00 = (2.0f / (float)screenWidth) * sw * c;
+    inst.m01 = (2.0f / (float)screenWidth) * sh * (-s);
+    inst.m10 = -(2.0f / (float)screenHeight) * sw * s;
+    inst.m11 = -(2.0f / (float)screenHeight) * sh * c;
     inst.pos_z = 0.0f;
     inst.pad = 0.0f;
     inst.uv_x = item->uv.x;
@@ -253,12 +253,14 @@ void GPUBatcher::addSpriteInternal(const SpriteTexture& sprite,
     inst.v_min = item->uv.y;
     inst.u_max = item->uv.x + item->uv.w;
     inst.v_max = item->uv.y + item->uv.h;
-    inst.pivot_x = (float)item->Pivot.x / (float)item->r.w;
-    inst.pivot_y = (float)item->Pivot.y / (float)item->r.h;
-    inst.color_r = (float)color.red() / 255.0f;
-    inst.color_g = (float)color.green() / 255.0f;
-    inst.color_b = (float)color.blue() / 255.0f;
-    inst.color_a = (float)color.alpha() / 255.0f;
+    inst.pivot_x = (item->r.w > 0) ? (float)(item->Pivot.x - item->Offset.x) / (float)item->r.w : 0.0f;
+    inst.pivot_y = (item->r.h > 0) ? (float)(item->Pivot.y - item->Offset.y) / (float)item->r.h : 0.0f;
+
+    SDL_FColor col = toSDLFColor(color);
+    inst.color_r = col.r;
+    inst.color_g = col.g;
+    inst.color_b = col.b;
+    inst.color_a = col.a;
 
     spriteInstances.push_back(inst);
     batches.back().count++;
@@ -274,7 +276,8 @@ void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::gra
 
         auto pushV = [&](float vx, float vy) {
             SDL_FColor c = toSDLFColor(color);
-            primitiveVertices.push_back({(vx * 2.0f / screenWidth) - 1.0f, 1.0f - (vy * 2.0f / screenHeight), 0.0f, c.r, c.g, c.b, c.a});
+            primitiveVertices.push_back(
+                {(vx * 2.0f / (float)screenWidth) - 1.0f, 1.0f - (vy * 2.0f / (float)screenHeight), 0.0f, c.r, c.g, c.b, c.a});
         };
 
         pushV(x1, y1);
@@ -297,15 +300,16 @@ void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::gra
             auto pushV = [&](float vx, float vy) {
                 SDL_FColor c = toSDLFColor(color);
                 primitiveVertices.push_back(
-                    {(vx * 2.0f / screenWidth) - 1.0f, 1.0f - (vy * 2.0f / screenHeight), 0.0f, c.r, c.g, c.b, c.a});
+                    {(vx * 2.0f / (float)screenWidth) - 1.0f, 1.0f - (vy * 2.0f / (float)screenHeight), 0.0f, c.r, c.g, c.b, c.a});
             };
 
+            // Two triangles for the thick line
             pushV(x1 + nx, y1 + ny);
             pushV(x2 + nx, y2 + ny);
-            pushV(x1 - nx, y1 - ny);
-            pushV(x1 - nx, y1 - ny);
-            pushV(x2 + nx, y2 + ny);
             pushV(x2 - nx, y2 - ny);
+            pushV(x1 + nx, y1 + ny);
+            pushV(x2 - nx, y2 - ny);
+            pushV(x1 - nx, y1 - ny);
             batches.back().count += 6;
         }
     }
@@ -321,7 +325,8 @@ void GPUBatcher::addRect(float x, float y, float w, float h, const ppl7::grafix:
 
         auto pushV = [&](float vx, float vy) {
             SDL_FColor c = toSDLFColor(color);
-            primitiveVertices.push_back({(vx * 2.0f / screenWidth) - 1.0f, 1.0f - (vy * 2.0f / screenHeight), 0.0f, c.r, c.g, c.b, c.a});
+            primitiveVertices.push_back(
+                {(vx * 2.0f / (float)screenWidth) - 1.0f, 1.0f - (vy * 2.0f / (float)screenHeight), 0.0f, c.r, c.g, c.b, c.a});
         };
 
         pushV(x, y);
@@ -352,15 +357,17 @@ void GPUBatcher::addFilledRect(float x, float y, float w, float h, const ppl7::g
 
     auto pushV = [&](float vx, float vy) {
         SDL_FColor c = toSDLFColor(color);
-        primitiveVertices.push_back({(vx * 2.0f / screenWidth) - 1.0f, 1.0f - (vy * 2.0f / screenHeight), 0.0f, c.r, c.g, c.b, c.a});
+        primitiveVertices.push_back(
+            {(vx * 2.0f / (float)screenWidth) - 1.0f, 1.0f - (vy * 2.0f / (float)screenHeight), 0.0f, c.r, c.g, c.b, c.a});
     };
 
+    // Rect as 2 triangles with clockwise winding
     pushV(x, y);
     pushV(x + w, y);
-    pushV(x, y + h);
-    pushV(x, y + h);
-    pushV(x + w, y);
     pushV(x + w, y + h);
+    pushV(x, y);
+    pushV(x + w, y + h);
+    pushV(x, y + h);
     batches.back().count += 6;
 }
 
@@ -682,13 +689,12 @@ void GPUBatcher::updateMatrices(int screenWidth, int screenHeight)
     this->screenHeight = screenHeight;
     // ppl7::PrintDebugTime("GPUBatcher::updateMatrices: screen %dx%d\n", screenWidth, screenHeight);
 
-    // Create orthographic projection matrix for 2D rendering (Vulkan coordinate system)
-    // Maps screen coordinates (0,0) top-left to (screenWidth, screenHeight) bottom-right to NDC (-1,-1) to (1,1)
-    // Note: Vulkan's Y-axis points DOWN in screen space, so we flip it in the projection
+    // Create orthographic projection matrix for 2D rendering (Standard Y-UP NDC)
+    // Maps screen coordinates (0,0) top-left to (screenWidth, screenHeight) bottom-right to NDC ((-1,1) to (1,-1))
     float left = 0.0f;
     float right = (float)screenWidth;
-    float top = (float)screenHeight; // Vulkan: top > bottom for proper Y-flip
-    float bottom = 0.0f;
+    float top = 0.0f;
+    float bottom = (float)screenHeight;
     float near = -1.0f;
     float far = 1.0f;
 
