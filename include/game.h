@@ -4,6 +4,7 @@
 #include <ppl7.h>
 
 #include "gpu.h"
+#include "gamerenderer.h"
 #include "renderpipelines.h"
 #include "resources.h"
 #include "sdl.h"
@@ -230,7 +231,6 @@ private:
     SDL_Window* sdl_window;
     SDL_Renderer* sdl_renderer;
     GPUContext& gpu;
-    GPUBatcher gpu_batcher;
     Translator translator;
 
     ppltk::WindowManager_SDL3* wm;
@@ -262,9 +262,9 @@ private:
     void checkFileDialog();
 
     void clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
-    void drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse);
-    void drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
-    void drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
+    void drawUi();
+    void drawWorld();
+    void drawHUD();
 
     ppl7::grafix::PointF WorldMoveStart;
     bool worldIsMoving;
@@ -278,10 +278,10 @@ private:
     Background background;
 
 public:
+    GameRenderer renderer;
     GameEditor editor;
     GameController controller;
     Level level = Level(this);
-    RenderPipelines renderPipelines;
     Resources resources;
     AudioPool audiopool;
     AudioSystem audiosystem;

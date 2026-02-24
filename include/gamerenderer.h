@@ -5,6 +5,7 @@
 
 #include <ppl7.h>
 #include <ppl7-grafix.h>
+#include "gpu.h"
 
 class SpriteTexture;
 class GPUContext;
@@ -12,7 +13,6 @@ class GPUContext;
 class GameRenderer
 {
 private:
-    GPUContext* gpu;
     SDL_Window* window;
 
     SDL_GPUCommandBuffer* cmdbuf;
@@ -29,13 +29,6 @@ private:
     SDL_GPUGraphicsPipeline* copyWithAlphablendingPipeline;
     SDL_GPUSampler* samplerClamp;
 
-    SDL_GPUTexture* render_target;
-    SDL_GPUTexture* render_layer;
-    SDL_GPUTexture* render_lightmap;
-    SDL_GPUTexture* blur_temp;
-    SDL_GPUTexture* render_normal;
-    SDL_GPUTexture* depth_buffer;
-
     ppl7::grafix::Size render_target_size;
 
     void loadShaders();
@@ -43,6 +36,17 @@ private:
     void createSamplers();
 
 public:
+    GPUContext* gpu;
+
+    SDL_GPUTexture* render_target;
+    SDL_GPUTexture* render_layer;
+    SDL_GPUTexture* render_lightmap;
+    SDL_GPUTexture* blur_temp;
+    SDL_GPUTexture* render_normal;
+    SDL_GPUTexture* depth_buffer;
+
+    GPUBatcher batcher;
+
     GameRenderer();
     ~GameRenderer();
 
@@ -60,6 +64,9 @@ public:
     void copyTextureToSwapchain(SDL_GPUTexture* source,
                                 const SDL_FRect& destRect); // Clears swapchain and copies source to destRect inside the swapchain
     void blur(SDL_GPUTexture* source, SDL_GPUTexture* target, float blur_factor); // source and target can be the same
+
+    ppl7::grafix::Image getScreenshot(int width, int height);
+
     // Draw functions
     void setRenderTarget(SDL_GPUTexture* texture);
     void beginRenderPass();

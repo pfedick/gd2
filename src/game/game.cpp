@@ -88,14 +88,11 @@ void Game::init()
     wm->useGPUAPI(gpu.gpu);
     // wm->enableGPURenderer(gpu.gpu);
     createWindow();
-    gpu.initializeWindow((SDL_Window*)getSDLWindow());
+    gpu.initializeWindow(sdl_window);
     sdl.setGPUDevice(gpu.gpu);
-    gpu_batcher.init(&gpu); // Now using Storage Buffers instead of vertex buffer instancing
-
-    renderPipelines.init(gpu, (SDL_Window*)getSDLWindow());
+    renderer.init(gpu, sdl_window);
     // Initialize projection/view matrices for rendering
-    gpu_batcher.updateMatrices(game_viewport.getLogicalSize());
-    level.initialize(gpu, renderPipelines, gpu_batcher);
+    renderer.batcher.updateMatrices(game_viewport.getLogicalSize());
     initUi();
     initAudio();
     initGameController();
@@ -356,22 +353,7 @@ void Game::run()
     quitGame = false;
     while (!quitGame) {
         double idle_start_time = ppl7::GetMicrotime();
-        SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu.gpu);
-        if (cmdbuf == NULL) {
-            SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
-            continue;
-        }
-        SDL_GPUTexture* swapchainTexture;
-        if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, sdl_window, &swapchainTexture, NULL, NULL)) {
-            SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
-            SDL_SubmitGPUCommandBuffer(cmdbuf);
-            continue;
-        }
-        if (swapchainTexture == NULL) {
-            // Das kann passieren, wenn das Fenster minimiert ist
-            SDL_SubmitGPUCommandBuffer(cmdbuf);
-            continue;
-        }
+        if (!renderer.accuireGPUCommandBuffer()) continue;
         clock.update();
         clock.gpu_wait_fsync_time = clock.time - idle_start_time;
         idle_time_accumulator += clock.gpu_wait_fsync_time;
@@ -412,37 +394,27 @@ void Game::run()
         WorldCamera.setRenderSize(game_viewport.getLogicalSize());
         WorldCamera.update(clock, player);
 
-        gpu_batcher.clearQueues();
+        renderer.batcher.clearQueues();
 
         // Ensure Buffers matches window size
         int w, h;
         SDL_GetWindowSizeInPixels(sdl_window, &w, &h);
         game_viewport.setWindowSize(ppl7::grafix::Size(w, h));
-        level.resizeRenderBuffer(game_viewport.getRenderSize());
+        renderer.resizeRenderBuffer(game_viewport.getRenderSize());
 
-        drawWorld(cmdbuf, swapchainTexture);
-
-        // editor.drawSelectedSprite(renderer, mouse.p);
-        // editor.drawSelectedObject(renderer, mouse.p);
-        // editor.drawSelectedTile(renderer, mouse.p);
+        // World
+        drawWorld();
 
         // HUD
-        drawHUD(cmdbuf, swapchainTexture);
+        drawHUD();
 
         // Ui and Mouse if enabled
-        drawUi(cmdbuf, swapchainTexture, mouse);
+        drawUi();
 
         // Frame done
-        SDL_SubmitGPUCommandBuffer(cmdbuf);
-        gpu_batcher.resetContextSwitchCount(); // For debugging: Count how many times we switch GPU context (render pass)
+        renderer.submitGPUCommandBuffer();
+        renderer.batcher.resetContextSwitchCount(); // For debugging: Count how many times we switch GPU context (render pass)
 
-        // Hinweis: SDL_WaitForGPUFences blockiert die CPU nicht nur, bis die GPU fertig mit dem CommandBuffer ist,
-        // sondern wartet auch die VSync ab
-        /*
-        SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmdbuf);
-        SDL_WaitForGPUFences(gpu.gpu, true, &fence, 1);
-        SDL_ReleaseGPUFence(gpu.gpu, fence);
-        */
         metrics.time_frame.stop();
         metrics.time_total.stop();
         double frame_time = ppl7::GetMicrotime() - clock.time;
@@ -546,18 +518,20 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
     }
 }
 
-void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const ppltk::MouseState& mouse)
+void Game::drawUi()
 {
     if (!showui) return;
     metrics.time_draw_ui.start();
 
     // 1. Draw widgets into PPLTK internal texture
     this->drawWidgets();
-    wm->updateGPUTexture(*this, cmdbuf);
+    wm->updateGPUTexture(*this, renderer.getCommandBuffer());
 
     SDL_GPUTexture* gpuTex = (SDL_GPUTexture*)wm->getGPUTexture(*this);
 
     if (gpuTex) {
+        renderer.copyTexture(gpuTex, renderer.getSwapchainTexture(), true);
+        /*
         // 2. Draw PPLTK texture as overlay in final swapchain texture
         // ppl7::PrintDebug("Drawing UI overlay\n");
         SDL_GPUColorTargetInfo targetInfo = {0};
@@ -571,7 +545,7 @@ void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture
         SDL_SetGPUViewport(renderPass, NULL);
         SDL_SetGPUScissor(renderPass, NULL);
 
-        SDL_BindGPUGraphicsPipeline(renderPass, renderPipelines.uiPipeline);
+        SDL_BindGPUGraphicsPipeline(renderPass, renderer.uiPipeline);
 
         SDL_GPUTextureSamplerBinding binding;
         binding.texture = gpuTex;
@@ -581,6 +555,7 @@ void Game::drawUi(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture
         // Draw Fullscreen Quad
         SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
         SDL_EndGPURenderPass(renderPass);
+        */
     } else {
         ppl7::PrintDebug("ERROR: Could not get GPU Texture from PPLTK UI Surface!\n");
     }
@@ -600,14 +575,14 @@ struct BlurParams
     float texelSizeY;
 };
 
-void Game::drawWorld(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
+void Game::drawWorld()
 {
     metrics.time_draw_world.start();
-    level.draw(cmdbuf, swapchainTexture, WorldCamera, game_viewport, metrics);
+    level.draw(&renderer, WorldCamera, game_viewport, metrics);
     metrics.time_draw_world.stop();
 }
 
-void Game::drawHUD(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
+void Game::drawHUD()
 {
     metrics.time_draw_ui.start();
     // TODO

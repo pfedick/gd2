@@ -73,82 +73,78 @@ void ParallaxLayer::setPlayer(Player* p)
     player = p;
 }
 
-void ParallaxLayer::draw(RenderState& renderstate,
-                         SDL_GPUTexture* render_target,
-                         const ppl7::grafix::PointF& worldcoords,
-                         const GameViewport& viewport,
-                         Metrics& metrics)
+void ParallaxLayer::draw(GameRenderer& renderer, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport, Metrics& metrics)
 {
     if (!isVisible) return;
     ppl7::grafix::PointF parallax_worldcoords = worldcoords * speed_factor * size_factor;
     if (!hasVisibleGrafix()) return;
 
     // renderstate.batcher->startRenderPass();
-    renderstate.batcher->startRenderPass();
+    renderer.batcher.startRenderPass();
     metrics.time_draw_tsop.start();
 
     if (bShowSprites) {
         metrics.time_sprites.start();
-        background_sprites.draw(*renderstate.batcher, parallax_worldcoords);
+        background_sprites.draw(renderer.batcher, parallax_worldcoords);
         metrics.time_sprites.stop();
     }
     if (bShowObjects) {
         metrics.time_objects.start();
         if (objectEditMode) {
-            objects.drawEditMode(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
+            objects.drawEditMode(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
         } else {
-            objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
+            objects.draw(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
         }
         metrics.time_objects.stop();
     }
     if (bShowTiles) {
         metrics.time_tiles.start();
-        tiles.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+        tiles.draw(renderer.batcher, viewport, parallax_worldcoords, size_factor);
         metrics.time_tiles.stop();
     }
     if (bShowSprites) {
         metrics.time_sprites.start();
-        front_sprites.draw(*renderstate.batcher, parallax_worldcoords);
+        front_sprites.draw(renderer.batcher, parallax_worldcoords);
         metrics.time_sprites.stop();
     }
     if (bShowObjects) {
         metrics.time_objects.start();
         if (objectEditMode) {
-            objects.drawEditMode(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
+            objects.drawEditMode(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
         } else {
-            objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
+            objects.draw(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
         }
         metrics.time_objects.stop();
     }
 
     if (myParallaxLayer == ParallaxLayerId::Player && player != NULL) {
-        player->draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+        player->draw(renderer.batcher, viewport, parallax_worldcoords, size_factor);
     }
     if (bShowObjects) {
         metrics.time_objects.start();
         if (objectEditMode) {
-            objects.drawEditMode(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
+            objects.drawEditMode(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
         } else {
-            objects.draw(*renderstate.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
+            objects.draw(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
         }
         metrics.time_objects.stop();
     }
 
     if (bShowGrid) {
-        drawTileGrid(renderstate, parallax_worldcoords, viewport);
+        drawTileGrid(renderer, parallax_worldcoords, viewport);
     }
     if (bShowTileTypes) {
-        TileTypeMatrix.draw(*renderstate.batcher, viewport, parallax_worldcoords, size_factor);
+        TileTypeMatrix.draw(renderer.batcher, viewport, parallax_worldcoords, size_factor);
     }
     if (isEditLayer) {
-        game->editor.drawSelection(*renderstate.batcher);
+        game->editor.drawSelection(renderer.batcher);
     }
 
     //  background_sprites.draw(batcher, cmdbuf, swapchainTexture, worldcoords, viewport
-    renderstate.batcher->prepareInstanceData(renderstate.cmdbuf);
+    renderer.batcher.prepareInstanceData(renderer.getCommandBuffer());
 
     SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.texture = renderstate.render_layer;
+    colorTargetInfo.texture = renderer.render_layer;
     colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 0.0f}; // Black background
     colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
@@ -156,11 +152,11 @@ void ParallaxLayer::draw(RenderState& renderstate,
 
     if (!bBlurEnabled || blur_factor <= 0.0f) {
         colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
-        colorTargetInfo.texture = render_target;
+        colorTargetInfo.texture = renderer.render_target;
     }
 
     SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
-    depthTargetInfo.texture = renderstate.depth_buffer;
+    depthTargetInfo.texture = renderer.depth_buffer;
     depthTargetInfo.clear_depth = 1.0f;
     depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
@@ -168,23 +164,23 @@ void ParallaxLayer::draw(RenderState& renderstate,
     depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
     depthTargetInfo.cycle = false;
 
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderer.getCommandBuffer(), &colorTargetInfo, 1, &depthTargetInfo);
     // SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, NULL);
     SDL_SetGPUViewport(renderPass, NULL);
     SDL_SetGPUScissor(renderPass, NULL);
 
-    renderstate.batcher->endRenderPass(renderstate.cmdbuf, renderPass);
+    renderer.batcher.endRenderPass(renderer.getCommandBuffer(), renderPass);
     SDL_EndGPURenderPass(renderPass);
 
     // Post-Processing: Blur
     if (blur_factor > 0.0f && bBlurEnabled) {
-        blur(renderstate, renderstate.render_layer);
-        copyLayerToTarget(renderstate, renderstate.render_layer, render_target);
+        renderer.blur(renderer.render_layer, renderer.render_layer, blur_factor);
+        renderer.copyTexture(renderer.render_layer, renderer.render_target);
     }
     metrics.time_draw_tsop.stop();
 }
 
-void ParallaxLayer::drawTileGrid(RenderState& renderstate, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport)
+void ParallaxLayer::drawTileGrid(GameRenderer& renderer, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport)
 {
     ppl7::grafix::Color grid_color(255, 255, 255, 128);
     ppl7::grafix::Color grid_shadow(0, 0, 0, 128);
@@ -201,13 +197,13 @@ void ParallaxLayer::drawTileGrid(RenderState& renderstate, const ppl7::grafix::P
     start_y = -offset_y;
 
     for (float x = start_x; x < viewport.width(); x += tile_width) {
-        renderstate.batcher->addLine(x + 2, 0, x + 2, viewport.height(), grid_shadow, 2.0f);
-        renderstate.batcher->addLine(x, 0, x, viewport.height(), grid_color, 2.0f);
+        renderer.batcher.addLine(x + 2, 0, x + 2, viewport.height(), grid_shadow, 2.0f);
+        renderer.batcher.addLine(x, 0, x, viewport.height(), grid_color, 2.0f);
     }
 
     for (float y = start_y; y < viewport.height(); y += tile_height) {
-        renderstate.batcher->addLine(0, y + 2, viewport.width(), y + 2, grid_shadow, 2.0f);
-        renderstate.batcher->addLine(0, y, viewport.width(), y, grid_color, 2.0f);
+        renderer.batcher.addLine(0, y + 2, viewport.width(), y + 2, grid_shadow, 2.0f);
+        renderer.batcher.addLine(0, y, viewport.width(), y, grid_color, 2.0f);
     }
 }
 
@@ -219,6 +215,7 @@ struct BlurParams
     float texelSizeY;
 };
 
+/*
 void ParallaxLayer::blur(RenderState& renderstate, SDL_GPUTexture* target_texture)
 {
     SDL_GPUColorTargetInfo targetInfo = {};
@@ -270,7 +267,9 @@ void ParallaxLayer::blur(RenderState& renderstate, SDL_GPUTexture* target_textur
     SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
     SDL_EndGPURenderPass(renderPass);
 }
+*/
 
+/*
 void ParallaxLayer::copyLayerToTarget(RenderState& renderstate, SDL_GPUTexture* source, SDL_GPUTexture* target)
 {
     SDL_GPUColorTargetInfo targetInfo = {};
@@ -293,3 +292,4 @@ void ParallaxLayer::copyLayerToTarget(RenderState& renderstate, SDL_GPUTexture* 
 
     SDL_EndGPURenderPass(renderPass);
 }
+    */

@@ -3,7 +3,7 @@
 #include <map>
 #include <ppl7.h>
 #include "gpu.h"
-#include "renderpipelines.h"
+#include "gamerenderer.h"
 #include "background.h"
 #include "colorpalette.h"
 #include "spritesystem.h"
@@ -92,32 +92,14 @@ enum class ParallaxLayerId
     MaxLayerId
 };
 
-class RenderState
-{
-public:
-    SDL_GPUCommandBuffer* cmdbuf;
-    SDL_GPUTexture* render_target;
-    SDL_GPUTexture* render_lightmap;
-    SDL_GPUTexture* render_layer;
-    SDL_GPUTexture* render_normal;
-    SDL_GPUTexture* depth_buffer;
-    SDL_GPUTexture* blur_temp;
-    GPUContext* gpu;
-    RenderPipelines* renderpipelines;
-    GPUBatcher* batcher;
-    ppl7::grafix::Size render_target_size;
-
-    RenderState();
-};
-
 class ParallaxLayer
 {
 private:
     bool hasVisibleGrafix() const;
-    void drawTileGrid(RenderState& renderstate, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport);
+    void drawTileGrid(GameRenderer& renderer, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport);
 
-    void blur(RenderState& renderstate, SDL_GPUTexture* texture);
-    void copyLayerToTarget(RenderState& renderstate, SDL_GPUTexture* source, SDL_GPUTexture* target);
+    // void blur(GameRenderer& renderer, SDL_GPUTexture* texture);
+    // void copyLayerToTarget(GameRenderer& renderer, SDL_GPUTexture* source, SDL_GPUTexture* target);
     Player* player = NULL;
 
 public:
@@ -163,11 +145,7 @@ public:
     void updateParticles(const GameClock& clock, const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
     void updateLights(const GameClock& clock, const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
 
-    void draw(RenderState& renderstate,
-              SDL_GPUTexture* swapchainTexture,
-              const ppl7::grafix::PointF& worldcoords,
-              const GameViewport& viewport,
-              Metrics& metrics);
+    void draw(GameRenderer& renderer, const ppl7::grafix::PointF& worldcoords, const GameViewport& viewport, Metrics& metrics);
 };
 
 class Level
@@ -182,7 +160,6 @@ public:
 
 private:
     ParallaxLayer parallax_layers[static_cast<int>(ParallaxLayerId::MaxLayerId)];
-    RenderState renderstate;
 
     // LightSystem lights;
     // Decker::Objects::ObjectSystem* objects;
@@ -223,10 +200,10 @@ public:
     };
 
 private:
-    void clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf);
-    void copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const SDL_FRect& destRect);
+    // void clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf);
+    // void copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const SDL_FRect& destRect);
     void updateVisibility();
-    void drawDebug(const Camera& camera, const GameViewport& viewport, const Player* player);
+    void drawDebug(GameRenderer* renderer, const Camera& camera, const GameViewport& viewport, const Player* player);
 
 public:
     Level(Game* game);
@@ -241,13 +218,7 @@ public:
     void load(const ppl7::String& Filename);
     void save(const ppl7::String& Filename);
     void backup(const ppl7::String& Filename);
-    void initialize(GPUContext& gpu, RenderPipelines& renderpipelines, GPUBatcher& batcher);
-    void resizeRenderBuffer(const ppl7::grafix::Size& size);
-    void draw(SDL_GPUCommandBuffer* cmdbuf,
-              SDL_GPUTexture* swapchainTexture,
-              const Camera& worldcoords,
-              const GameViewport& viewport,
-              Metrics& metrics);
+    void draw(GameRenderer* renderer, const Camera& worldcoords, const GameViewport& viewport, Metrics& metrics);
 
     void update(const GameClock& clock,
                 Metrics& metrics,
@@ -294,8 +265,6 @@ public:
     // ppl7::grafix::Rect getOccupiedArea() const;
     ppl7::grafix::Rect getOccupiedAreaFromTileTypePlane(ParallaxLayerId layer) const;
     void updateParticles(double time); // Wird vom ParticleUpdateThread aufgerufen!
-
-    ppl7::grafix::Image getScreenshot(int width, int height);
 
     Objects::Object* getObject(uint32_t object_id) const;
 };

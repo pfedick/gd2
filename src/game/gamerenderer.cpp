@@ -63,6 +63,7 @@ void GameRenderer::init(GPUContext& gpu, SDL_Window* window)
     loadShaders();
     createPipelines();
     createSamplers();
+    batcher.init(&gpu);
 }
 
 void GameRenderer::loadShaders()
@@ -313,7 +314,6 @@ bool GameRenderer::accuireGPUCommandBuffer()
         SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
         return false;
     }
-    SDL_GPUTexture* swapchainTexture;
     if (!SDL_WaitAndAcquireGPUSwapchainTexture(cmdbuf, window, &swapchainTexture, NULL, NULL)) {
         SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
         SDL_SubmitGPUCommandBuffer(cmdbuf);
@@ -344,4 +344,39 @@ SDL_GPUCommandBuffer* GameRenderer::getCommandBuffer()
 SDL_GPUTexture* GameRenderer::getSwapchainTexture()
 {
     return swapchainTexture;
+}
+
+ppl7::grafix::Image GameRenderer::getScreenshot(int width, int height)
+{
+    if (!gpu) return ppl7::grafix::Image();
+    ppl7::grafix::Image img;
+
+    // 1. Kleine temporäre Target-Textur erstellen
+    SDL_GPUTexture* thumbTex = gpu->createRenderTarget(width, height);
+
+    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(gpu->gpu);
+
+    // 2. In die kleine Textur rendern (Skalierung)
+    SDL_GPUColorTargetInfo targetInfo = {0};
+    targetInfo.texture = thumbTex;
+    targetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+    SDL_GPURenderPass* pass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
+
+    // Viewport auf die kleine Größe setzen
+    SDL_GPUViewport viewport = {0, 0, (float)width, (float)height, 0, 1};
+    SDL_SetGPUViewport(pass, &viewport);
+
+    SDL_BindGPUGraphicsPipeline(pass, copyPipeline);
+    SDL_GPUTextureSamplerBinding binding = {.texture = render_target, .sampler = samplerClamp};
+    SDL_BindGPUFragmentSamplers(pass, 0, &binding, 1);
+
+    SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
+    SDL_EndGPURenderPass(pass);
+    SDL_SubmitGPUCommandBuffer(cmdbuf);
+
+    gpu->downloadTexture(thumbTex, width, height, img);
+    gpu->destroyGPUTexture(thumbTex);
+    return img;
 }

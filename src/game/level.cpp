@@ -8,20 +8,6 @@
 #include "player.h"
 #include "game.h"
 
-RenderState::RenderState()
-{
-    cmdbuf = NULL;
-    render_target = NULL;
-    render_lightmap = NULL;
-    render_layer = NULL;
-    render_normal = NULL;
-    depth_buffer = NULL;
-    blur_temp = NULL;
-    gpu = NULL;
-    renderpipelines = NULL;
-    batcher = NULL;
-}
-
 Level::Level(Game* game)
 {
     // objects = new Decker::Objects::ObjectSystem(&waynet);
@@ -59,14 +45,6 @@ Level::Level(Game* game)
 Level::~Level()
 {
     clear();
-    if (renderstate.gpu) {
-        if (renderstate.render_target) renderstate.gpu->destroyGPUTexture(renderstate.render_target);
-        if (renderstate.render_layer) renderstate.gpu->destroyGPUTexture(renderstate.render_layer);
-        if (renderstate.render_lightmap) renderstate.gpu->destroyGPUTexture(renderstate.render_lightmap);
-        if (renderstate.blur_temp) renderstate.gpu->destroyGPUTexture(renderstate.blur_temp);
-        if (renderstate.render_normal) renderstate.gpu->destroyGPUTexture(renderstate.render_normal);
-        if (renderstate.depth_buffer) renderstate.gpu->destroyGPUTexture(renderstate.depth_buffer);
-    }
 }
 
 void Level::clear()
@@ -228,33 +206,6 @@ SpriteSystem& Level::spritesystem(ParallaxLayerId id, ParallaxLayer::SpritePosit
     }
 }
 
-void Level::initialize(GPUContext& gpu, RenderPipelines& renderpipelines, GPUBatcher& batcher)
-{
-    renderstate.gpu = &gpu;
-    renderstate.renderpipelines = &renderpipelines;
-    renderstate.batcher = &batcher;
-}
-
-void Level::resizeRenderBuffer(const ppl7::grafix::Size& size)
-{
-    if (!renderstate.gpu) return;
-    if (size != render_target_size) {
-        // ppl7::PrintDebug("Resizing Level Render Targets to %dx%d\n", size.width, size.height);
-        if (renderstate.render_target) renderstate.gpu->destroyGPUTexture(renderstate.render_target);
-        renderstate.render_target = renderstate.gpu->createRenderTarget(size.width, size.height);
-        if (renderstate.render_layer) renderstate.gpu->destroyGPUTexture(renderstate.render_layer);
-        renderstate.render_layer = renderstate.gpu->createRenderTarget(size.width, size.height);
-        if (renderstate.render_lightmap) renderstate.gpu->destroyGPUTexture(renderstate.render_lightmap);
-        renderstate.render_lightmap = renderstate.gpu->createRenderTarget(size.width, size.height);
-        if (renderstate.blur_temp) renderstate.gpu->destroyGPUTexture(renderstate.blur_temp);
-        renderstate.blur_temp = renderstate.gpu->createRenderTarget(size.width, size.height);
-        if (renderstate.depth_buffer) renderstate.gpu->destroyGPUTexture(renderstate.depth_buffer);
-        renderstate.depth_buffer = renderstate.gpu->createDepthBuffer(size.width, size.height);
-        render_target_size = size;
-        renderstate.render_target_size = size;
-    }
-}
-
 void Level::load(const ppl7::String& Filename)
 {
     clear();
@@ -379,6 +330,7 @@ void Level::updateParticles(double time)
     }
 }
 
+/*
 void Level::clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf)
 {
     // 1. Das interne 4K-Target (render_target) einmalig leeren
@@ -391,7 +343,9 @@ void Level::clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf)
     SDL_GPURenderPass* rtClearPass = SDL_BeginGPURenderPass(cmdbuf, &rtInfo, 1, NULL);
     SDL_EndGPURenderPass(rtClearPass);
 }
+*/
 
+/*
 void Level::copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const SDL_FRect& destRect)
 {
     SDL_GPUColorTargetInfo colorTargetInfo = {0};
@@ -422,6 +376,7 @@ void Level::copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTex
 
     SDL_EndGPURenderPass(renderPass);
 }
+*/
 
 void Level::setPlayer(Player* player)
 {
@@ -431,30 +386,24 @@ void Level::setPlayer(Player* player)
     }
 }
 
-void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
-                 SDL_GPUTexture* swapchainTexture,
-                 const Camera& worldcoords,
-                 const GameViewport& viewport,
-                 Metrics& metrics)
+void Level::draw(GameRenderer* renderer, const Camera& worldcoords, const GameViewport& viewport, Metrics& metrics)
 {
-    renderstate.cmdbuf = cmdbuf;
-    // Step 1: Clear internal render target
-    clearRenderTarget(cmdbuf);
+    if (!renderer) return;
+    renderer->clearTexture(renderer->render_target, runtimeParams.BackgroundColor);
 
     // Step 2: Draw all parallax layers in correct order to internal render target
-    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].draw(renderstate, renderstate.render_target, worldcoords, viewport,
-                                                                     metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(renderstate, renderstate.render_target, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(*renderer, worldcoords, viewport, metrics);
 
-    drawDebug(worldcoords, viewport, player);
+    drawDebug(renderer, worldcoords, viewport, player);
     // Copy final render target, which is 4k, into viewport on swapchain, which may be smaller or bigger
     SDL_FRect destRect = viewport.getRenderRect();
     const ppl7::grafix::Rect& v = viewport.getViewport();
@@ -465,25 +414,26 @@ void Level::draw(SDL_GPUCommandBuffer* cmdbuf,
         if (destRect.x < v.x1) destRect.x += v.x1;
     }
 
-    copyRenderTargetToSwapchain(cmdbuf, swapchainTexture, destRect);
+    renderer->copyTextureToSwapchain(renderer->render_target, destRect);
+    //  copyRenderTargetToSwapchain(cmdbuf, swapchainTexture, destRect);
 }
 
-void Level::drawDebug(const Camera& camera, const GameViewport& viewport, const Player* player)
+void Level::drawDebug(GameRenderer* renderer, const Camera& camera, const GameViewport& viewport, const Player* player)
 {
-    renderstate.batcher->startRenderPass();
-    if (player && bShowCollisions) player->drawCollision(*renderstate.batcher, viewport, camera);
-    camera.draw(*renderstate.batcher, viewport);
+    renderer->batcher.startRenderPass();
+    if (player && bShowCollisions) player->drawCollision(renderer->batcher, viewport, camera);
+    camera.draw(renderer->batcher, viewport);
 
-    renderstate.batcher->prepareInstanceData(renderstate.cmdbuf);
+    renderer->batcher.prepareInstanceData(renderer->getCommandBuffer());
     SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.texture = renderstate.render_target;
+    colorTargetInfo.texture = renderer->render_target;
     colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 0.0f}; // Black background
     colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
 
     SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
-    depthTargetInfo.texture = renderstate.depth_buffer;
+    depthTargetInfo.texture = renderer->depth_buffer;
     depthTargetInfo.clear_depth = 1.0f;
     depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
@@ -491,48 +441,13 @@ void Level::drawDebug(const Camera& camera, const GameViewport& viewport, const 
     depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
     depthTargetInfo.cycle = false;
 
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderer->getCommandBuffer(), &colorTargetInfo, 1, &depthTargetInfo);
     // SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, NULL);
     SDL_SetGPUViewport(renderPass, NULL);
     SDL_SetGPUScissor(renderPass, NULL);
 
-    renderstate.batcher->endRenderPass(renderstate.cmdbuf, renderPass);
+    renderer->batcher.endRenderPass(renderer->getCommandBuffer(), renderPass);
     SDL_EndGPURenderPass(renderPass);
-}
-
-ppl7::grafix::Image Level::getScreenshot(int width, int height)
-{
-    if (!renderstate.gpu || !renderstate.render_target) return ppl7::grafix::Image();
-    ppl7::grafix::Image img;
-
-    // 1. Kleine temporäre Target-Textur erstellen
-    SDL_GPUTexture* thumbTex = renderstate.gpu->createRenderTarget(width, height);
-
-    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(renderstate.gpu->gpu);
-
-    // 2. In die kleine Textur rendern (Skalierung)
-    SDL_GPUColorTargetInfo targetInfo = {0};
-    targetInfo.texture = thumbTex;
-    targetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    targetInfo.store_op = SDL_GPU_STOREOP_STORE;
-
-    SDL_GPURenderPass* pass = SDL_BeginGPURenderPass(cmdbuf, &targetInfo, 1, NULL);
-
-    // Viewport auf die kleine Größe setzen
-    SDL_GPUViewport viewport = {0, 0, (float)width, (float)height, 0, 1};
-    SDL_SetGPUViewport(pass, &viewport);
-
-    SDL_BindGPUGraphicsPipeline(pass, renderstate.renderpipelines->copyPipeline);
-    SDL_GPUTextureSamplerBinding binding = {.texture = renderstate.render_target, .sampler = renderstate.renderpipelines->samplerClamp};
-    SDL_BindGPUFragmentSamplers(pass, 0, &binding, 1);
-
-    SDL_DrawGPUPrimitives(pass, 3, 1, 0, 0);
-    SDL_EndGPURenderPass(pass);
-    SDL_SubmitGPUCommandBuffer(cmdbuf);
-
-    renderstate.gpu->downloadTexture(thumbTex, width, height, img);
-    renderstate.gpu->destroyGPUTexture(thumbTex);
-    return img;
 }
 
 void Level::update(const GameClock& clock,
