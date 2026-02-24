@@ -301,6 +301,7 @@ void ObjectSystem::drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::gr
         if (item->texture) {
             item->texture->drawOutlines(batcher, item->initial_p.x - worldcoords.x, item->initial_p.y - worldcoords.y,
                                         item->sprite_no_representation, item->scale);
+            drawId(batcher, spritesets->fonts, item->initial_p.x - worldcoords.x, item->initial_p.y - worldcoords.y, item->id);
         }
     }
 }
