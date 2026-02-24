@@ -64,23 +64,22 @@ void main() {
     density /= 16.0; // Durchschnittliche Dichte (0.0 bis 1.0)
 
     // 3. Berechnung der Outline-Stärke mit Anti-Aliasing
-    // Ein kleiner Bereich (0.01 bis 0.1) sorgt für eine extrem glatte Außenkante
     float outline_alpha = smoothstep(0.01, 0.1, density);
     
-    // Kombinieren
-    float final_alpha = max(sprite_alpha, outline_alpha);
+    // 4. PMA Sprite Farbe berechnen (exakt wie sprite.frag)
+    vec4 sprite_pma = tex_color;
+    sprite_pma.rgb *= tex_color.a;
+    sprite_pma *= frag_color;
 
-    if (final_alpha > 0.01) {
-        // Ergebnis: Weißer Umriss (PMA)
-        out_color = vec4(final_alpha, final_alpha, final_alpha, final_alpha);
-        
-        // Innerhalb des Sprites: Sprite-Farbe + Selektions-Tint
-        if (sprite_alpha > 0.01) {
-            vec4 sprite_col = (tex_color * frag_color) + vec4(0.12, 0.12, 0.12, 0.0);
-            sprite_col.rgb *= tex_color.a; // PMA
-            out_color = mix(out_color, sprite_col, sprite_alpha);
-        }
-    } else {
+    // 5. Komposition
+    // Wir wollen den Umriss NUR im äußeren Ring sehen
+    float ring_strength = max(0.0, outline_alpha - sprite_alpha);
+    vec4 ring_pma = vec4(ring_strength, ring_strength, ring_strength, ring_strength);
+
+    // Sprite PLUS isolierten Ring (da wir Ring weggeschnitten haben reicht Addition)
+    out_color = sprite_pma + ring_pma;
+
+    if (out_color.a < 0.01) {
         discard;
     }
 }
