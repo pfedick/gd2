@@ -394,8 +394,6 @@ void Game::run()
         WorldCamera.setRenderSize(game_viewport.getLogicalSize());
         WorldCamera.update(clock, player);
 
-        renderer.batcher.clearQueues();
-
         // Ensure Buffers matches window size
         int w, h;
         SDL_GetWindowSizeInPixels(sdl_window, &w, &h);

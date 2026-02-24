@@ -114,8 +114,6 @@ private:
 
     SDL_GPUBuffer* primitiveVertexBuffer;
     Uint32 primitiveVertexCapacity;
-    Uint32 primitiveTriangleVertexCount;
-    Uint32 primitiveLineVertexCount;
 
     SDL_GPUBuffer* uniformBuffer; // Not used - push constants instead
     UniformData currentUniforms;  // Current projection/view matrices
@@ -147,7 +145,25 @@ private:
         float color_r, color_g, color_b, color_a; // Color Modulation
     };
 
-    std::vector<SpriteInstance> instanceData;
+    enum class BatchType
+    {
+        Sprites,
+        PrimitiveLines,
+        PrimitiveTriangles
+    };
+
+    struct RenderBatch
+    {
+        BatchType type;
+        uint32_t offset;
+        uint32_t count;
+        SDL_GPUTexture* texture;
+        bool outline;
+    };
+
+    std::vector<SpriteInstance> spriteInstances;
+    std::vector<PrimitiveVertex> primitiveVertices;
+    std::vector<RenderBatch> batches;
 
     void loadShaders();
     void createPipeline();
@@ -155,98 +171,22 @@ private:
     void uploadStaticQuadData();
     void cleanup();
     void bindTexture(SDL_GPURenderPass* render_pass, SDL_GPUTexture* texture);
-    void drawPrimitives(SDL_GPURenderPass* render_pass);
+    void finishCurrentBatch();
+    void addSpriteInternal(const SpriteTexture& sprite,
+                           int id,
+                           float x,
+                           float y,
+                           float scale_x,
+                           float scale_y,
+                           float angle,
+                           const ppl7::grafix::Color& color,
+                           bool outline);
 
 public:
-    class PrimitiveCommand
-    {
-    public:
-        enum class Type
-        {
-            Line,
-            Rect,
-            FilledRect
-        };
-
-        Type type = Type::Line;
-        float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-        float w = 0, h = 0;
-        ppl7::grafix::Color color;
-        float thickness = 0.0f;
-
-        PrimitiveCommand() = default;
-
-        static PrimitiveCommand Line(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness)
-        {
-            PrimitiveCommand cmd;
-            cmd.type = Type::Line;
-            cmd.x1 = x1;
-            cmd.y1 = y1;
-            cmd.x2 = x2;
-            cmd.y2 = y2;
-            cmd.color = color;
-            cmd.thickness = thickness;
-            return cmd;
-        }
-
-        static PrimitiveCommand Rect(
-            Type type, float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness = 0.0f)
-        {
-            PrimitiveCommand cmd;
-            cmd.type = type;
-            cmd.x1 = x;
-            cmd.y1 = y;
-            cmd.w = w;
-            cmd.h = h;
-            cmd.color = color;
-            cmd.thickness = thickness;
-            return cmd;
-        }
-    };
-
-    class SpriteCommand
-    {
-    public:
-        SDL_GPUTexture* texture; // Direktes Texture-Handling
-        float x, y, z;
-        float scale_x, scale_y;
-        float angle;
-        ppl7::grafix::Color color_modulation;
-
-        // Neue Felder für Unabhängigkeit und Outlines:
-        float uv_x, uv_y, uv_w, uv_h;
-        float pivot_x, pivot_y;
-        float sprite_w, sprite_h;
-        bool outline; // Flag für den Outline-Modus
-
-        SpriteCommand()
-            : texture(nullptr),
-              outline(false)
-        {
-        }
-    };
-
-    struct SpriteBatchKey
-    {
-        SDL_GPUTexture* texture;
-        bool outline;
-        bool operator<(const SpriteBatchKey& other) const
-        {
-            if (texture != other.texture) return texture < other.texture;
-            return outline < other.outline;
-        }
-    };
-
-private:
-    std::list<PrimitiveCommand> primitiveCommands;
-    std::map<SpriteBatchKey, std::list<SpriteCommand>> spriteCommands;
-
     uint32_t contextSwitchCount; // For debugging: Count how many times we switch GPU context (render pass)
     uint32_t totalSpriteCount;
     uint32_t totalPrimitivesCount;
-    SDL_GPUTexture* lasttexture = nullptr;
 
-public:
     GPUBatcher();
     ~GPUBatcher();
     void resetContextSwitchCount();
@@ -254,13 +194,12 @@ public:
     void updateMatrices(int screenWidth, int screenHeight);
     void updateMatrices(const ppl7::grafix::Size& size);
 
-    void clearQueues(); // temporary?
     void startRenderPass();
     void prepareInstanceData(SDL_GPUCommandBuffer* cmd); // Upload instance data before render pass
     void endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass);
 
     void addSprite(const SpriteTexture& sprite,
-                   int sprite_id,
+                   int id,
                    float x,
                    float y,
                    float scale_x = 1.0f,
@@ -268,15 +207,16 @@ public:
                    float angle = 0.0f,
                    const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
     void addSpriteOutline(const SpriteTexture& sprite,
-                          int sprite_id,
+                          int id,
                           float x,
                           float y,
                           float scale_x = 1.0f,
                           float scale_y = 1.0f,
                           float angle = 0.0f,
                           const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
-    void addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness = 1.0f);
-    void addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness = 1.0f);
+
+    void addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, int thickness = 1);
+    void addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, int thickness = 1);
     void addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color);
 };
 

@@ -7,7 +7,6 @@
 
 GPUBatcher::GPUBatcher()
 {
-    z = 0.0f;
     gpu = nullptr;
     screenWidth = 1920;
     screenHeight = 1080;
@@ -46,7 +45,6 @@ void GPUBatcher::resetContextSwitchCount()
     totalSpriteCount = 0;
     totalPrimitivesCount = 0;
     contextSwitchCount = 0;
-    lasttexture = nullptr;
 }
 
 void GPUBatcher::init(GPUContext* gpu)
@@ -57,434 +55,139 @@ void GPUBatcher::init(GPUContext* gpu)
     createBuffers();
 }
 
-void GPUBatcher::clearQueues()
-{
-    primitiveCommands.clear();
-    spriteCommands.clear();
-}
-
 void GPUBatcher::startRenderPass()
 {
-    z = 0.5f;
+    spriteInstances.clear();
+    primitiveVertices.clear();
+    batches.clear();
+}
+
+void GPUBatcher::finishCurrentBatch()
+{
+    if (batches.empty()) return;
+
+    RenderBatch& current = batches.back();
+    if (current.type == BatchType::Sprites) {
+        current.count = (uint32_t)spriteInstances.size() - current.offset;
+    } else {
+        current.count = (uint32_t)primitiveVertices.size() - current.offset;
+    }
 }
 
 void GPUBatcher::prepareInstanceData(SDL_GPUCommandBuffer* cmd)
 {
-    if (!gpu || !gpu->gpu || !storageBuffer) {
-        return;
-    }
+    if (!gpu || !gpu->gpu || !storageBuffer) return;
 
-    const size_t MAX_INSTANCES_PER_BATCH = 16384;
-    instanceData.clear();
-    // Pre-allocate to avoid reallocations, but don't shrink if it's already large enough
-    if (instanceData.capacity() < MAX_INSTANCES_PER_BATCH) {
-        instanceData.reserve(MAX_INSTANCES_PER_BATCH);
-    }
-
-    // Upload instance data for all sprite batches
-    for (const auto& [batchKey, spriteList] : spriteCommands) {
-        if (spriteList.empty()) continue;
-
-        // Collect instance data
-        for (const SpriteCommand& spriteCmd : spriteList) {
-            // Determine Pivot Point in Texture Coordinates (Pixels relative to Texture Top-Left)
-            float pivot_pixel_x = spriteCmd.pivot_x;
-            float pivot_pixel_y = spriteCmd.pivot_y;
-
-            // Set world position to the desired Pivot Point (x,y)
-            // The shader assumes 'pos' is the center of rotation/scaling.
-            float world_x = spriteCmd.x;
-            float world_y = spriteCmd.y;
-
-            // X: 0..W -> -1..1
-            float ndc_x = (world_x * 2.0f / screenWidth) - 1.0f;
-            // Y: +1 (Top) ... -1 (Bottom)
-            float ndc_y = 1.0f - (world_y * 2.0f / screenHeight);
-
-            float rad = spriteCmd.angle * (M_PI / 180.0f);
-            float c = cosf(rad);
-            float s = sinf(rad);
-
-            // Pixel dimensions of the sprite
-            float sw = spriteCmd.sprite_w * spriteCmd.scale_x;
-            float sh = spriteCmd.sprite_h * spriteCmd.scale_y;
-
-            // Matrix calculation to transform (0..1) unit vector to Rotated NDC
-            float m00 = (2.0f / screenWidth) * sw * c;
-            float m01 = (2.0f / screenWidth) * sh * (-s);
-            float m10 = (-2.0f / screenHeight) * sw * s;
-            float m11 = (-2.0f / screenHeight) * sh * c;
-
-            SpriteInstance inst;
-            inst.pos_x = ndc_x;
-            inst.pos_y = ndc_y;
-
-            inst.m00 = m00;
-            inst.m01 = m01;
-            inst.m10 = m10;
-            inst.m11 = m11;
-
-            inst.pos_z = spriteCmd.z;
-            inst.pad = 0.0f;
-
-            inst.uv_x = spriteCmd.uv_x;
-            inst.uv_y = spriteCmd.uv_y;
-            inst.uv_w = spriteCmd.uv_w;
-            inst.uv_h = spriteCmd.uv_h;
-
-            inst.u_min = spriteCmd.uv_x;
-            inst.v_min = spriteCmd.uv_y;
-            inst.u_max = spriteCmd.uv_x + spriteCmd.uv_w;
-            inst.v_max = spriteCmd.uv_y + spriteCmd.uv_h;
-
-            // Normalize pivot relative to texture size
-            inst.pivot_x = (spriteCmd.sprite_w > 0) ? pivot_pixel_x / (float)spriteCmd.sprite_w : 0.0f;
-            inst.pivot_y = (spriteCmd.sprite_h > 0) ? pivot_pixel_y / (float)spriteCmd.sprite_h : 0.0f;
-
-            inst.offset_x = 0.0f;
-            inst.offset_y = 0.0f;
-
-            float a = (float)spriteCmd.color_modulation.alpha() / 255.0f;
-            inst.color_r = ((float)spriteCmd.color_modulation.red() / 255.0f) * a;
-            inst.color_g = ((float)spriteCmd.color_modulation.green() / 255.0f) * a;
-            inst.color_b = ((float)spriteCmd.color_modulation.blue() / 255.0f) * a;
-            inst.color_a = a;
-
-            instanceData.push_back(inst);
-        }
-    }
-
-    if (!instanceData.empty()) {
-
-        // Upload ALL instance data at once
-        size_t instanceDataSize = sizeof(SpriteInstance) * instanceData.size();
-
-        // Check if we need to resize the storage buffer
-        if (instanceDataSize > storageBufferCapacity) {
-            if (storageBuffer) {
-                SDL_ReleaseGPUBuffer(gpu->gpu, storageBuffer);
-            }
-            // Grow by power of 2 or large chunks
-            storageBufferCapacity = (Uint32)(instanceDataSize * 1.5);
-            SDL_GPUBufferCreateInfo storageBufferInfo = {
-                .usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ,
-                .size = storageBufferCapacity,
-            };
-            storageBuffer = SDL_CreateGPUBuffer(gpu->gpu, &storageBufferInfo);
-            if (!storageBuffer) {
-                ppl7::PrintDebugTime("ERROR: Failed to resize storage buffer to %u bytes\n", storageBufferCapacity);
-                return;
-            }
-            ppl7::PrintDebugTime("Resized Storage Buffer to %u bytes (%zu sprites)\n", storageBufferCapacity,
-                                 storageBufferCapacity / sizeof(SpriteInstance));
+    // --- Prepare Sprites ---
+    if (!spriteInstances.empty()) {
+        size_t dataSize = spriteInstances.size() * sizeof(SpriteInstance);
+        if (dataSize > storageBufferCapacity) {
+            if (storageBuffer) SDL_ReleaseGPUBuffer(gpu->gpu, storageBuffer);
+            storageBufferCapacity = (Uint32)(dataSize * 1.5);
+            SDL_GPUBufferCreateInfo desc = {.usage = SDL_GPU_BUFFERUSAGE_GRAPHICS_STORAGE_READ, .size = storageBufferCapacity};
+            storageBuffer = SDL_CreateGPUBuffer(gpu->gpu, &desc);
         }
 
-        SDL_GPUTransferBufferCreateInfo transferInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)instanceDataSize};
-        SDL_GPUTransferBuffer* transferBuffer = SDL_CreateGPUTransferBuffer(gpu->gpu, &transferInfo);
-        if (transferBuffer) {
-            void* mapped = SDL_MapGPUTransferBuffer(gpu->gpu, transferBuffer, false);
-            if (mapped) {
-                memcpy(mapped, instanceData.data(), instanceDataSize);
-                SDL_UnmapGPUTransferBuffer(gpu->gpu, transferBuffer);
-
-                SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(cmd);
-                SDL_GPUTransferBufferLocation transferLocation = {.transfer_buffer = transferBuffer, .offset = 0};
-                SDL_GPUBufferRegion bufferRegion = {.buffer = storageBuffer, .offset = 0, .size = (Uint32)instanceDataSize};
-                SDL_UploadToGPUBuffer(copyPass, &transferLocation, &bufferRegion, false);
-                SDL_EndGPUCopyPass(copyPass);
+        SDL_GPUTransferBufferCreateInfo tInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)dataSize};
+        SDL_GPUTransferBuffer* tBuf = SDL_CreateGPUTransferBuffer(gpu->gpu, &tInfo);
+        if (tBuf) {
+            void* map = SDL_MapGPUTransferBuffer(gpu->gpu, tBuf, false);
+            if (map) {
+                memcpy(map, spriteInstances.data(), dataSize);
+                SDL_UnmapGPUTransferBuffer(gpu->gpu, tBuf);
+                SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
+                SDL_GPUTransferBufferLocation loc = {.transfer_buffer = tBuf, .offset = 0};
+                SDL_GPUBufferRegion reg = {.buffer = storageBuffer, .offset = 0, .size = (Uint32)dataSize};
+                SDL_UploadToGPUBuffer(cp, &loc, &reg, false);
+                SDL_EndGPUCopyPass(cp);
             }
-            SDL_ReleaseGPUTransferBuffer(gpu->gpu, transferBuffer);
+            SDL_ReleaseGPUTransferBuffer(gpu->gpu, tBuf);
         }
     }
 
     // --- Prepare Primitives ---
-    primitiveTriangleVertexCount = 0;
-    primitiveLineVertexCount = 0;
-
-    if (!primitiveCommands.empty()) {
-        std::vector<PrimitiveVertex> primitives;
-        // Reserve some memory to avoid reallocations
-        primitives.reserve(primitiveCommands.size() * 4);
-
-        // Helper to add vertex
-        auto pushV = [&](float x, float y, const ppl7::grafix::Color& c) {
-            float ndc_x = (x * 2.0f / screenWidth) - 1.0f;
-            float ndc_y = 1.0f - (y * 2.0f / screenHeight);
-            float a = (float)c.alpha() / 255.0f;
-            primitives.push_back({ndc_x, ndc_y, 0.0f,
-                                  (float)c.red() / 255.0f * a,   // Pre-multiplied Red
-                                  (float)c.green() / 255.0f * a, // Pre-multiplied Green
-                                  (float)c.blue() / 255.0f * a,  // Pre-multiplied Blue
-                                  a});
-        };
-
-        // Helper to add thick line as quad (2 triangles)
-        auto pushThickLine = [&](float x1, float y1, float x2, float y2, float thickness, const ppl7::grafix::Color& c) {
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-            float len = sqrtf(dx * dx + dy * dy);
-            if (len == 0.0f) return;
-
-            float ux = dx / len;
-            float uy = dy / len;
-            // Normal (perpendicular) vector
-            float nx = -uy;
-            float ny = ux;
-
-            float halfWidth = thickness * 0.5f;
-            float ox = nx * halfWidth;
-            float oy = ny * halfWidth;
-
-            // 4 corners
-            float p1x = x1 + ox;
-            float p1y = y1 + oy;
-            float p2x = x1 - ox;
-            float p2y = y1 - oy;
-            float p3x = x2 - ox;
-            float p3y = y2 - oy;
-            float p4x = x2 + ox;
-            float p4y = y2 + oy;
-
-            // Triangle 1
-            pushV(p1x, p1y, c);
-            pushV(p2x, p2y, c);
-            pushV(p3x, p3y, c);
-
-            // Triangle 2
-            pushV(p1x, p1y, c);
-            pushV(p3x, p3y, c);
-            pushV(p4x, p4y, c);
-        };
-
-        // First pass: Triangles (Filled Rects + Thick Lines/Rects)
-        for (const auto& cmd : primitiveCommands) {
-            if (cmd.type == PrimitiveCommand::Type::FilledRect) {
-                float x2 = cmd.x1 + cmd.w;
-                float y2 = cmd.y1 + cmd.h;
-                // Triangle 1 (CCW)
-                pushV(cmd.x1, cmd.y1, cmd.color);
-                pushV(cmd.x1, y2, cmd.color);
-                pushV(x2, cmd.y1, cmd.color);
-
-                // Triangle 2 (CCW)
-                pushV(x2, cmd.y1, cmd.color);
-                pushV(cmd.x1, y2, cmd.color);
-                pushV(x2, y2, cmd.color);
-            } else if (cmd.type == PrimitiveCommand::Type::Line && cmd.thickness > 1.0f) {
-                pushThickLine(cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.thickness, cmd.color);
-            } else if (cmd.type == PrimitiveCommand::Type::Rect && cmd.thickness > 1.0f) {
-                // Ensure crisp "Square Join" corners by drawing 4 overlapping rectangles
-                // Note: This logic assumes axis-aligned rectangles.
-                float halfWidth = cmd.thickness * 0.5f;
-
-                float left = cmd.x1 - halfWidth;
-                float right = cmd.x1 + cmd.w + halfWidth;
-                float top = cmd.y1 - halfWidth;
-                float bottom = cmd.y1 + cmd.h + halfWidth;
-
-                // Top Bar (full width)
-                // x: [left, right], y: [top, top + thickness]
-                {
-                    float y1 = top;
-                    float y2 = top + cmd.thickness;
-                    pushV(left, y1, cmd.color);
-                    pushV(left, y2, cmd.color);
-                    pushV(right, y1, cmd.color);
-                    pushV(right, y1, cmd.color);
-                    pushV(left, y2, cmd.color);
-                    pushV(right, y2, cmd.color);
-                }
-
-                // Bottom Bar (full width)
-                // x: [left, right], y: [bottom - thickness, bottom]
-                {
-                    float y1 = bottom - cmd.thickness;
-                    float y2 = bottom;
-                    pushV(left, y1, cmd.color);
-                    pushV(left, y2, cmd.color);
-                    pushV(right, y1, cmd.color);
-                    pushV(right, y1, cmd.color);
-                    pushV(left, y2, cmd.color);
-                    pushV(right, y2, cmd.color);
-                }
-
-                // Left Bar (between top/bottom bars)
-                // x: [left, left + thickness], y: [top + thickness, bottom - thickness]
-                {
-                    float x1 = left;
-                    float x2 = left + cmd.thickness;
-                    float y1 = top + cmd.thickness;
-                    float y2 = bottom - cmd.thickness;
-                    // Only draw if height is positive (otherwise bars overlap/cross)
-                    if (y2 > y1) {
-                        pushV(x1, y1, cmd.color);
-                        pushV(x1, y2, cmd.color);
-                        pushV(x2, y1, cmd.color);
-                        pushV(x2, y1, cmd.color);
-                        pushV(x1, y2, cmd.color);
-                        pushV(x2, y2, cmd.color);
-                    }
-                }
-
-                // Right Bar (between top/bottom bars)
-                // x: [right - thickness, right], y: [top + thickness, bottom - thickness]
-                {
-                    float x1 = right - cmd.thickness;
-                    float x2 = right;
-                    float y1 = top + cmd.thickness;
-                    float y2 = bottom - cmd.thickness;
-                    if (y2 > y1) {
-                        pushV(x1, y1, cmd.color);
-                        pushV(x1, y2, cmd.color);
-                        pushV(x2, y1, cmd.color);
-                        pushV(x2, y1, cmd.color);
-                        pushV(x1, y2, cmd.color);
-                        pushV(x2, y2, cmd.color);
-                    }
-                }
-            }
-        }
-        primitiveTriangleVertexCount = (Uint32)primitives.size();
-
-        // Second pass: Thin Lines/Rects (Native LineList)
-        for (const auto& cmd : primitiveCommands) {
-            if (cmd.type == PrimitiveCommand::Type::Line && cmd.thickness <= 1.0f) {
-                pushV(cmd.x1, cmd.y1, cmd.color);
-                pushV(cmd.x2, cmd.y2, cmd.color);
-            } else if (cmd.type == PrimitiveCommand::Type::Rect && cmd.thickness <= 1.0f) {
-                float x2 = cmd.x1 + cmd.w;
-                float y2 = cmd.y1 + cmd.h;
-                // Top
-                pushV(cmd.x1, cmd.y1, cmd.color);
-                pushV(x2, cmd.y1, cmd.color);
-                // Right
-                pushV(x2, cmd.y1, cmd.color);
-                pushV(x2, y2, cmd.color);
-                // Bottom
-                pushV(x2, y2, cmd.color);
-                pushV(cmd.x1, y2, cmd.color);
-                // Left
-                pushV(cmd.x1, y2, cmd.color);
-                pushV(cmd.x1, cmd.y1, cmd.color);
-            }
+    if (!primitiveVertices.empty()) {
+        size_t dataSize = primitiveVertices.size() * sizeof(PrimitiveVertex);
+        if (dataSize > primitiveVertexCapacity) {
+            if (primitiveVertexBuffer) SDL_ReleaseGPUBuffer(gpu->gpu, primitiveVertexBuffer);
+            primitiveVertexCapacity = (Uint32)(dataSize * 1.5);
+            SDL_GPUBufferCreateInfo desc = {.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = primitiveVertexCapacity};
+            primitiveVertexBuffer = SDL_CreateGPUBuffer(gpu->gpu, &desc);
         }
 
-        primitiveLineVertexCount = (Uint32)primitives.size() - primitiveTriangleVertexCount;
+        SDL_GPUTransferBufferCreateInfo tInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)dataSize};
+        SDL_GPUTransferBuffer* tBuf = SDL_CreateGPUTransferBuffer(gpu->gpu, &tInfo);
+        if (tBuf) {
+            void* map = SDL_MapGPUTransferBuffer(gpu->gpu, tBuf, false);
+            if (map) {
+                memcpy(map, primitiveVertices.data(), dataSize);
+                SDL_UnmapGPUTransferBuffer(gpu->gpu, tBuf);
 
-        if (!primitives.empty()) {
-            size_t dataSize = primitives.size() * sizeof(PrimitiveVertex);
-            if (dataSize > primitiveVertexCapacity) {
-                if (primitiveVertexBuffer) SDL_ReleaseGPUBuffer(gpu->gpu, primitiveVertexBuffer);
-                primitiveVertexCapacity = (Uint32)(dataSize * 1.5);
-                SDL_GPUBufferCreateInfo desc = {.usage = SDL_GPU_BUFFERUSAGE_VERTEX, .size = primitiveVertexCapacity};
-                primitiveVertexBuffer = SDL_CreateGPUBuffer(gpu->gpu, &desc);
+                SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
+                SDL_GPUTransferBufferLocation loc = {.transfer_buffer = tBuf, .offset = 0};
+                SDL_GPUBufferRegion reg = {.buffer = primitiveVertexBuffer, .offset = 0, .size = (Uint32)dataSize};
+                SDL_UploadToGPUBuffer(cp, &loc, &reg, false);
+                SDL_EndGPUCopyPass(cp);
             }
-
-            // Upload
-            SDL_GPUTransferBufferCreateInfo tInfo = {.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = (Uint32)dataSize};
-            SDL_GPUTransferBuffer* tBuf = SDL_CreateGPUTransferBuffer(gpu->gpu, &tInfo);
-            if (tBuf) {
-                void* map = SDL_MapGPUTransferBuffer(gpu->gpu, tBuf, false);
-                if (map) {
-                    memcpy(map, primitives.data(), dataSize);
-                    SDL_UnmapGPUTransferBuffer(gpu->gpu, tBuf);
-
-                    SDL_GPUCopyPass* cp = SDL_BeginGPUCopyPass(cmd);
-                    SDL_GPUTransferBufferLocation loc = {.transfer_buffer = tBuf, .offset = 0};
-                    SDL_GPUBufferRegion reg = {.buffer = primitiveVertexBuffer, .offset = 0, .size = (Uint32)dataSize};
-                    SDL_UploadToGPUBuffer(cp, &loc, &reg, false);
-                    SDL_EndGPUCopyPass(cp);
-                }
-                SDL_ReleaseGPUTransferBuffer(gpu->gpu, tBuf);
-            }
+            SDL_ReleaseGPUTransferBuffer(gpu->gpu, tBuf);
         }
     }
 }
 
 void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* render_pass)
 {
-    if (!spritePipeline) return;
+    if (batches.empty()) return;
 
-    // Count total sprites
-    size_t totalSprites = 0;
-    for (const auto& [textureId, spriteList] : spriteCommands) {
-        totalSprites += spriteList.size();
-    }
-    totalSpriteCount += (uint32_t)totalSprites;
-    totalPrimitivesCount += (uint32_t)primitiveCommands.size();
-
-    if (totalSprites) {
-
-        // ppl7::PrintDebugTime("  endRenderPass: Drawing %zu sprites\n", totalSprites);
-
-        // Bind vertex buffer only
-        SDL_GPUBufferBinding vertexBinding = {.buffer = vertexBuffer, .offset = 0};
-        SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
-
-        // Bind storage buffer for sprite instance data
+    // Sprite setup
+    if (!spriteInstances.empty()) {
+        SDL_GPUBufferBinding vBinding = {.buffer = vertexBuffer, .offset = 0};
+        SDL_BindGPUVertexBuffers(render_pass, 0, &vBinding, 1);
         SDL_BindGPUVertexStorageBuffers(render_pass, 0, &storageBuffer, 1);
         SDL_BindGPUFragmentStorageBuffers(render_pass, 0, &storageBuffer, 1);
+        SDL_GPUBufferBinding iBinding = {.buffer = indexBuffer, .offset = 0};
+        SDL_BindGPUIndexBuffer(render_pass, &iBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+    }
 
-        // Bind index buffer once
-        SDL_GPUBufferBinding indexBinding = {.buffer = indexBuffer, .offset = 0};
-        SDL_BindGPUIndexBuffer(render_pass, &indexBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+    // Primitive setup
+    if (!primitiveVertices.empty()) {
+        SDL_GPUBufferBinding vBinding = {.buffer = primitiveVertexBuffer, .offset = 0};
+        SDL_BindGPUVertexBuffers(render_pass, 0, &vBinding, 1);
+    }
 
-        // Draw by texture batch
-        Uint32 instanceOffset = 0;
-        SDL_GPUGraphicsPipeline* currentPipeline = nullptr;
+    SDL_GPUGraphicsPipeline* curPipe = nullptr;
+    SDL_GPUTexture* curTex = nullptr;
 
-        for (const auto& [batchKey, spriteList] : spriteCommands) {
-            if (spriteList.empty()) continue;
-
-            // Pipeline switch if needed
-            SDL_GPUGraphicsPipeline* targetPipeline = batchKey.outline ? spriteOutlinePipeline : spritePipeline;
-            if (targetPipeline != currentPipeline) {
-                SDL_BindGPUGraphicsPipeline(render_pass, targetPipeline);
-                currentPipeline = targetPipeline;
+    for (const auto& b : batches) {
+        if (b.type == BatchType::Sprites) {
+            SDL_GPUGraphicsPipeline* nextPipe = b.outline ? spriteOutlinePipeline : spritePipeline;
+            if (nextPipe != curPipe) {
+                SDL_BindGPUGraphicsPipeline(render_pass, nextPipe);
+                curPipe = nextPipe;
             }
-
-            // Bind texture for this batch
-            bindTexture(render_pass, batchKey.texture);
-
-            // Draw instances for this batch only
-            SDL_DrawGPUIndexedPrimitives(render_pass, 6, (Uint32)spriteList.size(), 0, 0, instanceOffset);
-
-            instanceOffset += (Uint32)spriteList.size();
+            if (b.texture != curTex) {
+                bindTexture(render_pass, b.texture);
+                curTex = b.texture;
+            }
+            SDL_DrawGPUIndexedPrimitives(render_pass, 6, b.count, 0, 0, b.offset);
+        } else {
+            SDL_GPUGraphicsPipeline* nextPipe = (b.type == BatchType::PrimitiveTriangles) ? primitiveFillPipeline : primitivePipeline;
+            if (nextPipe != curPipe) {
+                SDL_BindGPUGraphicsPipeline(render_pass, nextPipe);
+                curPipe = nextPipe;
+            }
+            SDL_DrawGPUPrimitives(render_pass, b.count, 1, b.offset, 0);
         }
     }
 
-    drawPrimitives(render_pass);
-
-    primitiveCommands.clear();
-    spriteCommands.clear();
-}
-
-void GPUBatcher::drawPrimitives(SDL_GPURenderPass* render_pass)
-{
-    if ((primitiveTriangleVertexCount == 0 && primitiveLineVertexCount == 0) || !primitiveVertexBuffer) {
-        return;
-    }
-
-    // Bind primitive vertex buffer
-    SDL_GPUBufferBinding vertexBinding = {.buffer = primitiveVertexBuffer, .offset = 0};
-    SDL_BindGPUVertexBuffers(render_pass, 0, &vertexBinding, 1);
-
-    // 1. Draw Triangles (FilledRects)
-    if (primitiveTriangleVertexCount > 0 && primitiveFillPipeline) {
-        SDL_BindGPUGraphicsPipeline(render_pass, primitiveFillPipeline);
-        SDL_DrawGPUPrimitives(render_pass, primitiveTriangleVertexCount, 1, 0, 0);
-    }
-
-    // 2. Draw Lines (Lines, RectOutlines)
-    if (primitiveLineVertexCount > 0 && primitivePipeline) {
-        SDL_BindGPUGraphicsPipeline(render_pass, primitivePipeline);
-        // Offset is primitiveTriangleVertexCount
-        SDL_DrawGPUPrimitives(render_pass, primitiveLineVertexCount, 1, primitiveTriangleVertexCount, 0);
-    }
+    totalSpriteCount += (uint32_t)spriteInstances.size();
+    totalPrimitivesCount += (uint32_t)primitiveVertices.size();
+    batches.clear();
+    spriteInstances.clear();
+    primitiveVertices.clear();
 }
 
 void GPUBatcher::addSprite(const SpriteTexture& sprite,
-                           int sprite_id,
+                           int id,
                            float x,
                            float y,
                            float scale_x,
@@ -492,42 +195,11 @@ void GPUBatcher::addSprite(const SpriteTexture& sprite,
                            float angle,
                            const ppl7::grafix::Color& color_modulation)
 {
-    const SpriteTexture::SpriteIndexItem* item = sprite.getSpriteIndex(sprite_id);
-    if (!item || !item->tex) {
-        return;
-    }
-    if (item->tex != lasttexture) {
-        contextSwitchCount++;
-        lasttexture = item->tex;
-    }
-    SpriteCommand cmd;
-    cmd.texture = item->tex;
-    cmd.x = x;
-    cmd.y = y;
-    cmd.z = z;
-    cmd.scale_x = scale_x;
-    cmd.scale_y = scale_y;
-    cmd.angle = angle;
-    cmd.color_modulation = color_modulation;
-
-    cmd.uv_x = item->uv.x;
-    cmd.uv_y = item->uv.y;
-    cmd.uv_w = item->uv.w;
-    cmd.uv_h = item->uv.h;
-
-    cmd.pivot_x = (float)item->Pivot.x - (float)item->Offset.x;
-    cmd.pivot_y = (float)item->Pivot.y - (float)item->Offset.y;
-    cmd.sprite_w = (float)item->r.w;
-    cmd.sprite_h = (float)item->r.h;
-    cmd.outline = false;
-
-    z -= 0.0001f; // Slightly increase Z to ensure correct layering
-    SpriteBatchKey key = {cmd.texture, cmd.outline};
-    spriteCommands[key].push_back(cmd);
+    addSpriteInternal(sprite, id, x, y, scale_x, scale_y, angle, color_modulation, false);
 }
 
 void GPUBatcher::addSpriteOutline(const SpriteTexture& sprite,
-                                  int sprite_id,
+                                  int id,
                                   float x,
                                   float y,
                                   float scale_x,
@@ -535,53 +207,161 @@ void GPUBatcher::addSpriteOutline(const SpriteTexture& sprite,
                                   float angle,
                                   const ppl7::grafix::Color& color_modulation)
 {
-    const SpriteTexture::SpriteIndexItem* item = sprite.getSpriteIndex(sprite_id);
-    if (!item || !item->tex) {
-        return;
-    }
-    if (item->tex != lasttexture) {
-        contextSwitchCount++;
-        lasttexture = item->tex;
-    }
-
-    SpriteCommand cmd;
-    cmd.texture = item->tex;
-    cmd.x = x;
-    cmd.y = y;
-    cmd.z = z;
-    cmd.scale_x = scale_x;
-    cmd.scale_y = scale_y;
-    cmd.angle = angle;
-    cmd.color_modulation = color_modulation;
-
-    cmd.uv_x = item->uv.x;
-    cmd.uv_y = item->uv.y;
-    cmd.uv_w = item->uv.w;
-    cmd.uv_h = item->uv.h;
-
-    cmd.pivot_x = (float)item->Pivot.x - (float)item->Offset.x;
-    cmd.pivot_y = (float)item->Pivot.y - (float)item->Offset.y;
-    cmd.sprite_w = (float)item->r.w;
-    cmd.sprite_h = (float)item->r.h;
-    cmd.outline = true;
-
-    z -= 0.0001f; // Slightly increase Z to ensure correct layering
-    SpriteBatchKey key = {cmd.texture, cmd.outline};
-    spriteCommands[key].push_back(cmd);
+    addSpriteInternal(sprite, id, x, y, scale_x, scale_y, angle, color_modulation, true);
 }
 
-void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness)
+void GPUBatcher::addSpriteInternal(const SpriteTexture& sprite,
+                                   int id,
+                                   float x,
+                                   float y,
+                                   float scale_x,
+                                   float scale_y,
+                                   float angle,
+                                   const ppl7::grafix::Color& color,
+                                   bool outline)
 {
-    primitiveCommands.push_back(PrimitiveCommand::Line(x1, y1, x2, y2, color, thickness));
+    const SpriteTexture::SpriteIndexItem* item = sprite.getSpriteIndex(id);
+    if (!item) return;
+
+    if (batches.empty() || batches.back().type != BatchType::Sprites || batches.back().texture != item->tex ||
+        batches.back().outline != outline) {
+        finishCurrentBatch();
+        batches.push_back(
+            {.type = BatchType::Sprites, .offset = (uint32_t)spriteInstances.size(), .count = 0, .texture = item->tex, .outline = outline});
+    }
+
+    float rad = angle * (M_PI / 180.0f);
+    float c = cosf(rad);
+    float s = sinf(rad);
+    float sw = (float)item->r.w * scale_x;
+    float sh = (float)item->r.h * scale_y;
+
+    SpriteInstance inst;
+    inst.pos_x = (x * 2.0f / screenWidth) - 1.0f;
+    inst.pos_y = 1.0f - (y * 2.0f / screenHeight);
+    inst.m00 = (2.0f / screenWidth) * sw * c;
+    inst.m01 = (2.0f / screenWidth) * sh * (-s);
+    inst.m10 = (-2.0f / screenHeight) * sw * s;
+    inst.m11 = (-2.0f / screenHeight) * sh * c;
+    inst.pos_z = 0.0f;
+    inst.pad = 0.0f;
+    inst.uv_x = item->uv.x;
+    inst.uv_y = item->uv.y;
+    inst.uv_w = item->uv.w;
+    inst.uv_h = item->uv.h;
+    inst.u_min = item->uv.x;
+    inst.v_min = item->uv.y;
+    inst.u_max = item->uv.x + item->uv.w;
+    inst.v_max = item->uv.y + item->uv.h;
+    inst.pivot_x = (float)item->Pivot.x / (float)item->r.w;
+    inst.pivot_y = (float)item->Pivot.y / (float)item->r.h;
+    inst.color_r = (float)color.red() / 255.0f;
+    inst.color_g = (float)color.green() / 255.0f;
+    inst.color_b = (float)color.blue() / 255.0f;
+    inst.color_a = (float)color.alpha() / 255.0f;
+
+    spriteInstances.push_back(inst);
+    batches.back().count++;
 }
 
-void GPUBatcher::addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness)
+void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, int thickness)
 {
-    primitiveCommands.push_back(PrimitiveCommand::Rect(PrimitiveCommand::Type::Rect, x, y, w, h, color, thickness));
+    if (thickness <= 1) {
+        if (batches.empty() || batches.back().type != BatchType::PrimitiveLines) {
+            finishCurrentBatch();
+            batches.push_back({.type = BatchType::PrimitiveLines, .offset = (uint32_t)primitiveVertices.size(), .count = 0});
+        }
+
+        auto pushV = [&](float vx, float vy) {
+            SDL_FColor c = toSDLFColor(color);
+            primitiveVertices.push_back({(vx * 2.0f / screenWidth) - 1.0f, 1.0f - (vy * 2.0f / screenHeight), 0.0f, c.r, c.g, c.b, c.a});
+        };
+
+        pushV(x1, y1);
+        pushV(x2, y2);
+        batches.back().count += 2;
+    } else {
+        // Draw thicker line as filled rectangle
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float length = sqrtf(dx * dx + dy * dy);
+        if (length > 0) {
+            float nx = -dy / length * (float)thickness * 0.5f;
+            float ny = dx / length * (float)thickness * 0.5f;
+
+            if (batches.empty() || batches.back().type != BatchType::PrimitiveTriangles) {
+                finishCurrentBatch();
+                batches.push_back({.type = BatchType::PrimitiveTriangles, .offset = (uint32_t)primitiveVertices.size(), .count = 0});
+            }
+
+            auto pushV = [&](float vx, float vy) {
+                SDL_FColor c = toSDLFColor(color);
+                primitiveVertices.push_back(
+                    {(vx * 2.0f / screenWidth) - 1.0f, 1.0f - (vy * 2.0f / screenHeight), 0.0f, c.r, c.g, c.b, c.a});
+            };
+
+            pushV(x1 + nx, y1 + ny);
+            pushV(x2 + nx, y2 + ny);
+            pushV(x1 - nx, y1 - ny);
+            pushV(x1 - nx, y1 - ny);
+            pushV(x2 + nx, y2 + ny);
+            pushV(x2 - nx, y2 - ny);
+            batches.back().count += 6;
+        }
+    }
 }
+
+void GPUBatcher::addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, int thickness)
+{
+    if (thickness <= 1) {
+        if (batches.empty() || batches.back().type != BatchType::PrimitiveLines) {
+            finishCurrentBatch();
+            batches.push_back({.type = BatchType::PrimitiveLines, .offset = (uint32_t)primitiveVertices.size(), .count = 0});
+        }
+
+        auto pushV = [&](float vx, float vy) {
+            SDL_FColor c = toSDLFColor(color);
+            primitiveVertices.push_back({(vx * 2.0f / screenWidth) - 1.0f, 1.0f - (vy * 2.0f / screenHeight), 0.0f, c.r, c.g, c.b, c.a});
+        };
+
+        pushV(x, y);
+        pushV(x + w, y);
+        pushV(x + w, y);
+        pushV(x + w, y + h);
+        pushV(x + w, y + h);
+        pushV(x, y + h);
+        pushV(x, y + h);
+        pushV(x, y);
+        batches.back().count += 8;
+    } else {
+        // Draw thicker rect using 4 filled rects (lines)
+        float t = (float)thickness;
+        addFilledRect(x - t * 0.5f, y - t * 0.5f, w + t, t, color);     // Top
+        addFilledRect(x - t * 0.5f, y + h - t * 0.5f, w + t, t, color); // Bottom
+        addFilledRect(x - t * 0.5f, y + t * 0.5f, t, h - t, color);     // Left
+        addFilledRect(x + w - t * 0.5f, y + t * 0.5f, t, h - t, color); // Right
+    }
+}
+
 void GPUBatcher::addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color)
 {
-    primitiveCommands.push_back(PrimitiveCommand::Rect(PrimitiveCommand::Type::FilledRect, x, y, w, h, color));
+    if (batches.empty() || batches.back().type != BatchType::PrimitiveTriangles) {
+        finishCurrentBatch();
+        batches.push_back({.type = BatchType::PrimitiveTriangles, .offset = (uint32_t)primitiveVertices.size(), .count = 0});
+    }
+
+    auto pushV = [&](float vx, float vy) {
+        SDL_FColor c = toSDLFColor(color);
+        primitiveVertices.push_back({(vx * 2.0f / screenWidth) - 1.0f, 1.0f - (vy * 2.0f / screenHeight), 0.0f, c.r, c.g, c.b, c.a});
+    };
+
+    pushV(x, y);
+    pushV(x + w, y);
+    pushV(x, y + h);
+    pushV(x, y + h);
+    pushV(x + w, y);
+    pushV(x + w, y + h);
+    batches.back().count += 6;
 }
 
 void GPUBatcher::loadShaders()
@@ -692,14 +472,14 @@ void GPUBatcher::createPipeline()
                                                           },
                                                       .depth_stencil_state =
                                                           {
-                                                              .compare_op = SDL_GPU_COMPAREOP_LESS_OR_EQUAL,
-                                                              .enable_depth_test = true,
-                                                              .enable_depth_write = true,
+                                                              .compare_op = SDL_GPU_COMPAREOP_ALWAYS,
+                                                              .enable_depth_test = false,
+                                                              .enable_depth_write = false,
                                                           },
                                                       .target_info = {.color_target_descriptions = &colorTarget,
                                                                       .num_color_targets = 1,
-                                                                      .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM,
-                                                                      .has_depth_stencil_target = true}};
+                                                                      .depth_stencil_format = (SDL_GPUTextureFormat)0,
+                                                                      .has_depth_stencil_target = false}};
 
     spritePipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &pipelineInfo);
     if (!spritePipeline) {
@@ -768,8 +548,8 @@ void GPUBatcher::createPipeline()
                                                                .target_info = {
                                                                    .color_target_descriptions = primitiveColorTargets,
                                                                    .num_color_targets = 1,
-                                                                   .depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D16_UNORM, // Match default
-                                                                   .has_depth_stencil_target = true,
+                                                                   .depth_stencil_format = (SDL_GPUTextureFormat)0,
+                                                                   .has_depth_stencil_target = false,
                                                                }};
 
     primitivePipeline = SDL_CreateGPUGraphicsPipeline(gpu->gpu, &primitivePipelineInfo);

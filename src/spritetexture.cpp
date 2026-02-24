@@ -337,20 +337,7 @@ void SpriteTexture::draw(GPUBatcher& gpu, int x, int y, int id) const
 void SpriteTexture::draw(GPUBatcher& gpu, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const
 {
     if (!bGPUBufferd) return;
-#ifdef OLD_SDL_RENDERER_API
-    std::map<int, SpriteIndexItem>::const_iterator it;
-    it = SpriteList.find(id);
-    if (it == SpriteList.end()) return;
-    const SpriteIndexItem& item = it->second;
-    SDL_FRect tr;
-    tr.x = x + item.Offset.x - item.Pivot.x;
-    tr.y = y + item.Offset.y - item.Pivot.y;
-    tr.w = item.r.w;
-    tr.h = item.r.h;
-    SDL_SetTextureAlphaMod(item.tex, color_modulation.alpha());
-    SDL_SetTextureColorMod(item.tex, color_modulation.red(), color_modulation.green(), color_modulation.blue());
-    SDL_RenderTexture(renderer, item.tex, &item.r, &tr);
-#endif
+    gpu.addSprite(*this, id, (float)x, (float)y, 1.0f, 1.0f, 0.0f, color_modulation);
 }
 
 void SpriteTexture::drawBoundingBox(GPUBatcher& gpu, int x, int y, int id) const
