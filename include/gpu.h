@@ -147,6 +147,7 @@ private:
 
     enum class BatchType
     {
+        None,
         Sprites,
         PrimitiveLines,
         PrimitiveTriangles
@@ -221,5 +222,6 @@ public:
 };
 
 SDL_FColor toSDLFColor(const ppl7::grafix::Color& color);
+SDL_FColor toSDLFPMAColor(const ppl7::grafix::Color& color);
 
 #endif // INCLUDE_GPU_H

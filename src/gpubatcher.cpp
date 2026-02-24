@@ -138,27 +138,27 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
 {
     if (batches.empty()) return;
 
-    // Sprite setup
+    // Static setup (doesn't change per batch type)
     if (!spriteInstances.empty()) {
-        SDL_GPUBufferBinding vBinding = {.buffer = vertexBuffer, .offset = 0};
-        SDL_BindGPUVertexBuffers(render_pass, 0, &vBinding, 1);
         SDL_BindGPUVertexStorageBuffers(render_pass, 0, &storageBuffer, 1);
         SDL_BindGPUFragmentStorageBuffers(render_pass, 0, &storageBuffer, 1);
         SDL_GPUBufferBinding iBinding = {.buffer = indexBuffer, .offset = 0};
         SDL_BindGPUIndexBuffer(render_pass, &iBinding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
     }
 
-    // Primitive setup
-    if (!primitiveVertices.empty()) {
-        SDL_GPUBufferBinding vBinding = {.buffer = primitiveVertexBuffer, .offset = 0};
-        SDL_BindGPUVertexBuffers(render_pass, 0, &vBinding, 1);
-    }
-
     SDL_GPUGraphicsPipeline* curPipe = nullptr;
     SDL_GPUTexture* curTex = nullptr;
+    BatchType curType = BatchType::None;
 
     for (const auto& b : batches) {
         if (b.type == BatchType::Sprites) {
+            // Re-bind vertex buffer if we switched from primitives
+            if (curType != BatchType::Sprites) {
+                SDL_GPUBufferBinding vBinding = {.buffer = vertexBuffer, .offset = 0};
+                SDL_BindGPUVertexBuffers(render_pass, 0, &vBinding, 1);
+                curType = BatchType::Sprites;
+            }
+
             SDL_GPUGraphicsPipeline* nextPipe = b.outline ? spriteOutlinePipeline : spritePipeline;
             if (nextPipe != curPipe) {
                 SDL_BindGPUGraphicsPipeline(render_pass, nextPipe);
@@ -170,6 +170,13 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
             }
             SDL_DrawGPUIndexedPrimitives(render_pass, 6, b.count, 0, 0, b.offset);
         } else {
+            // Re-bind vertex buffer if we switched from sprites or different primitive buffer
+            if (curType != b.type) {
+                SDL_GPUBufferBinding vBinding = {.buffer = primitiveVertexBuffer, .offset = 0};
+                SDL_BindGPUVertexBuffers(render_pass, 0, &vBinding, 1);
+                curType = b.type;
+            }
+
             SDL_GPUGraphicsPipeline* nextPipe = (b.type == BatchType::PrimitiveTriangles) ? primitiveFillPipeline : primitivePipeline;
             if (nextPipe != curPipe) {
                 SDL_BindGPUGraphicsPipeline(render_pass, nextPipe);
@@ -256,7 +263,7 @@ void GPUBatcher::addSpriteInternal(const SpriteTexture& sprite,
     inst.pivot_x = (item->r.w > 0) ? (float)(item->Pivot.x - item->Offset.x) / (float)item->r.w : 0.0f;
     inst.pivot_y = (item->r.h > 0) ? (float)(item->Pivot.y - item->Offset.y) / (float)item->r.h : 0.0f;
 
-    SDL_FColor col = toSDLFColor(color);
+    SDL_FColor col = toSDLFPMAColor(color);
     inst.color_r = col.r;
     inst.color_g = col.g;
     inst.color_b = col.b;
@@ -275,7 +282,7 @@ void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::gra
         }
 
         auto pushV = [&](float vx, float vy) {
-            SDL_FColor c = toSDLFColor(color);
+            SDL_FColor c = toSDLFPMAColor(color);
             primitiveVertices.push_back(
                 {(vx * 2.0f / (float)screenWidth) - 1.0f, 1.0f - (vy * 2.0f / (float)screenHeight), 0.0f, c.r, c.g, c.b, c.a});
         };
@@ -298,7 +305,7 @@ void GPUBatcher::addLine(float x1, float y1, float x2, float y2, const ppl7::gra
             }
 
             auto pushV = [&](float vx, float vy) {
-                SDL_FColor c = toSDLFColor(color);
+                SDL_FColor c = toSDLFPMAColor(color);
                 primitiveVertices.push_back(
                     {(vx * 2.0f / (float)screenWidth) - 1.0f, 1.0f - (vy * 2.0f / (float)screenHeight), 0.0f, c.r, c.g, c.b, c.a});
             };
@@ -324,7 +331,7 @@ void GPUBatcher::addRect(float x, float y, float w, float h, const ppl7::grafix:
         }
 
         auto pushV = [&](float vx, float vy) {
-            SDL_FColor c = toSDLFColor(color);
+            SDL_FColor c = toSDLFPMAColor(color);
             primitiveVertices.push_back(
                 {(vx * 2.0f / (float)screenWidth) - 1.0f, 1.0f - (vy * 2.0f / (float)screenHeight), 0.0f, c.r, c.g, c.b, c.a});
         };
@@ -356,7 +363,7 @@ void GPUBatcher::addFilledRect(float x, float y, float w, float h, const ppl7::g
     }
 
     auto pushV = [&](float vx, float vy) {
-        SDL_FColor c = toSDLFColor(color);
+        SDL_FColor c = toSDLFPMAColor(color);
         primitiveVertices.push_back(
             {(vx * 2.0f / (float)screenWidth) - 1.0f, 1.0f - (vy * 2.0f / (float)screenHeight), 0.0f, c.r, c.g, c.b, c.a});
     };
