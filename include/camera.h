@@ -4,7 +4,7 @@
 #include <ppl7-grafix.h>
 
 class Player;
-class GPUBatcher;
+class GameRenderer;
 class GameClock;
 
 class Camera : public ppl7::grafix::PointF
@@ -41,7 +41,7 @@ public:
     void setDeadZone(float x, float y);
     void setFollowPlayer(bool enable);
     bool isFollowingPlayer() const;
-    void draw(GPUBatcher& batcher, const GameViewport& viewport) const;
+    void draw(GameRenderer& batcher, const GameViewport& viewport) const;
 };
 
 #endif // INCLUDE_CAMERA_H_

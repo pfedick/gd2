@@ -80,52 +80,52 @@ void ParallaxLayer::draw(GameRenderer& renderer, const ppl7::grafix::PointF& wor
     if (!hasVisibleGrafix()) return;
 
     // renderstate.batcher->startRenderPass();
-    renderer.batcher.startRenderPass();
+    renderer.startRenderPass();
     metrics.time_draw_tsop.start();
 
     if (bShowSprites) {
         metrics.time_sprites.start();
-        background_sprites.draw(renderer.batcher, parallax_worldcoords);
+        background_sprites.draw(renderer, parallax_worldcoords);
         metrics.time_sprites.stop();
     }
     if (bShowObjects) {
         metrics.time_objects.start();
         if (objectEditMode) {
-            objects.drawEditMode(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
+            objects.drawEditMode(renderer, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
         } else {
-            objects.draw(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
+            objects.draw(renderer, parallax_worldcoords, Objects::Object::Layer::BehindBricks);
         }
         metrics.time_objects.stop();
     }
     if (bShowTiles) {
         metrics.time_tiles.start();
-        tiles.draw(renderer.batcher, viewport, parallax_worldcoords, size_factor);
+        tiles.draw(renderer, viewport, parallax_worldcoords, size_factor);
         metrics.time_tiles.stop();
     }
     if (bShowSprites) {
         metrics.time_sprites.start();
-        front_sprites.draw(renderer.batcher, parallax_worldcoords);
+        front_sprites.draw(renderer, parallax_worldcoords);
         metrics.time_sprites.stop();
     }
     if (bShowObjects) {
         metrics.time_objects.start();
         if (objectEditMode) {
-            objects.drawEditMode(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
+            objects.drawEditMode(renderer, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
         } else {
-            objects.draw(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
+            objects.draw(renderer, parallax_worldcoords, Objects::Object::Layer::BeforeBricks);
         }
         metrics.time_objects.stop();
     }
 
     if (myParallaxLayer == ParallaxLayerId::Player && player != NULL) {
-        player->draw(renderer.batcher, viewport, parallax_worldcoords, size_factor);
+        player->draw(renderer, viewport, parallax_worldcoords, size_factor);
     }
     if (bShowObjects) {
         metrics.time_objects.start();
         if (objectEditMode) {
-            objects.drawEditMode(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
+            objects.drawEditMode(renderer, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
         } else {
-            objects.draw(renderer.batcher, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
+            objects.draw(renderer, parallax_worldcoords, Objects::Object::Layer::BeforePlayer);
         }
         metrics.time_objects.stop();
     }
@@ -134,14 +134,14 @@ void ParallaxLayer::draw(GameRenderer& renderer, const ppl7::grafix::PointF& wor
         drawTileGrid(renderer, parallax_worldcoords, viewport);
     }
     if (bShowTileTypes) {
-        TileTypeMatrix.draw(renderer.batcher, viewport, parallax_worldcoords, size_factor);
+        TileTypeMatrix.draw(renderer, viewport, parallax_worldcoords, size_factor);
     }
     if (isEditLayer) {
-        game->editor.drawSelection(renderer.batcher);
+        game->editor.drawSelection(renderer);
     }
 
     //  background_sprites.draw(batcher, cmdbuf, swapchainTexture, worldcoords, viewport
-    renderer.batcher.prepareInstanceData(renderer.getCommandBuffer());
+    renderer.prepareInstanceData();
 
     SDL_GPUColorTargetInfo colorTargetInfo = {0};
     colorTargetInfo.texture = renderer.render_layer;
@@ -169,7 +169,7 @@ void ParallaxLayer::draw(GameRenderer& renderer, const ppl7::grafix::PointF& wor
     SDL_SetGPUViewport(renderPass, NULL);
     SDL_SetGPUScissor(renderPass, NULL);
 
-    renderer.batcher.endRenderPass(renderer.getCommandBuffer(), renderPass);
+    renderer.endRenderPass(renderPass);
     SDL_EndGPURenderPass(renderPass);
 
     // Post-Processing: Blur
@@ -197,13 +197,13 @@ void ParallaxLayer::drawTileGrid(GameRenderer& renderer, const ppl7::grafix::Poi
     start_y = -offset_y;
 
     for (float x = start_x; x < viewport.width(); x += tile_width) {
-        renderer.batcher.addLine(x + 2, 0, x + 2, viewport.height(), grid_shadow, 2.0f);
-        renderer.batcher.addLine(x, 0, x, viewport.height(), grid_color, 2.0f);
+        renderer.addLine(x + 2, 0, x + 2, viewport.height(), grid_shadow, 2.0f);
+        renderer.addLine(x, 0, x, viewport.height(), grid_color, 2.0f);
     }
 
     for (float y = start_y; y < viewport.height(); y += tile_height) {
-        renderer.batcher.addLine(0, y + 2, viewport.width(), y + 2, grid_shadow, 2.0f);
-        renderer.batcher.addLine(0, y, viewport.width(), y, grid_color, 2.0f);
+        renderer.addLine(0, y + 2, viewport.width(), y + 2, grid_shadow, 2.0f);
+        renderer.addLine(0, y, viewport.width(), y, grid_color, 2.0f);
     }
 }
 

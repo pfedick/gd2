@@ -268,14 +268,14 @@ void GameEditor::handleMouseDrawInWorld(const ppltk::MouseState& mouse)
     }
 }
 
-void GameEditor::drawSelection(GPUBatcher& batcher)
+void GameEditor::drawSelection(GameRenderer& renderer)
 {
-    game->editor.drawSelectedSprite(batcher, mouse.p - game->viewport.topLeft());
-    game->editor.drawSelectedObject(batcher, mouse.p - game->viewport.topLeft());
-    game->editor.drawSelectedTile(batcher, mouse.p - game->viewport.topLeft());
+    game->editor.drawSelectedSprite(renderer, mouse.p - game->viewport.topLeft());
+    game->editor.drawSelectedObject(renderer, mouse.p - game->viewport.topLeft());
+    game->editor.drawSelectedTile(renderer, mouse.p - game->viewport.topLeft());
 }
 
-void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Point& mouse)
+void GameEditor::drawSelectedSprite(GameRenderer& renderer, const ppl7::grafix::Point& mouse)
 {
     if (!sprite_selection) return;
     // if (mouse.x < 0 || mouse.y < 0) return;
@@ -289,7 +289,7 @@ void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Poi
     // ParallaxLayer::SpritePosition sprite_layer = sprite_selection->currentSpriteLayer();
     if (sprite_mode == SpriteMode::Edit && selected_sprite.id >= 0 && selected_sprite_system != NULL) {
 
-        selected_sprite_system->drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_sprite.id);
+        selected_sprite_system->drawSelectedSpriteOutline(renderer, parallax_worldcoords, selected_sprite.id);
     } else if (sprite_mode == SpriteMode::Draw) {
         int nr = sprite_selection->selectedSprite();
         if (nr < 0) return;
@@ -305,12 +305,12 @@ void GameEditor::drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Poi
         if (nr < 0 || spriteset < 0 || spriteset >= static_cast<int>(Resources::SpriteSets::MaxSpriteSet)) return;
         // game->resources.SpriteSets[static_cast<int>(spriteset)].Sprites.drawScaledWithAngle(
         //     batcher, tmouse.x, tmouse.y, nr, scale, scale, rotation, game->level.palette.getColor(sprite_selection->colorIndex()));
-        game->resources.SpriteSets[static_cast<int>(spriteset)].Sprites.drawOutlinesWithAngle(batcher, tmouse.x, tmouse.y, nr, scale, scale,
-                                                                                              rotation);
+        game->resources.SpriteSets[static_cast<int>(spriteset)].Sprites.drawOutlinesWithAngle(renderer, tmouse.x, tmouse.y, nr, scale,
+                                                                                              scale, rotation);
     }
 }
 
-void GameEditor::drawSelectedTile(GPUBatcher& batcher, const ppl7::grafix::Point& mouse)
+void GameEditor::drawSelectedTile(GameRenderer& renderer, const ppl7::grafix::Point& mouse)
 {
     if (!tiles_selection) return;
     if (mouse.x < 0 || mouse.y < 0) return;
@@ -339,12 +339,12 @@ void GameEditor::drawSelectedTile(GPUBatcher& batcher, const ppl7::grafix::Point
     if (!layer.tiles.isOccupied(tx, ty, currentLayer, occupation)) {
         float x = (float)tx * scaled_tile_width - parallax_worldcoords.x;
         float y = (float)ty * scaled_tile_height - parallax_worldcoords.y;
-        batcher.addSprite(tile_resource.Sprites, nr, x, y + scaled_tile_height, layer.size_factor, layer.size_factor, 0.0f,
-                          game->level.palette.getColor(color_index));
+        renderer.addSprite(tile_resource.Sprites, nr, x, y + scaled_tile_height, layer.size_factor, layer.size_factor, 0.0f,
+                           game->level.palette.getColor(color_index));
     }
 }
 
-void GameEditor::drawSelectedObject(GPUBatcher& batcher, const ppl7::grafix::Point& mouse)
+void GameEditor::drawSelectedObject(GameRenderer& renderer, const ppl7::grafix::Point& mouse)
 {
     if (!object_selection) return;
     ParallaxLayer& layer = game->level.layer(mainmenue->currentLayer());
@@ -352,12 +352,12 @@ void GameEditor::drawSelectedObject(GPUBatcher& batcher, const ppl7::grafix::Poi
 
     if (sprite_mode == SpriteMode::Edit && selected_object != NULL) {
         // selected_sprite_system->drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_sprite.id, layer.size_factor);
-        layer.objects.drawSelectedSpriteOutline(batcher, parallax_worldcoords, selected_object->id);
+        layer.objects.drawSelectedSpriteOutline(renderer, parallax_worldcoords, selected_object->id);
     } else if (sprite_mode == SpriteMode::Draw) {
         Objects::Type object_type = object_selection->selectedObjectType();
         if (object_type == Objects::Type::Invalid) return;
         ppl7::grafix::PointF tmouse = game->game_viewport.translate(mouse);
-        layer.objects.drawPlaceSelection(batcher, tmouse, object_type);
+        layer.objects.drawPlaceSelection(renderer, tmouse, object_type);
     }
 }
 

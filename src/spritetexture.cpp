@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include "gpu.h"
+#include "gamerenderer.h"
 #include "sprite.h"
 
 using namespace ppl7;
@@ -313,10 +313,10 @@ SDL_FRect SpriteTexture::getSpriteSource(int id) const
     return (*it).second.uv;
 }
 
-void SpriteTexture::draw(GPUBatcher& gpu, int x, int y, int id) const
+void SpriteTexture::draw(GameRenderer& renderer, int x, int y, int id) const
 {
     if (!bGPUBufferd) return;
-    gpu.addSprite(*this, id, (float)x, (float)y);
+    renderer.addSprite(*this, id, (float)x, (float)y);
 #ifdef OLD_SDL_RENDERER_API
     std::map<int, SpriteIndexItem>::const_iterator it;
     it = SpriteList.find(id);
@@ -334,13 +334,13 @@ void SpriteTexture::draw(GPUBatcher& gpu, int x, int y, int id) const
 #endif
 }
 
-void SpriteTexture::draw(GPUBatcher& gpu, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const
+void SpriteTexture::draw(GameRenderer& renderer, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const
 {
     if (!bGPUBufferd) return;
-    gpu.addSprite(*this, id, (float)x, (float)y, 1.0f, 1.0f, 0.0f, color_modulation);
+    renderer.addSprite(*this, id, (float)x, (float)y, 1.0f, 1.0f, 0.0f, color_modulation);
 }
 
-void SpriteTexture::drawBoundingBox(GPUBatcher& gpu, int x, int y, int id) const
+void SpriteTexture::drawBoundingBox(GameRenderer& renderer, int x, int y, int id) const
 {
     if (!bGPUBufferd) return;
 #ifdef OLD_SDL_RENDERER_API
@@ -357,7 +357,7 @@ void SpriteTexture::drawBoundingBox(GPUBatcher& gpu, int x, int y, int id) const
 #endif
 }
 
-void SpriteTexture::drawBoundingBoxWithAngle(GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle) const
+void SpriteTexture::drawBoundingBoxWithAngle(GameRenderer& renderer, int x, int y, int id, float scale_x, float scale_y, float angle) const
 {
     if (!bGPUBufferd) return;
     std::map<int, SpriteIndexItem>::const_iterator it;
@@ -377,40 +377,47 @@ void SpriteTexture::drawBoundingBoxWithAngle(GPUBatcher& gpu, int x, int y, int 
 #endif
 }
 
-void SpriteTexture::draw(GPUBatcher& gpu, int id, const SDL_FRect& source, const SDL_FRect& target) const
+void SpriteTexture::draw(GameRenderer& renderer, int id, const SDL_FRect& source, const SDL_FRect& target) const
 {
     if (!bGPUBufferd) return;
     // gpu.addSprite(*this, id, target.x, target.y, target.w / source.w, target.h / source.h, 0.0f, ppl7::grafix::Color(255, 255, 255, 255),
     // source);
 }
 
-void SpriteTexture::drawScaled(GPUBatcher& gpu, int x, int y, int id, float scale_factor) const
+void SpriteTexture::drawScaled(GameRenderer& renderer, int x, int y, int id, float scale_factor) const
 {
     if (!bGPUBufferd) return;
-    gpu.addSprite(*this, id, (float)x, (float)y, scale_factor, scale_factor);
+    renderer.addSprite(*this, id, (float)x, (float)y, scale_factor, scale_factor);
 }
 
-void SpriteTexture::drawScaled(GPUBatcher& gpu, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const
+void SpriteTexture::drawScaled(
+    GameRenderer& renderer, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const
 {
     if (!bGPUBufferd) return;
-    gpu.addSprite(*this, id, (float)x, (float)y, scale_factor, scale_factor, 0.0f, color_modulation);
+    renderer.addSprite(*this, id, (float)x, (float)y, scale_factor, scale_factor, 0.0f, color_modulation);
 }
 
-void SpriteTexture::drawScaledWithAngle(
-    GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color_modulation) const
+void SpriteTexture::drawScaledWithAngle(GameRenderer& renderer,
+                                        int x,
+                                        int y,
+                                        int id,
+                                        float scale_x,
+                                        float scale_y,
+                                        float angle,
+                                        const ppl7::grafix::Color& color_modulation) const
 {
     if (!bGPUBufferd) return;
-    gpu.addSprite(*this, id, (float)x, (float)y, scale_x, scale_y, angle, color_modulation);
+    renderer.addSprite(*this, id, (float)x, (float)y, scale_x, scale_y, angle, color_modulation);
 }
 
-void SpriteTexture::drawOutlines(GPUBatcher& gpu, int x, int y, int id, float scale_factor)
+void SpriteTexture::drawOutlines(GameRenderer& renderer, int x, int y, int id, float scale_factor)
 {
-    gpu.addSpriteOutline(*this, id, (float)x, (float)y, scale_factor, scale_factor);
+    renderer.addSpriteOutline(*this, id, (float)x, (float)y, scale_factor, scale_factor);
 }
 
-void SpriteTexture::drawOutlinesWithAngle(GPUBatcher& gpu, int x, int y, int id, float scale_x, float scale_y, float angle)
+void SpriteTexture::drawOutlinesWithAngle(GameRenderer& renderer, int x, int y, int id, float scale_x, float scale_y, float angle)
 {
-    gpu.addSpriteOutline(*this, id, (float)x, (float)y, scale_x, scale_y, angle);
+    renderer.addSpriteOutline(*this, id, (float)x, (float)y, scale_x, scale_y, angle);
 }
 
 ppl7::grafix::Size SpriteTexture::spriteSize(int id, float scale_factor) const

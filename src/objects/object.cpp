@@ -103,24 +103,24 @@ size_t Object::load(const unsigned char* buffer, size_t size)
     return 17;
 }
 
-void Object::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const
+void Object::drawEditMode(GameRenderer& renderer, const ppl7::grafix::Point& coords) const
 {
     if (!spawned) {
-        batcher.addSprite(*texture, sprite_no_representation, initial_p.x + coords.x, initial_p.y + coords.y, scale, scale, rotation,
-                          color_mod);
+        renderer.addSprite(*texture, sprite_no_representation, initial_p.x + coords.x, initial_p.y + coords.y, scale, scale, rotation,
+                           color_mod);
     }
 
     ppl7::grafix::Color c = color_mod;
     c.setAlpha(90);
-    batcher.addSprite(*texture, sprite_no, p.x + coords.x, p.y + coords.y, scale, scale, rotation, c);
+    renderer.addSprite(*texture, sprite_no, p.x + coords.x, p.y + coords.y, scale, scale, rotation, c);
 }
 
-void Object::draw(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const
+void Object::draw(GameRenderer& renderer, const ppl7::grafix::Point& coords) const
 {
     if (myType == Type::PlayerStartpoint) {
         ppl7::PrintDebug("Drawing PlayerStartpoint at (%f, %f)\n", p.x, p.y);
     }
-    batcher.addSprite(*texture, sprite_no, p.x + coords.x, p.y + coords.y, scale, scale, rotation, color_mod);
+    renderer.addSprite(*texture, sprite_no, p.x + coords.x, p.y + coords.y, scale, scale, rotation, color_mod);
 }
 
 void Object::handleCollision(Player* player, const Collision& collision)

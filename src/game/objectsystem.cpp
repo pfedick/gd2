@@ -164,7 +164,7 @@ void ObjectSystem::update(const GameClock& clock, TileTypePlane& ttplane, Player
     }
 }
 
-void ObjectSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const
+void ObjectSystem::draw(GameRenderer& renderer, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const
 {
     std::map<uint64_t, Objects::Object*>::const_iterator it;
     ppl7::grafix::Point coords(-worldcoords.x, -worldcoords.y);
@@ -173,12 +173,12 @@ void ObjectSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoo
         const Objects::Object* object = it->second;
         if (object->texture != NULL && object->enabled == true && object->visibleAtPlaytime == true && object->myLayer == layer &&
             (object->difficulty_matrix & dm)) {
-            object->draw(batcher, coords);
+            object->draw(renderer, coords);
         }
     }
 }
 
-static void drawId(GPUBatcher& batcher, SpriteTexture* spriteset, int x, int y, uint32_t as)
+static void drawId(GameRenderer& renderer, SpriteTexture* spriteset, int x, int y, uint32_t as)
 {
     ppl7::WideString s;
     uint32_t id = as & 0xffffff;
@@ -195,7 +195,7 @@ static void drawId(GPUBatcher& batcher, SpriteTexture* spriteset, int x, int y, 
     x -= w / 2;
     for (size_t p = 0; p < s.size(); p++) {
         int num = s[p];
-        batcher.addSprite(*spriteset, num, x, y);
+        renderer.addSprite(*spriteset, num, x, y);
         if (s[p] == ' ')
             x += 12;
         else
@@ -203,7 +203,7 @@ static void drawId(GPUBatcher& batcher, SpriteTexture* spriteset, int x, int y, 
     }
 }
 
-void ObjectSystem::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const
+void ObjectSystem::drawEditMode(GameRenderer& renderer, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const
 {
     std::map<uint64_t, Objects::Object*>::const_iterator it;
     ppl7::grafix::Point coords(-worldcoords.x, -worldcoords.y);
@@ -211,14 +211,14 @@ void ObjectSystem::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& 
         const Objects::Object* object = it->second;
         if (object->type() == Objects::Type::Projectile) {
             if (object->texture != NULL && object->myLayer == layer) {
-                object->draw(batcher, coords);
+                object->draw(renderer, coords);
             }
         } else {
             if (object->texture != NULL && object->myLayer == layer) {
-                object->drawEditMode(batcher, coords);
-                drawId(batcher, spritesets->fonts, object->p.x + coords.x, object->p.y + coords.y, object->id);
+                object->drawEditMode(renderer, coords);
+                drawId(renderer, spritesets->fonts, object->p.x + coords.x, object->p.y + coords.y, object->id);
                 if (object->p != object->initial_p && object->spawned == false)
-                    drawId(batcher, spritesets->fonts, object->initial_p.x + coords.x, object->initial_p.y + coords.y, object->id);
+                    drawId(renderer, spritesets->fonts, object->initial_p.x + coords.x, object->initial_p.y + coords.y, object->id);
             }
         }
     }
@@ -292,16 +292,16 @@ Objects::Object* ObjectSystem::getObject(uint32_t object_id) const
     return NULL;
 }
 
-void ObjectSystem::drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, int id)
+void ObjectSystem::drawSelectedSpriteOutline(GameRenderer& renderer, const ppl7::grafix::Point& worldcoords, int id)
 {
     std::map<uint32_t, Objects::Object*>::const_iterator it;
     it = object_list.find(id);
     if (it != object_list.end()) {
         const Objects::Object* item = it->second;
         if (item->texture) {
-            item->texture->drawOutlines(batcher, item->initial_p.x - worldcoords.x, item->initial_p.y - worldcoords.y,
+            item->texture->drawOutlines(renderer, item->initial_p.x - worldcoords.x, item->initial_p.y - worldcoords.y,
                                         item->sprite_no_representation, item->scale);
-            drawId(batcher, spritesets->fonts, item->initial_p.x - worldcoords.x, item->initial_p.y - worldcoords.y, item->id);
+            drawId(renderer, spritesets->fonts, item->initial_p.x - worldcoords.x, item->initial_p.y - worldcoords.y, item->id);
         }
     }
 }
@@ -312,14 +312,14 @@ SpriteTexture* ObjectSystem::getTexture(Objects::SpritesetId sprite_set) const
     return spritesets->getSpriteset(sprite_set);
 }
 
-void ObjectSystem::drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::Point& p, Objects::Type object_type)
+void ObjectSystem::drawPlaceSelection(GameRenderer& renderer, const ppl7::grafix::Point& p, Objects::Type object_type)
 {
     Objects::Representation repr = Objects::getRepresentation(object_type);
     if (repr.sprite_set < Objects::SpritesetId::MaxSpritesets) {
         SpriteTexture* texture = getTexture(repr.sprite_set);
         if (texture) {
-            texture->draw(batcher, p.x, p.y, repr.sprite_no);
-            texture->drawOutlines(batcher, p.x, p.y, repr.sprite_no, 1.0f);
+            texture->draw(renderer, p.x, p.y, repr.sprite_no);
+            texture->drawOutlines(renderer, p.x, p.y, repr.sprite_no, 1.0f);
         }
     }
 }

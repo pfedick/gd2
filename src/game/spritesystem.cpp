@@ -162,7 +162,7 @@ size_t SpriteSystem::countVisible() const
     return visible_sprite_map.size();
 }
 
-void SpriteSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords) const
+void SpriteSystem::draw(GameRenderer& renderer, const ppl7::grafix::Point& worldcoords) const
 {
     if (!bSpritesVisible) return;
     std::map<uint64_t, const SpriteSystem::Item&>::const_iterator it;
@@ -170,13 +170,13 @@ void SpriteSystem::draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoo
     for (it = visible_sprite_map.begin(); it != visible_sprite_map.end(); ++it) {
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
-            batcher.addSprite(*item.texture, item.sprite_no, item.x - worldcoords.x, item.y - worldcoords.y, item.scale * scale_factor,
-                              item.scale * scale_factor, item.rotation, palette->getColor(item.color_index));
+            renderer.addSprite(*item.texture, item.sprite_no, item.x - worldcoords.x, item.y - worldcoords.y, item.scale * scale_factor,
+                               item.scale * scale_factor, item.rotation, palette->getColor(item.color_index));
         }
     }
 }
 
-void SpriteSystem::drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, int id)
+void SpriteSystem::drawSelectedSpriteOutline(GameRenderer& renderer, const ppl7::grafix::Point& worldcoords, int id)
 {
     if (!bSpritesVisible) return;
     std::map<int, SpriteSystem::Item>::const_iterator it;
@@ -184,8 +184,8 @@ void SpriteSystem::drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::gr
     if (it != sprite_list.end()) {
         const SpriteSystem::Item& item = (it->second);
         if (item.texture) {
-            batcher.addSpriteOutline(*item.texture, item.sprite_no, item.x - worldcoords.x, item.y - worldcoords.y,
-                                     item.scale * scale_factor, item.scale * scale_factor, item.rotation);
+            renderer.addSpriteOutline(*item.texture, item.sprite_no, item.x - worldcoords.x, item.y - worldcoords.y,
+                                      item.scale * scale_factor, item.scale * scale_factor, item.rotation);
         }
     }
 }

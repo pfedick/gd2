@@ -386,22 +386,21 @@ void Level::setPlayer(Player* player)
     }
 }
 
-void Level::draw(GameRenderer* renderer, const Camera& worldcoords, const GameViewport& viewport, Metrics& metrics)
+void Level::draw(GameRenderer& renderer, const Camera& worldcoords, const GameViewport& viewport, Metrics& metrics)
 {
-    if (!renderer) return;
-    renderer->clearTexture(renderer->render_target, runtimeParams.BackgroundColor);
+    renderer.clearTexture(renderer.render_target, runtimeParams.BackgroundColor);
 
     // Step 2: Draw all parallax layers in correct order to internal render target
-    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].draw(*renderer, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].draw(*renderer, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].draw(*renderer, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].draw(*renderer, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].draw(*renderer, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].draw(*renderer, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].draw(*renderer, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].draw(*renderer, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(*renderer, worldcoords, viewport, metrics);
-    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(*renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Sky)].draw(renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Horizon)].draw(renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Far)].draw(renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Middle)].draw(renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Behind)].draw(renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Back)].draw(renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Player)].draw(renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Front)].draw(renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Close)].draw(renderer, worldcoords, viewport, metrics);
+    parallax_layers[static_cast<int>(ParallaxLayerId::Near)].draw(renderer, worldcoords, viewport, metrics);
 
     drawDebug(renderer, worldcoords, viewport, player);
     // Copy final render target, which is 4k, into viewport on swapchain, which may be smaller or bigger
@@ -414,26 +413,26 @@ void Level::draw(GameRenderer* renderer, const Camera& worldcoords, const GameVi
         if (destRect.x < v.x1) destRect.x += v.x1;
     }
 
-    renderer->copyTextureToSwapchain(renderer->render_target, destRect);
+    renderer.copyTextureToSwapchain(renderer.render_target, destRect);
     //  copyRenderTargetToSwapchain(cmdbuf, swapchainTexture, destRect);
 }
 
-void Level::drawDebug(GameRenderer* renderer, const Camera& camera, const GameViewport& viewport, const Player* player)
+void Level::drawDebug(GameRenderer& renderer, const Camera& camera, const GameViewport& viewport, const Player* player)
 {
-    renderer->batcher.startRenderPass();
-    if (player && bShowCollisions) player->drawCollision(renderer->batcher, viewport, camera);
-    camera.draw(renderer->batcher, viewport);
+    renderer.startRenderPass();
+    if (player && bShowCollisions) player->drawCollision(renderer, viewport, camera);
+    camera.draw(renderer, viewport);
 
-    renderer->batcher.prepareInstanceData(renderer->getCommandBuffer());
+    renderer.prepareInstanceData();
     SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.texture = renderer->render_target;
+    colorTargetInfo.texture = renderer.render_target;
     colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 0.0f}; // Black background
     colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
 
     SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
-    depthTargetInfo.texture = renderer->depth_buffer;
+    depthTargetInfo.texture = renderer.depth_buffer;
     depthTargetInfo.clear_depth = 1.0f;
     depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
     depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
@@ -441,12 +440,11 @@ void Level::drawDebug(GameRenderer* renderer, const Camera& camera, const GameVi
     depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
     depthTargetInfo.cycle = false;
 
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderer->getCommandBuffer(), &colorTargetInfo, 1, &depthTargetInfo);
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderer.getCommandBuffer(), &colorTargetInfo, 1, &depthTargetInfo);
     // SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, NULL);
     SDL_SetGPUViewport(renderPass, NULL);
     SDL_SetGPUScissor(renderPass, NULL);
-
-    renderer->batcher.endRenderPass(renderer->getCommandBuffer(), renderPass);
+    renderer.endRenderPass(renderPass);
     SDL_EndGPURenderPass(renderPass);
 }
 

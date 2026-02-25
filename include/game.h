@@ -212,11 +212,11 @@ public:
     void updateParallaxLayerForSelectedObject(ParallaxLayerId plane);
     void setSpriteModeToDraw();
 
-    void drawSelection(GPUBatcher& batcher);
+    void drawSelection(GameRenderer& renderer);
 
-    void drawSelectedSprite(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
-    void drawSelectedTile(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
-    void drawSelectedObject(GPUBatcher& batcher, const ppl7::grafix::Point& mouse);
+    void drawSelectedSprite(GameRenderer& renderer, const ppl7::grafix::Point& mouse);
+    void drawSelectedTile(GameRenderer& renderer, const ppl7::grafix::Point& mouse);
+    void drawSelectedObject(GameRenderer& renderer, const ppl7::grafix::Point& mouse);
 
     void selectSprite(const ppl7::grafix::Point& mouse);
     void updateSpriteFromUi();

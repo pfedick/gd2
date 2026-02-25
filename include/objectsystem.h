@@ -6,7 +6,7 @@
 #include <vector>
 #include <ppl7.h>
 #include <ppl7-grafix.h>
-#include "gpu.h"
+#include "gamerenderer.h"
 
 #include "animation.h"
 // #include "particle.h"
@@ -191,8 +191,8 @@ public:
     virtual size_t load(const unsigned char* buffer, size_t size);
     virtual size_t saveSize() const;
     virtual void handleCollision(Player* player, const Collision& collision);
-    virtual void draw(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const;
-    virtual void drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const;
+    virtual void draw(GameRenderer& renderer, const ppl7::grafix::Point& coords) const;
+    virtual void drawEditMode(GameRenderer& renderer, const ppl7::grafix::Point& coords) const;
     virtual void openUi();
     virtual void reset();
     virtual void toggle(bool enable, Object* source = NULL);
@@ -261,8 +261,8 @@ public:
     Objects::Object* getInstance(Objects::Type object_type) const;
     void update(const GameClock& clock, TileTypePlane& ttplane, Player& player);
     void updateVisibleObjectList(const ppl7::grafix::PointF& worldcoords, const ppl7::grafix::Size& render_target_size);
-    void draw(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const;
-    void drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const;
+    void draw(GameRenderer& renderer, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const;
+    void drawEditMode(GameRenderer& renderer, const ppl7::grafix::Point& worldcoords, Objects::Object::Layer layer) const;
     void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const;
     void load(const ppl7::ByteArrayPtr& ba);
     Objects::Object* getObject(uint32_t object_id) const;
@@ -272,8 +272,8 @@ public:
     void detectObjectCollision(const Objects::Object* object, std::list<Objects::Object*>& collision_object_list);
     void detectObjectCollision(const ppl7::grafix::Rect& boundary, std::list<Objects::Object*>& collision_object_list);
 
-    void drawSelectedSpriteOutline(GPUBatcher& batcher, const ppl7::grafix::Point& worldcoords, int id);
-    void drawPlaceSelection(GPUBatcher& batcher, const ppl7::grafix::Point& p, Objects::Type object_type);
+    void drawSelectedSpriteOutline(GameRenderer& renderer, const ppl7::grafix::Point& worldcoords, int id);
+    void drawPlaceSelection(GameRenderer& renderer, const ppl7::grafix::Point& p, Objects::Type object_type);
     void deleteObject(uint32_t id);
     bool findObjectsInRange(const ppl7::grafix::PointF& p, double range, std::list<Objects::Object*>& objects);
     ppl7::grafix::Point findPlayerStart() const;

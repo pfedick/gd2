@@ -98,7 +98,7 @@ void TileTypePlane::setTileTypesSprites(SpriteTexture* sprites)
  * \param viewport The GameViewport that defines the visible area.
  * \param worldcoords The world coordinates representing the top-left corner of the viewport.
  */
-void TileTypePlane::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const
+void TileTypePlane::draw(GameRenderer& renderer, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const
 {
     if (!tiletypes) return;
     const ppl7::grafix::Size& render_target_size = viewport.getLogicalSize();
@@ -123,7 +123,7 @@ void TileTypePlane::draw(GPUBatcher& batcher, const GameViewport& viewport, cons
         for (int x = 0; x < tiles_num_x; x++) {
             TileType::Type type = getType(x + start_x, y + start_y);
             if (type > 0) {
-                batcher.addSprite(*tiletypes, type, x1 + x * scaled_tile_width, y1 + y * scaled_tile_height, scale, scale);
+                renderer.addSprite(*tiletypes, type, x1 + x * scaled_tile_width, y1 + y * scaled_tile_height, scale, scale);
             }
         }
     }

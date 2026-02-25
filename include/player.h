@@ -4,6 +4,7 @@
 
 class SpriteTexture;
 #include "gpu.h"
+#include "gamerenderer.h"
 #include "animation.h"
 #include "physic.h"
 #include "audio.h"
@@ -234,9 +235,9 @@ public:
     void setSavePoint(const ppl7::grafix::Point& p);
     void setSpriteResource(const SpriteTexture& resource);
     void setTileTypeResource(const SpriteTexture& resource);
-    void draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords, float size) const;
+    void draw(GameRenderer& renderer, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords, float size) const;
     // void addFlashlightToLightSystem(LightSystem& lights);
-    void drawCollision(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords) const;
+    void drawCollision(GameRenderer& renderer, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords) const;
     void move(int x, int y);
     ppl7::grafix::Rect getBoundingBox() const;
     void setStandingOnObject(Objects::Object* object);

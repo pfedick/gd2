@@ -313,7 +313,7 @@ bool TileGrid::hasTileset(int no) const
     return no >= 0 && no < (int)this->tileset.size() && this->tileset[no] != nullptr;
 }
 
-void TileGrid::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const
+void TileGrid::draw(GameRenderer& renderer, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const
 {
     // ppl7::PrintDebugTime("Drawing TileGrid at worldcoords %.2f/%.2f, scale %.2f\n", worldcoords.x, worldcoords.y, scale);
     if (!palette) return;
@@ -343,8 +343,8 @@ void TileGrid::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl
             for (int x = 0; x < tiles_num_x; x++) {
                 const Tile* tile = get(x + start_x, y + start_y);
                 if (tile != NULL && tile->tileLayers[z].tileset) {
-                    batcher.addSprite(*tileset[tile->tileLayers[z].tileset], tile->tileLayers[z].tileno, x1 + x * scaled_tile_width,
-                                      y1 + y * scaled_tile_height, scale, scale, 0.0f, palette->getColor(tile->tileLayers[z].color_index));
+                    renderer.addSprite(*tileset[tile->tileLayers[z].tileset], tile->tileLayers[z].tileno, x1 + x * scaled_tile_width,
+                                       y1 + y * scaled_tile_height, scale, scale, 0.0f, palette->getColor(tile->tileLayers[z].color_index));
                 }
             }
         }

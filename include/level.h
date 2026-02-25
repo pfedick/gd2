@@ -203,7 +203,7 @@ private:
     // void clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf);
     // void copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const SDL_FRect& destRect);
     void updateVisibility();
-    void drawDebug(GameRenderer* renderer, const Camera& camera, const GameViewport& viewport, const Player* player);
+    void drawDebug(GameRenderer& renderer, const Camera& camera, const GameViewport& viewport, const Player* player);
 
 public:
     Level(Game* game);
@@ -218,7 +218,7 @@ public:
     void load(const ppl7::String& Filename);
     void save(const ppl7::String& Filename);
     void backup(const ppl7::String& Filename);
-    void draw(GameRenderer* renderer, const Camera& worldcoords, const GameViewport& viewport, Metrics& metrics);
+    void draw(GameRenderer& renderer, const Camera& worldcoords, const GameViewport& viewport, Metrics& metrics);
 
     void update(const GameClock& clock,
                 Metrics& metrics,

@@ -1,6 +1,7 @@
 #include <math.h>
 #include <ppl7-grafix.h>
 #include "game.h"
+#include "gamerenderer.h"
 #include "player.h"
 #include "constants.h"
 
@@ -41,7 +42,7 @@ void Camera::setRenderSize(const ppl7::grafix::Size& size)
     render_size = size;
 }
 
-void Camera::draw(GPUBatcher& batcher, const GameViewport& viewport) const
+void Camera::draw(GameRenderer& renderer, const GameViewport& viewport) const
 {
     // Hier könnte man z.B. eine Debug-Ansicht der Kamera zeichnen, z.B. die Dead-Zone oder die Zielposition
 }

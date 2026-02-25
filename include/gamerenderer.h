@@ -35,6 +35,8 @@ private:
     void createPipelines();
     void createSamplers();
 
+    GPUBatcher batcher;
+
 public:
     GPUContext* gpu;
 
@@ -44,8 +46,6 @@ public:
     SDL_GPUTexture* blur_temp;
     SDL_GPUTexture* render_normal;
     SDL_GPUTexture* depth_buffer;
-
-    GPUBatcher batcher;
 
     GameRenderer();
     ~GameRenderer();
@@ -68,27 +68,32 @@ public:
     ppl7::grafix::Image getScreenshot(int width, int height);
 
     // Draw functions
-    void setRenderTarget(SDL_GPUTexture* texture);
-    void beginRenderPass();
-    void endRenderPass();
-    void drawSprite(const SpriteTexture& sprite,
-                    int sprite_id,
-                    float x,
-                    float y,
-                    float scale_x = 1.0f,
-                    float scale_y = 1.0f,
-                    float angle = 0.0f,
-                    const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
+    void updateMatrices(int screenWidth, int screenHeight);
+    void updateMatrices(const ppl7::grafix::Size& size);
+
+    void startRenderPass();
+    void prepareInstanceData(); // Upload instance data before render pass
+    void endRenderPass(SDL_GPURenderPass* render_pass);
+
+    void addSprite(const SpriteTexture& sprite,
+                   int id,
+                   float x,
+                   float y,
+                   float scale_x = 1.0f,
+                   float scale_y = 1.0f,
+                   float angle = 0.0f,
+                   const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
     void addSpriteOutline(const SpriteTexture& sprite,
-                          int sprite_id,
+                          int id,
                           float x,
                           float y,
                           float scale_x = 1.0f,
                           float scale_y = 1.0f,
                           float angle = 0.0f,
                           const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
-    void addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, float thickness = 1.0f);
-    void addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, float thickness = 1.0f);
+
+    void addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, int thickness = 1);
+    void addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, int thickness = 1);
     void addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color);
 };
 

@@ -3,7 +3,7 @@
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include "sprite.h"
-#include "gpu.h"
+#include "gamerenderer.h"
 
 class TileType
 {
@@ -71,7 +71,7 @@ public:
     TileType::Type getType(const ppl7::grafix::Point& player) const;
     // int getPlayerGround(const ppl7::grafix::Point& player) const;
     void setTileTypesSprites(SpriteTexture* sprites);
-    void draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const;
+    void draw(GameRenderer& renderer, const GameViewport& viewport, const ppl7::grafix::PointF& worldcoords, float scale) const;
     void save(ppl7::FileObject& file, unsigned char chunkid, unsigned char layer) const;
     void load(const ppl7::ByteArrayPtr& ba);
     ppl7::grafix::Rect getOccupiedArea() const;

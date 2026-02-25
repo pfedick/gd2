@@ -307,7 +307,7 @@ public:
     void reset();
     virtual void toggle(bool enable, Object* source = NULL) override;
     virtual void trigger(Object* source = NULL) override;
-    void drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const override;
+    void drawEditMode(GameRenderer& renderer, const ppl7::grafix::Point& coords) const override;
     void openUi() override;
 
     void test();

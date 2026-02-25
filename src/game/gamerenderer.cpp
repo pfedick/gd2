@@ -380,3 +380,53 @@ ppl7::grafix::Image GameRenderer::getScreenshot(int width, int height)
     gpu->destroyGPUTexture(thumbTex);
     return img;
 }
+
+void ::GameRenderer::updateMatrices(int screenWidth, int screenHeight)
+{
+    batcher.updateMatrices(screenWidth, screenHeight);
+}
+
+void GameRenderer::updateMatrices(const ppl7::grafix::Size& size)
+{
+    batcher.updateMatrices(size.width, size.height);
+}
+
+void GameRenderer::startRenderPass()
+{
+    batcher.startRenderPass();
+}
+
+void GameRenderer::prepareInstanceData()
+{
+    batcher.prepareInstanceData(cmdbuf);
+}
+
+void GameRenderer::endRenderPass(SDL_GPURenderPass* render_pass)
+{
+    batcher.endRenderPass(cmdbuf, render_pass);
+}
+
+void GameRenderer::addSprite(
+    const SpriteTexture& sprite, int id, float x, float y, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color)
+{
+    batcher.addSpriteInternal(sprite, id, x, y, scale_x, scale_y, angle, color, false);
+}
+
+void GameRenderer::addSpriteOutline(
+    const SpriteTexture& sprite, int id, float x, float y, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color)
+{
+    batcher.addSpriteInternal(sprite, id, x, y, scale_x, scale_y, angle, color, true);
+}
+
+void GameRenderer::addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, int thickness)
+{
+    batcher.addLine(x1, y1, x2, y2, color, thickness);
+}
+void GameRenderer::addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, int thickness)
+{
+    batcher.addRect(x, y, w, h, color, thickness);
+}
+void GameRenderer::addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color)
+{
+    batcher.addFilledRect(x, y, w, h, color);
+}

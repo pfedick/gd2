@@ -80,8 +80,11 @@ public:
 
 GPUContext& getGlobalGPUContext();
 
+class GameRenderer;
 class GPUBatcher
 {
+    friend class GameRenderer;
+
 private:
     struct UniformData
     {

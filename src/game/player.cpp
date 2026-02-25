@@ -357,7 +357,7 @@ void Player::move(int x, int y)
     this->y = y;
 }
 
-void Player::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords, float size) const
+void Player::draw(GameRenderer& renderer, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords, float size) const
 {
     if (!visible) return;
     ppl7::grafix::PointF p(x - worldcoords.x, y - worldcoords.y);
@@ -373,7 +373,7 @@ void Player::draw(GPUBatcher& batcher, const GameViewport& viewport, const ppl7:
         else if (frame >= 415 && frame <= 432)
             frame += 18;
     }
-    batcher.addSprite(*sprite_resource, frame, p.x, p.y + 1, scale * size, scale * size, 0.0f, color_modulation);
+    renderer.addSprite(*sprite_resource, frame, p.x, p.y + 1, scale * size, scale * size, 0.0f, color_modulation);
     // sprite_resource->draw(renderer, p.x, p.y + 1, frame, color_modulation);
 }
 
@@ -471,7 +471,7 @@ void Player::addFlashlightToLightSystem(LightSystem& lights)
 }
 */
 
-void Player::drawCollision(GPUBatcher& batcher, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords) const
+void Player::drawCollision(GameRenderer& renderer, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords) const
 {
     ppl7::grafix::Point p(x - worldcoords.x, y - worldcoords.y);
     ppl7::grafix::Color nocol(255, 255, 255, 64);
@@ -480,19 +480,19 @@ void Player::drawCollision(GPUBatcher& batcher, const GameViewport& viewport, co
         for (int cy = 0; cy < 6; cy++) {
             for (int cx = 0; cx < 6; cx++) {
                 if (collision_matrix[cx][cy] == 0) {
-                    batcher.addSprite(*tiletype_resource, collision_matrix[cx][cy], p.x - (TILE_WIDTH * 3) + (cx * TILE_WIDTH),
-                                      p.y - (5 * TILE_HEIGHT) + (cy * TILE_HEIGHT), 1.0f, 1.0f, 0.0f, nocol);
+                    renderer.addSprite(*tiletype_resource, collision_matrix[cx][cy], p.x - (TILE_WIDTH * 3) + (cx * TILE_WIDTH),
+                                       p.y - (5 * TILE_HEIGHT) + (cy * TILE_HEIGHT), 1.0f, 1.0f, 0.0f, nocol);
 
                 } else {
-                    batcher.addSprite(*tiletype_resource, collision_matrix[cx][cy], p.x - (TILE_WIDTH * 3) + (cx * TILE_WIDTH),
-                                      p.y - (5 * TILE_HEIGHT) + (cy * TILE_HEIGHT), 1.0f, 1.0f, 0.0f, white);
+                    renderer.addSprite(*tiletype_resource, collision_matrix[cx][cy], p.x - (TILE_WIDTH * 3) + (cx * TILE_WIDTH),
+                                       p.y - (5 * TILE_HEIGHT) + (cy * TILE_HEIGHT), 1.0f, 1.0f, 0.0f, white);
                 }
             }
         }
     }
-    tiletype_resource->draw(batcher, p.x + 4 * TILE_WIDTH, p.y - TILE_HEIGHT, collision_at_pivoty[0]);
-    tiletype_resource->draw(batcher, p.x + 4 * TILE_WIDTH, p.y, collision_at_pivoty[1]);
-    tiletype_resource->draw(batcher, p.x + 4 * TILE_WIDTH, p.y + TILE_HEIGHT, collision_at_pivoty[2]);
+    tiletype_resource->draw(renderer, p.x + 4 * TILE_WIDTH, p.y - TILE_HEIGHT, collision_at_pivoty[0]);
+    tiletype_resource->draw(renderer, p.x + 4 * TILE_WIDTH, p.y, collision_at_pivoty[1]);
+    tiletype_resource->draw(renderer, p.x + 4 * TILE_WIDTH, p.y + TILE_HEIGHT, collision_at_pivoty[2]);
 }
 
 void Player::turn(PlayerOrientation target)

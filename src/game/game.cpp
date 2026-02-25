@@ -92,7 +92,7 @@ void Game::init()
     sdl.setGPUDevice(gpu.gpu);
     renderer.init(gpu, sdl_window);
     // Initialize projection/view matrices for rendering
-    renderer.batcher.updateMatrices(game_viewport.getLogicalSize());
+    renderer.updateMatrices(game_viewport.getLogicalSize());
     initUi();
     initAudio();
     initGameController();
@@ -411,7 +411,6 @@ void Game::run()
 
         // Frame done
         renderer.submitGPUCommandBuffer();
-        renderer.batcher.resetContextSwitchCount(); // For debugging: Count how many times we switch GPU context (render pass)
 
         metrics.time_frame.stop();
         metrics.time_total.stop();
@@ -576,7 +575,7 @@ struct BlurParams
 void Game::drawWorld()
 {
     metrics.time_draw_world.start();
-    level.draw(&renderer, WorldCamera, game_viewport, metrics);
+    level.draw(renderer, WorldCamera, game_viewport, metrics);
     metrics.time_draw_world.stop();
 }
 

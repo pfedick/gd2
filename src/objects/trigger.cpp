@@ -43,7 +43,7 @@ Trigger::~Trigger()
 {
 }
 
-void Trigger::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coords) const
+void Trigger::drawEditMode(GameRenderer& renderer, const ppl7::grafix::Point& coords) const
 {
     if (triggeredByCollision) {
         SDL_FRect r;
@@ -51,10 +51,10 @@ void Trigger::drawEditMode(GPUBatcher& batcher, const ppl7::grafix::Point& coord
         r.y = p.y + coords.y - range.y / 2;
         r.w = range.x;
         r.h = range.y;
-        batcher.addFilledRect(r.x, r.y, r.w, r.h, ppl7::grafix::Color(0, 192, 0, 96));
-        batcher.addRect(r.x, r.y, r.w, r.h, ppl7::grafix::Color(0, 192, 0, 255), 2.0f);
+        renderer.addFilledRect(r.x, r.y, r.w, r.h, ppl7::grafix::Color(0, 192, 0, 96));
+        renderer.addRect(r.x, r.y, r.w, r.h, ppl7::grafix::Color(0, 192, 0, 255), 2.0f);
     }
-    Object::drawEditMode(batcher, coords);
+    Object::drawEditMode(renderer, coords);
 }
 
 void Trigger::handleCollision(Player* player, const Collision& collision)
