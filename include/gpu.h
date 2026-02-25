@@ -195,8 +195,8 @@ public:
     ~GPUBatcher();
     void resetContextSwitchCount();
     void init(GPUContext* gpu);
-    void updateMatrices(int screenWidth, int screenHeight);
-    void updateMatrices(const ppl7::grafix::Size& size);
+    void setLogicalRenderSize(int screenWidth, int screenHeight);
+    void setLogicalRenderSize(const ppl7::grafix::Size& size);
 
     void startRenderPass();
     void prepareInstanceData(SDL_GPUCommandBuffer* cmd); // Upload instance data before render pass

@@ -79,7 +79,6 @@ void ParallaxLayer::draw(GameRenderer& renderer, const ppl7::grafix::PointF& wor
     ppl7::grafix::PointF parallax_worldcoords = worldcoords * speed_factor * size_factor;
     if (!hasVisibleGrafix()) return;
 
-    // renderstate.batcher->startRenderPass();
     renderer.startRenderPass();
     metrics.time_draw_tsop.start();
 
@@ -140,37 +139,11 @@ void ParallaxLayer::draw(GameRenderer& renderer, const ppl7::grafix::PointF& wor
         game->editor.drawSelection(renderer);
     }
 
-    //  background_sprites.draw(batcher, cmdbuf, swapchainTexture, worldcoords, viewport
-    renderer.prepareInstanceData();
-
-    SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.texture = renderer.render_layer;
-    colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 0.0f}; // Black background
-    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
-
     if (!bBlurEnabled || blur_factor <= 0.0f) {
-        colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
-        colorTargetInfo.texture = renderer.render_target;
+        renderer.endRenderPass(renderer.render_target, SDL_GPU_LOADOP_LOAD);
+    } else {
+        renderer.endRenderPass(renderer.render_layer, SDL_GPU_LOADOP_CLEAR);
     }
-
-    SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
-    depthTargetInfo.texture = renderer.depth_buffer;
-    depthTargetInfo.clear_depth = 1.0f;
-    depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
-    depthTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
-    depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
-    depthTargetInfo.cycle = false;
-
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderer.getCommandBuffer(), &colorTargetInfo, 1, &depthTargetInfo);
-    // SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, NULL);
-    SDL_SetGPUViewport(renderPass, NULL);
-    SDL_SetGPUScissor(renderPass, NULL);
-
-    renderer.endRenderPass(renderPass);
-    SDL_EndGPURenderPass(renderPass);
 
     // Post-Processing: Blur
     if (blur_factor > 0.0f && bBlurEnabled) {

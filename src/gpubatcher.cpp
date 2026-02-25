@@ -683,18 +683,15 @@ void GPUBatcher::uploadStaticQuadData()
     SDL_WaitForGPUIdle(gpu->gpu);
 }
 
-void GPUBatcher::updateMatrices(const ppl7::grafix::Size& size)
+void GPUBatcher::setLogicalRenderSize(const ppl7::grafix::Size& size)
 {
-    updateMatrices(size.width, size.height);
+    setLogicalRenderSize(size.width, size.height);
 }
 
-void GPUBatcher::updateMatrices(int screenWidth, int screenHeight)
+void GPUBatcher::setLogicalRenderSize(int screenWidth, int screenHeight)
 {
-    if (!gpu || !gpu->gpu) return;
-
     this->screenWidth = screenWidth;
     this->screenHeight = screenHeight;
-    // ppl7::PrintDebugTime("GPUBatcher::updateMatrices: screen %dx%d\n", screenWidth, screenHeight);
 
     // Create orthographic projection matrix for 2D rendering (Standard Y-UP NDC)
     // Maps screen coordinates (0,0) top-left to (screenWidth, screenHeight) bottom-right to NDC ((-1,1) to (1,-1))

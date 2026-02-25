@@ -68,12 +68,13 @@ public:
     ppl7::grafix::Image getScreenshot(int width, int height);
 
     // Draw functions
-    void updateMatrices(int screenWidth, int screenHeight);
-    void updateMatrices(const ppl7::grafix::Size& size);
+    void setLogicalRenderSize(int screenWidth, int screenHeight);
+    void setLogicalRenderSize(const ppl7::grafix::Size& size);
 
     void startRenderPass();
-    void prepareInstanceData(); // Upload instance data before render pass
-    void endRenderPass(SDL_GPURenderPass* render_pass);
+    void endRenderPass(SDL_GPUTexture* target_texture,
+                       SDL_GPULoadOp loadOp = SDL_GPU_LOADOP_CLEAR,
+                       const ppl7::grafix::Color& clearColor = ppl7::grafix::Color(0, 0, 0, 0));
 
     void addSprite(const SpriteTexture& sprite,
                    int id,

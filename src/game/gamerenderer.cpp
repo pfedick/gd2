@@ -381,14 +381,14 @@ ppl7::grafix::Image GameRenderer::getScreenshot(int width, int height)
     return img;
 }
 
-void ::GameRenderer::updateMatrices(int screenWidth, int screenHeight)
+void ::GameRenderer::setLogicalRenderSize(int screenWidth, int screenHeight)
 {
-    batcher.updateMatrices(screenWidth, screenHeight);
+    batcher.setLogicalRenderSize(screenWidth, screenHeight);
 }
 
-void GameRenderer::updateMatrices(const ppl7::grafix::Size& size)
+void GameRenderer::setLogicalRenderSize(const ppl7::grafix::Size& size)
 {
-    batcher.updateMatrices(size.width, size.height);
+    batcher.setLogicalRenderSize(size.width, size.height);
 }
 
 void GameRenderer::startRenderPass()
@@ -396,14 +396,31 @@ void GameRenderer::startRenderPass()
     batcher.startRenderPass();
 }
 
-void GameRenderer::prepareInstanceData()
+void GameRenderer::endRenderPass(SDL_GPUTexture* target_texture, SDL_GPULoadOp loadOp, const ppl7::grafix::Color& clearColor)
 {
     batcher.prepareInstanceData(cmdbuf);
-}
+    SDL_GPUColorTargetInfo colorTargetInfo = {0};
+    colorTargetInfo.texture = target_texture;
+    colorTargetInfo.clear_color = toSDLFColor(clearColor);
+    colorTargetInfo.load_op = loadOp;
+    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+    colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
 
-void GameRenderer::endRenderPass(SDL_GPURenderPass* render_pass)
-{
-    batcher.endRenderPass(cmdbuf, render_pass);
+    SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
+    depthTargetInfo.texture = depth_buffer;
+    depthTargetInfo.clear_depth = 1.0f;
+    depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+    depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
+    depthTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
+    depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
+    depthTargetInfo.cycle = false;
+
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
+    // SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, NULL);
+    SDL_SetGPUViewport(renderPass, NULL);
+    SDL_SetGPUScissor(renderPass, NULL);
+    batcher.endRenderPass(cmdbuf, renderPass);
+    SDL_EndGPURenderPass(renderPass);
 }
 
 void GameRenderer::addSprite(

@@ -422,30 +422,7 @@ void Level::drawDebug(GameRenderer& renderer, const Camera& camera, const GameVi
     renderer.startRenderPass();
     if (player && bShowCollisions) player->drawCollision(renderer, viewport, camera);
     camera.draw(renderer, viewport);
-
-    renderer.prepareInstanceData();
-    SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.texture = renderer.render_target;
-    colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 0.0f}; // Black background
-    colorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
-    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
-
-    SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
-    depthTargetInfo.texture = renderer.depth_buffer;
-    depthTargetInfo.clear_depth = 1.0f;
-    depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
-    depthTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
-    depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
-    depthTargetInfo.cycle = false;
-
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderer.getCommandBuffer(), &colorTargetInfo, 1, &depthTargetInfo);
-    // SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, NULL);
-    SDL_SetGPUViewport(renderPass, NULL);
-    SDL_SetGPUScissor(renderPass, NULL);
-    renderer.endRenderPass(renderPass);
-    SDL_EndGPURenderPass(renderPass);
+    renderer.endRenderPass(renderer.render_target, SDL_GPU_LOADOP_LOAD);
 }
 
 void Level::update(const GameClock& clock,

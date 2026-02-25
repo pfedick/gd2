@@ -92,7 +92,7 @@ void Game::init()
     sdl.setGPUDevice(gpu.gpu);
     renderer.init(gpu, sdl_window);
     // Initialize projection/view matrices for rendering
-    renderer.updateMatrices(game_viewport.getLogicalSize());
+    renderer.setLogicalRenderSize(game_viewport.getLogicalSize());
     initUi();
     initAudio();
     initGameController();
