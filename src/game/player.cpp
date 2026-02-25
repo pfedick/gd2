@@ -490,9 +490,9 @@ void Player::drawCollision(GameRenderer& renderer, const GameViewport& viewport,
             }
         }
     }
-    tiletype_resource->draw(renderer, p.x + 4 * TILE_WIDTH, p.y - TILE_HEIGHT, collision_at_pivoty[0]);
-    tiletype_resource->draw(renderer, p.x + 4 * TILE_WIDTH, p.y, collision_at_pivoty[1]);
-    tiletype_resource->draw(renderer, p.x + 4 * TILE_WIDTH, p.y + TILE_HEIGHT, collision_at_pivoty[2]);
+    renderer.addSprite(*tiletype_resource, collision_at_pivoty[0], p.x + 4 * TILE_WIDTH, p.y - TILE_HEIGHT);
+    renderer.addSprite(*tiletype_resource, collision_at_pivoty[1], p.x + 4 * TILE_WIDTH, p.y);
+    renderer.addSprite(*tiletype_resource, collision_at_pivoty[2], p.x + 4 * TILE_WIDTH, p.y + TILE_HEIGHT);
 }
 
 void Player::turn(PlayerOrientation target)

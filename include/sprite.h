@@ -3,7 +3,8 @@
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include <map>
-#include "gamerenderer.h"
+#include "SDL3/SDL.h"
+#include "gpu.h"
 
 /*!\page PFPSpriteTexture1 Format PFP Sprite-Textures, Version 1
  *
@@ -214,25 +215,6 @@ public:
     void clear();
     void draw(ppl7::grafix::Drawable& target, int x, int y, int id) const;
     void draw(ppl7::grafix::Drawable& target, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const;
-
-    void draw(GameRenderer& renderer, int x, int y, int id) const;
-    void draw(GameRenderer& renderer, int x, int y, int id, const ppl7::grafix::Color& color_modulation) const;
-    void draw(GameRenderer& renderer, int x, int y, int id, const SDL_Color& color_modulation) const;
-    void drawBoundingBox(GameRenderer& renderer, int x, int y, int id) const;
-    void drawBoundingBoxWithAngle(GameRenderer& renderer, int x, int y, int id, float scale_x, float scale_y, float angle) const;
-    void draw(GameRenderer& renderer, int id, const SDL_FRect& source, const SDL_FRect& target) const;
-    void drawScaled(GameRenderer& renderer, int x, int y, int id, float scale_factor) const;
-    void drawScaled(GameRenderer& renderer, int x, int y, int id, float scale_factor, const ppl7::grafix::Color& color_modulation) const;
-    void drawScaledWithAngle(GameRenderer& renderer,
-                             int x,
-                             int y,
-                             int id,
-                             float scale_x,
-                             float scale_y,
-                             float angle,
-                             const ppl7::grafix::Color& color_modulation) const;
-    void drawOutlines(GameRenderer& renderer, int x, int y, int id, float scale_factor);
-    void drawOutlinesWithAngle(GameRenderer& renderer, int x, int y, int id, float scale_x, float scale_y, float angle);
 
     ppl7::grafix::Size spriteSize(int id, float scale_factor) const;
     ppl7::grafix::Rect spriteBoundary(int id, float scale_factor, int x, int y) const;

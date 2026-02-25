@@ -299,8 +299,8 @@ void ObjectSystem::drawSelectedSpriteOutline(GameRenderer& renderer, const ppl7:
     if (it != object_list.end()) {
         const Objects::Object* item = it->second;
         if (item->texture) {
-            item->texture->drawOutlines(renderer, item->initial_p.x - worldcoords.x, item->initial_p.y - worldcoords.y,
-                                        item->sprite_no_representation, item->scale);
+            renderer.addSpriteOutline(*item->texture, item->sprite_no_representation, item->initial_p.x - worldcoords.x,
+                                      item->initial_p.y - worldcoords.y, item->scale, item->scale);
             drawId(renderer, spritesets->fonts, item->initial_p.x - worldcoords.x, item->initial_p.y - worldcoords.y, item->id);
         }
     }
@@ -318,8 +318,7 @@ void ObjectSystem::drawPlaceSelection(GameRenderer& renderer, const ppl7::grafix
     if (repr.sprite_set < Objects::SpritesetId::MaxSpritesets) {
         SpriteTexture* texture = getTexture(repr.sprite_set);
         if (texture) {
-            texture->draw(renderer, p.x, p.y, repr.sprite_no);
-            texture->drawOutlines(renderer, p.x, p.y, repr.sprite_no, 1.0f);
+            renderer.addSpriteOutline(*texture, repr.sprite_no, p.x, p.y);
         }
     }
 }
