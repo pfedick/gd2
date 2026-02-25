@@ -12,7 +12,8 @@ layout(location = 0) out vec4 out_color;
 
 void main() {
     // Sample texture
-    vec4 tex_color = texture(tex_sampler, frag_texcoord);
+    // LOD-Bias von -1.0 macht das Bild deutlich schärfer, nutzt aber trotzdem noch Mipmaps für die Stabilität.
+    vec4 tex_color = texture(tex_sampler, frag_texcoord, -1.0);
     
     // Convert to Pre-multiplied Alpha (Straight -> PMA)
     tex_color.rgb *= tex_color.a;
