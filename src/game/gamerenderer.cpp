@@ -20,6 +20,12 @@ GameRenderer::GameRenderer()
     copyWithAlphablendingPipeline = nullptr;
 
     samplerClamp = nullptr;
+
+    render_target = nullptr;
+    render_layer = nullptr;
+    render_lightmap = nullptr;
+    blur_temp = nullptr;
+    render_normal = nullptr;
 }
 
 GameRenderer::~GameRenderer()
@@ -51,7 +57,6 @@ GameRenderer::~GameRenderer()
         if (render_lightmap) gpu->destroyGPUTexture(render_lightmap);
         if (blur_temp) gpu->destroyGPUTexture(blur_temp);
         if (render_normal) gpu->destroyGPUTexture(render_normal);
-        if (depth_buffer) gpu->destroyGPUTexture(depth_buffer);
         render_target_size.setSize(0, 0);
     }
 }
@@ -167,8 +172,6 @@ void GameRenderer::resizeRenderBuffer(const ppl7::grafix::Size& size)
         render_lightmap = gpu->createRenderTarget(size.width, size.height);
         if (blur_temp) gpu->destroyGPUTexture(blur_temp);
         blur_temp = gpu->createRenderTarget(size.width, size.height);
-        if (depth_buffer) gpu->destroyGPUTexture(depth_buffer);
-        depth_buffer = gpu->createDepthBuffer(size.width, size.height);
         render_target_size = size;
     }
 }
@@ -406,16 +409,7 @@ void GameRenderer::endRenderPass(SDL_GPUTexture* target_texture, SDL_GPULoadOp l
     colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
     colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
 
-    SDL_GPUDepthStencilTargetInfo depthTargetInfo = {0};
-    depthTargetInfo.texture = depth_buffer;
-    depthTargetInfo.clear_depth = 1.0f;
-    depthTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    depthTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
-    depthTargetInfo.stencil_load_op = SDL_GPU_LOADOP_DONT_CARE;
-    depthTargetInfo.stencil_store_op = SDL_GPU_STOREOP_DONT_CARE;
-    depthTargetInfo.cycle = false;
-
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, &depthTargetInfo);
+    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
     // SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(renderstate.cmdbuf, &colorTargetInfo, 1, NULL);
     SDL_SetGPUViewport(renderPass, NULL);
     SDL_SetGPUScissor(renderPass, NULL);

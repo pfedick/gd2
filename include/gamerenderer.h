@@ -45,7 +45,6 @@ public:
     SDL_GPUTexture* render_lightmap;
     SDL_GPUTexture* blur_temp;
     SDL_GPUTexture* render_normal;
-    SDL_GPUTexture* depth_buffer;
 
     GameRenderer();
     ~GameRenderer();
