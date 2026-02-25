@@ -22,7 +22,7 @@ private:
     ppl7::grafix::PointF speed;
     ppl7::grafix::PointF player_position;
     ppl7::grafix::PointF target_position;
-    ppl7::grafix::Size render_size;
+    ppl7::grafix::Size logical_render_size;
     bool follow_player;
 
     void stopMovement(float frame_rate_compensation);
@@ -35,7 +35,8 @@ public:
     void setZoom(float zoom);
     float getZoom() const;
     void setTargetZoom(float zoom, float speed);
-    void setRenderSize(const ppl7::grafix::Size& size);
+    void setLogicalRenderSize(const ppl7::grafix::Size& size);
+    ppl7::grafix::Size getLogicalRenderSize() const;
     void update(const GameClock& clock, const Player* player);
     void setPosition(const ppl7::grafix::PointF& pos);
     void setDeadZone(float x, float y);

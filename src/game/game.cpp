@@ -364,7 +364,7 @@ void Game::run()
         }
 
         WorldCamera.setFollowPlayer(editor.mainmenue->worldFollowsPlayer());
-        WorldCamera.setRenderSize(game_viewport.getLogicalSize());
+        WorldCamera.setLogicalRenderSize(game_viewport.getLogicalSize());
         WorldCamera.update(clock, player);
 
         // Ensure Buffers matches window size

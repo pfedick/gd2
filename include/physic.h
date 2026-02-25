@@ -109,6 +109,7 @@ public:
     float acceleration_jump_sideways;
     float speed_walk;
     float speed_run;
+    float coyote_time; // time after leaving a platform where player can still jump
 
     double jump_climax;
     double time;

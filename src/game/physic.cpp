@@ -35,6 +35,7 @@ Physic::Physic()
     player_stands_on_object = NULL;
     speed_walk = 2.0f * 2.0f;
     speed_run = 6.0f * 2.0f;
+    coyote_time = 1.0f;
 }
 
 ppl7::String Physic::getState() const

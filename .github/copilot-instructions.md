@@ -43,14 +43,9 @@ Das Spiel wird in C++23 mit SDL3 und OpenGL/Vulkan/Metal (über SDL3 GPU API) en
 - Erstellung von Assets (Sprites, Normal Maps, Tilesets) in Lightwave 3D
 - Festlegung eines konsistenten visuellen Stils und einer Farbpalette
 
-### Abgeschlossene Schritte:
-- Editor zum Erstellen von Level: Ein einfacher Editor wurde implementiert, mit dem man Level erstellen und bearbeiten kann. Er unterstützt das Platzieren von Kacheln, Sprites und Objekten, sowie das Speichern und Laden von Leveln.
-- Parallax-Scrolling mit mehreren Ebenen: Es wurden mehrere Ebenen für den Hintergrund, Midground und Vordergrund erstellt, die sich mit unterschiedlichen Geschwindigkeiten bewegen, um einen Tiefeneffekt zu erzeugen.
-- Gausscher Blur für entfernte Ebenen: Ein einfacher Gausscher Blur wurde implementiert, um entfernte Ebenen unscharf zu machen und so die Tiefenwirkung zu verstärken.
-- Tiles, Sprites, Objekte und Animationen: Es wurden grundlegende Klassen für Tiles, Sprites und Objekte erstellt, die in den Leveln platziert werden können. Es gibt auch eine einfache Animationslogik für Sprites.
-- Einfache Kamera, die dem Spieler folgt: Eine Kamera wurde implementiert, die dem Spielercharakter folgt und den sichtbaren Bereich der Welt steuert.
-- Einfache Player-Mechaniken: Es wurden grundlegende Bewegungsmechaniken für den Spieler implementiert, einschließlich Laufen, Springen und Kollisionserkennung mit der Welt.
-- Zusammenfassen der GPU-spezifischen Klassen und GPUBatcher in zentraler Klasse "GameRenderer". Die Renderlogik wurde vereinfacht, um die korrekte Reihenfolge von Sprites und Primitives zu gewährleisten, insbesondere bei semitransparenten Objekten. Es wird nun strikt das "Painter's Algorithm" für die Renderreihenfolge eingehalten. Metriken zur Renderleistung werden erfasst, um Engpässe zu identifizieren und gezielt zu optimieren.
+
+### Derzeitiger Fokus
+- Coyote time: after leaving a platform, the player can still jump for a short time (e.g. 0.2 seconds)
 
 ### Next Focus: Player mechanics and camera handling
 A player character will be added, which can be controlled by keyboard or gamepad.
@@ -115,6 +110,15 @@ Camera handling:
 - Create `OcclusionMap` (Solid pixels = 1.0, Air = 0.0).
 - In the Light Shader: Perform simple 2D Raymarching from Pixel to LightPos using the OcclusionMap.
 - If ray hits wall -> Light = 0.0 (Shadow).
+
+### Abgeschlossene Schritte:
+- Editor zum Erstellen von Level: Ein einfacher Editor wurde implementiert, mit dem man Level erstellen und bearbeiten kann. Er unterstützt das Platzieren von Kacheln, Sprites und Objekten, sowie das Speichern und Laden von Leveln.
+- Parallax-Scrolling mit mehreren Ebenen: Es wurden mehrere Ebenen für den Hintergrund, Midground und Vordergrund erstellt, die sich mit unterschiedlichen Geschwindigkeiten bewegen, um einen Tiefeneffekt zu erzeugen.
+- Gausscher Blur für entfernte Ebenen: Ein einfacher Gausscher Blur wurde implementiert, um entfernte Ebenen unscharf zu machen und so die Tiefenwirkung zu verstärken.
+- Tiles, Sprites, Objekte und Animationen: Es wurden grundlegende Klassen für Tiles, Sprites und Objekte erstellt, die in den Leveln platziert werden können. Es gibt auch eine einfache Animationslogik für Sprites.
+- Einfache Kamera, die dem Spieler folgt: Eine Kamera wurde implementiert, die dem Spielercharakter folgt und den sichtbaren Bereich der Welt steuert.
+- Einfache Player-Mechaniken: Es wurden grundlegende Bewegungsmechaniken für den Spieler implementiert, einschließlich Laufen, Springen und Kollisionserkennung mit der Welt.
+- Zusammenfassen der GPU-spezifischen Klassen und GPUBatcher in zentraler Klasse "GameRenderer". Die Renderlogik wurde vereinfacht, um die korrekte Reihenfolge von Sprites und Primitives zu gewährleisten, insbesondere bei semitransparenten Objekten. Es wird nun strikt das "Painter's Algorithm" für die Renderreihenfolge eingehalten. Metriken zur Renderleistung werden erfasst, um Engpässe zu identifizieren und gezielt zu optimieren.
 
 ---
 

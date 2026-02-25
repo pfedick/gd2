@@ -330,54 +330,6 @@ void Level::updateParticles(double time)
     }
 }
 
-/*
-void Level::clearRenderTarget(SDL_GPUCommandBuffer* cmdbuf)
-{
-    // 1. Das interne 4K-Target (render_target) einmalig leeren
-    SDL_GPUColorTargetInfo rtInfo = {0};
-    rtInfo.texture = renderstate.render_target;
-    rtInfo.clear_color = toSDLFColor(runtimeParams.BackgroundColor);
-    rtInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    rtInfo.store_op = SDL_GPU_STOREOP_STORE;
-    rtInfo.cycle = false;
-    SDL_GPURenderPass* rtClearPass = SDL_BeginGPURenderPass(cmdbuf, &rtInfo, 1, NULL);
-    SDL_EndGPURenderPass(rtClearPass);
-}
-*/
-
-/*
-void Level::copyRenderTargetToSwapchain(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture, const SDL_FRect& destRect)
-{
-    SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.texture = swapchainTexture;
-    colorTargetInfo.clear_color = (SDL_FColor){0.0f, 0.0f, 0.0f, 1.0f}; // Black background
-    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.cycle = false;
-
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
-
-    // Hier setzen wir den Viewport auf die Zielgröße im Fenster
-    SDL_GPUViewport gpuViewport = {
-        .x = destRect.x, .y = destRect.y, .w = destRect.w, .h = destRect.h, .min_depth = 0.0f, .max_depth = 1.0f};
-
-    SDL_SetGPUViewport(renderPass, &gpuViewport);
-    SDL_SetGPUScissor(renderPass, NULL);
-
-    SDL_BindGPUGraphicsPipeline(renderPass, renderstate.renderpipelines->copyPipeline);
-    SDL_GPUTextureSamplerBinding binding = {};
-
-    binding.texture = renderstate.render_target;
-    binding.sampler = renderstate.renderpipelines->samplerClamp; // Einen Clamp-Sampler benutzen!
-    SDL_BindGPUFragmentSamplers(renderPass, 0, &binding, 1);
-
-    // Fullscreen Triangle zeichnen (3 Vertices, Shader generiert Coords)
-    SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
-
-    SDL_EndGPURenderPass(renderPass);
-}
-*/
-
 void Level::setPlayer(Player* player)
 {
     this->player = player;

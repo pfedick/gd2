@@ -210,13 +210,13 @@ void Game::startLevel(const ppl7::String& filename)
     editor.mainmenue->setWorldFollowsPlayer(true);
     player->setParallaxLayer(ParallaxLayerId::Player);
 
-    // DEBUG, TODO REMOVE
-    startpoint.x = 3000;
-    startpoint.y = 1080;
     if (startpoint.x > 0) {
         player->move(startpoint.x, startpoint.y);
         player->setSavePoint(startpoint);
         player->setVisible(true);
+        ppl7::grafix::Size halfsize = WorldCamera.getLogicalRenderSize() / 2;
+
+        WorldCamera.setPoint(startpoint - ppl7::grafix::Point(halfsize.width, halfsize.height));
         enableControls(true);
 
     } else {

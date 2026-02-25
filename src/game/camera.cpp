@@ -14,7 +14,7 @@ Camera::Camera()
     dead_zone.x = 0.0f;
     dead_zone.y = 128;
     follow_player = true;
-    render_size.setSize(1920 * 2, 1080 * 2);
+    logical_render_size.setSize(1920 * 2, 1080 * 2);
     look_ahead_x = 0.0f;
     look_ahead_distance = 300.0f;
     acceleration = 0.3f;
@@ -37,9 +37,14 @@ void Camera::setTargetZoom(float zoom, float speed)
     zoom_speed = speed;
 }
 
-void Camera::setRenderSize(const ppl7::grafix::Size& size)
+void Camera::setLogicalRenderSize(const ppl7::grafix::Size& size)
 {
-    render_size = size;
+    logical_render_size = size;
+}
+
+ppl7::grafix::Size Camera::getLogicalRenderSize() const
+{
+    return logical_render_size;
 }
 
 void Camera::draw(GameRenderer& renderer, const GameViewport& viewport) const
@@ -68,8 +73,8 @@ void Camera::stopMovement(float frame_rate_compensation)
 
 bool Camera::isPlayerInDeadZone() const
 {
-    float cam_center_x = x + (render_size.width / 2.0f);
-    float cam_center_y = y + (render_size.height / 2.0f);
+    float cam_center_x = x + (logical_render_size.width / 2.0f);
+    float cam_center_y = y + (logical_render_size.height / 2.0f);
     float diff_x = player_position.x - cam_center_x;
     float diff_y = player_position.y - cam_center_y - player_offset_y;
     return (fabs(diff_x) <= dead_zone.x && fabs(diff_y) <= dead_zone.y);
@@ -77,7 +82,7 @@ bool Camera::isPlayerInDeadZone() const
 
 void Camera::aimTarget(const ppl7::grafix::PointF& target, float frame_rate_compensation, const Player* player)
 {
-    ppl7::grafix::PointF cam_center(x + (render_size.width / 2.0f), y + (render_size.height / 2.0f));
+    ppl7::grafix::PointF cam_center(x + (logical_render_size.width / 2.0f), y + (logical_render_size.height / 2.0f));
     ppl7::PrintDebug("Player:=(%.2f, %.2f), Camera::aimTarget: target=(%.2f, %.2f), camera=(%.2f, %.2f), speed=(%.2f, %.2f)\n", player->x,
                      player->y, target.x, target.y, cam_center.x, cam_center.y, speed.x, speed.y);
     const float ACCEL = acceleration * frame_rate_compensation;
@@ -137,7 +142,7 @@ void Camera::update(const GameClock& clock, const Player* player)
 
     float deltaTime = clock.delta_time;
 
-    ppl7::grafix::PointF cam_center(x + (render_size.width / 2.0f), y + (render_size.height / 2.0f));
+    ppl7::grafix::PointF cam_center(x + (logical_render_size.width / 2.0f), y + (logical_render_size.height / 2.0f));
 
     if (target_position.x == 0.0f && target_position.y == 0.0f) {
         target_position = player->position();
@@ -163,13 +168,13 @@ void Camera::update(const GameClock& clock, const Player* player)
 
     return;
 
-    float cam_center_x = x + (render_size.width / 2.0f);
-    float cam_center_y = y + (render_size.height / 2.0f);
+    float cam_center_x = x + (logical_render_size.width / 2.0f);
+    float cam_center_y = y + (logical_render_size.height / 2.0f);
 
     if (speed.x == 0.0f && speed.y == 0.0f) {
         dead_zone.x = 200.0f;
         if (isPlayerInDeadZone()) {
-            y = player->y - (render_size.height / 2.0f) - player_offset_y; // Spieler etwas unter der Mitte platzieren
+            y = player->y - (logical_render_size.height / 2.0f) - player_offset_y; // Spieler etwas unter der Mitte platzieren
             return;
         }
     }
@@ -189,7 +194,7 @@ void Camera::update(const GameClock& clock, const Player* player)
     }
     x += speed.x * clock.frame_rate_compensation;
     // y += speed.y * frame_rate_compensation;
-    y = player->y - (render_size.height / 2.0f) - player_offset_y; // Spieler etwas unter der Mitte platzieren
+    y = player->y - (logical_render_size.height / 2.0f) - player_offset_y; // Spieler etwas unter der Mitte platzieren
 }
 
 #ifdef OLDCODE
@@ -274,8 +279,8 @@ void Camera::setDeadZone(float x, float y)
 void Camera::setFollowPlayer(bool enable)
 {
     if (enable && !follow_player) {
-        // x = player_position.x;
-        // y = player_position.y;
+        ppl7::grafix::Size halfsize = logical_render_size / 2;
+        setPoint(player_position - ppl7::grafix::PointF(halfsize.width, halfsize.height));
         speed.setPoint(0.0f, 0.0f);
     }
     follow_player = enable;
