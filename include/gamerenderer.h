@@ -30,7 +30,6 @@ private:
     SDL_GPUShader* fragShader;
     SDL_GPUShader* vertShader;
     SDL_GPUGraphicsPipeline* spritePipeline;
-
     SDL_GPUGraphicsPipeline* spriteOutlinePipeline;
     SDL_GPUShader* outlineFragShader;
 
@@ -123,8 +122,10 @@ public:
 
     GPUBatcher();
     ~GPUBatcher();
+    void init(GPUContext* gpu, SDL_GPUSampler* sampler);
+
     void resetContextSwitchCount();
-    void init(GPUContext* gpu);
+
     void setLogicalRenderSize(int screenWidth, int screenHeight);
     void setLogicalRenderSize(const ppl7::grafix::Size& size);
 

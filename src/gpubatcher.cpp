@@ -47,9 +47,10 @@ void GPUBatcher::resetContextSwitchCount()
     contextSwitchCount = 0;
 }
 
-void GPUBatcher::init(GPUContext* gpu)
+void GPUBatcher::init(GPUContext* gpu, SDL_GPUSampler* sampler)
 {
     this->gpu = gpu;
+    this->sampler = sampler;
     loadShaders();
     createPipeline();
     createBuffers();
@@ -417,23 +418,6 @@ void GPUBatcher::createPipeline()
         throw GPUException("Shaders not loaded");
     }
 
-    // Create sampler for texture sampling
-    SDL_GPUSamplerCreateInfo samplerInfo = {
-        .min_filter = SDL_GPU_FILTER_LINEAR,
-        .mag_filter = SDL_GPU_FILTER_LINEAR,
-        .mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-        .address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-        .address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-        .address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
-        .max_anisotropy = 8.0f,
-        .max_lod = 1000.0f,
-        .enable_anisotropy = true,
-    };
-    sampler = SDL_CreateGPUSampler(gpu->gpu, &samplerInfo);
-    if (!sampler) {
-        throw GPUException("Failed to create sampler: %s", SDL_GetError());
-    }
-
     // Define vertex attributes (per-vertex data only)
     SDL_GPUVertexAttribute vertexAttributes[] = {
         // Position (location 0)
@@ -750,10 +734,6 @@ void GPUBatcher::cleanup()
         primitiveFillPipeline = nullptr;
     }
 
-    if (sampler) {
-        SDL_ReleaseGPUSampler(gpu->gpu, sampler);
-        sampler = nullptr;
-    }
     if (vertexBuffer) {
         SDL_ReleaseGPUBuffer(gpu->gpu, vertexBuffer);
         vertexBuffer = nullptr;

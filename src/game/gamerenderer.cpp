@@ -68,7 +68,7 @@ void GameRenderer::init(GPUContext& gpu, SDL_Window* window)
     loadShaders();
     createPipelines();
     createSamplers();
-    batcher.init(&gpu);
+    batcher.init(&gpu, samplerClamp);
 }
 
 void GameRenderer::loadShaders()
