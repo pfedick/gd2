@@ -2,7 +2,7 @@
 #include <math.h>
 #include <ppl7.h>
 #include <ppl7-grafix.h>
-#include "gpu.h"
+#include "gamerenderer.h"
 #include "sprite.h"
 
 GPUBatcher::GPUBatcher()

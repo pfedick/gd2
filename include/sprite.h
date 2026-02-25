@@ -3,7 +3,7 @@
 #include <ppl7.h>
 #include <ppl7-grafix.h>
 #include <map>
-#include "gpu.h"
+#include "gamerenderer.h"
 
 /*!\page PFPSpriteTexture1 Format PFP Sprite-Textures, Version 1
  *

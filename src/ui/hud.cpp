@@ -2,7 +2,7 @@
 
 #include "ui/hud.h"
 #include "sprite.h"
-#include "gpu.h"
+#include "gamerenderer.h"
 #include "translate.h"
 // #include "player.h"
 
