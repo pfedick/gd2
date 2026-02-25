@@ -3,7 +3,7 @@
 #include "ui/menue.h"
 
 MetricsSubMenu::MetricsSubMenu(int x, int y, MainMenue* menue)
-    : ppltk::Frame(x, y, 450, 255)
+    : ppltk::Frame(x, y, 450, 300)
 {
     this->menue = menue;
     this->setTransparent(false);
@@ -87,9 +87,9 @@ void MetricsSubMenu::paint(ppl7::grafix::Drawable& draw)
     draw.line(210, y + 8, 214, y + 12, line_color);
 
     draw.line(214, y - 2, 214, y + 4, line_color);
-    draw.line(214, y + 12, 214, draw.height() - 11, line_color);
+    draw.line(214, y + 12, 214, draw.height() - 11 - 45, line_color);
     draw.line(214, y - 2, 224, y - 2, line_color);
-    draw.line(214, draw.height() - 10, 224, draw.height() - 10, line_color);
+    draw.line(214, draw.height() - 10 - 45, 224, draw.height() - 10 - 45, line_color);
 
     y += line;
     drawMillisecondMetric(draw, c1, c2, y, "particle update thread:", metrics.time_particle_thread.get());
@@ -102,6 +102,13 @@ void MetricsSubMenu::paint(ppl7::grafix::Drawable& draw)
     drawDoubleMetric(draw, c1, c2, y, "FPS comp:", metrics.frame_rate_compensation);
     y += line;
     drawMillisecondMetric(draw, c1, c2, y, "Frametime:", metrics.frametime);
+    y += (line * 1.5f);
+    drawIntMetric(draw, c1, c2, y, "Total Sprite Draws:", metrics.renderer_total_sprites_drawn);
+    y += line;
+    drawIntMetric(draw, c1, c2, y, "Total Primitive Draws:", metrics.renderer_total_primitives_drawn);
+    y += line;
+    drawIntMetric(draw, c1, c2, y, "Context Switches:", metrics.renderer_context_switches);
+
     y += (line * 1.5f);
     draw.print(font, c1, y, "Counter:");
     y += line;

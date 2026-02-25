@@ -34,9 +34,10 @@ Das Spiel wird in C++23 mit SDL3 und OpenGL/Vulkan/Metal (über SDL3 GPU API) en
 - Die tatsächlichen Renderziele können niedriger sein (z.B. 1920x1080) für bessere Performance auf integrierten GPUs.
 - In Lightwave 3D wird eine Orthogonale Kamera verwendet, die in ihrer horizontalen dem Raster der Welt entspricht, also 200 Pixel pro Meter
 - Alle Grafiken werden mit Normal Maps erstellt, um dynamische Beleuchtung zu ermöglichen.
+- Die Engine verwendet Pre-multiplied Alpha (PMA) für alle Texturen und Blending-Operationen, um saubere Transparenz und stabile Ergebnisse bei Effekten wie Blur zu gewährleisten.
+- Der GameRenderer optimiert das Zeichnen von Sprites und Primitives, beachtet aber strikt den Painter's Algorithm für die Renderreihenfolge, um korrekte Überlagerungen zu gewährleisten, insbesondere bei semitransparenten Objekten.
 
 ## Roadmap & Derzeitiger Fokus
-- Die verschiedenen GPU-spezifischen Klassen zusammenfassen und GPUBatcher ersetzen (in Arbeit)
 - Player-Mechaniken (Bewegung, Kollision, Kamera) (aus George Decker übernommen, Refakturierung steht noch aus)
 - 2D Deferred Lighting (Global/Spot/Point Lights + Shadows + Normal Maps)
 - Erstellung von Assets (Sprites, Normal Maps, Tilesets) in Lightwave 3D
@@ -49,23 +50,7 @@ Das Spiel wird in C++23 mit SDL3 und OpenGL/Vulkan/Metal (über SDL3 GPU API) en
 - Tiles, Sprites, Objekte und Animationen: Es wurden grundlegende Klassen für Tiles, Sprites und Objekte erstellt, die in den Leveln platziert werden können. Es gibt auch eine einfache Animationslogik für Sprites.
 - Einfache Kamera, die dem Spieler folgt: Eine Kamera wurde implementiert, die dem Spielercharakter folgt und den sichtbaren Bereich der Welt steuert.
 - Einfache Player-Mechaniken: Es wurden grundlegende Bewegungsmechaniken für den Spieler implementiert, einschließlich Laufen, Springen und Kollisionserkennung mit der Welt.
-
-### Derzeitiger Fokus: Zusammenfassen der GPU-spezifischen Klassen und GPUBatcher umschreiben
-**Ist-Zustand:**
-Für den ersten Prototypen des Spiels habe ich eine Reihe von Klassen erstellt, um die Grafik- und Renderlogik zu implementieren. Diese sind:
-
-- GPUContext: Verwaltet die GPU-Ressourcen, Swapchain, Texturen und Shader-Pipelines.
-- GPUBatcher: Verantwortlich für das effiziente Zeichnen von Sprites, Kacheln und anderen Grafiken. Es organisiert die Daten in Vertex- und Index-Puffern, verwaltet Bind-Groups für Texturen und Shader-Uniforms und führt die eigentlichen Draw-Calls aus. Zur Vermeidung von Kontext-Switchen werden die Sprites in Batches organisiert, die nach Material (Atlas-Textur) und Renderzustand gruppiert sind.
-- RenderPipelines: Definieren die Shader-Programme und die Renderzustände für verschiedene Arten von Zeichnungen (z.B. unbeleuchtete Sprites, beleuchtete Sprites, UI).
-- RenderState: Enthält Instanzen der zuvor genannten Klassen, sowie eine Reihe von Buffern und Texturen für die verschiedenen Renderziele (G-Buffer, Lichtakkumulation, Tiefenunschärfe).
-
-Insbesondere die hohe Optimierung des GPUBatchers mit Sortierung nach Textur und Verwendung eines Depth-Buffer hat sich als suboptimal erwiesen, da er semitransparente Sprites, die übereinander liegen, nicht korrekt rendert. Es entstehen teilweise transparente Ränder. Ferner werden Sprites und Primitives nicht in der korrekten Reihenfolge gezeichnet.
-
-**Ziele für das Refactoring:**
-- Zusammenfassen der GPU-spezifischen Klassen in einer einzigen Klasse, um die Komplexität zu reduzieren und die Wartbarkeit zu verbessern.
-- Vereinfachung der Renderlogik, um die korrekte Reihenfolge von Sprites und Primitives zu gewährleisten, insbesondere bei semitransparenten Objekten. Der Fokus liegt dabei auf strikter Einhaltung des "Painter's Algorithm" für die Renderreihenfolge.
-- Erfassung von Metriken zur Renderleistung, um Engpässe zu identifizieren und gezielt zu optimieren.
-
+- Zusammenfassen der GPU-spezifischen Klassen und GPUBatcher in zentraler Klasse "GameRenderer". Die Renderlogik wurde vereinfacht, um die korrekte Reihenfolge von Sprites und Primitives zu gewährleisten, insbesondere bei semitransparenten Objekten. Es wird nun strikt das "Painter's Algorithm" für die Renderreihenfolge eingehalten. Metriken zur Renderleistung werden erfasst, um Engpässe zu identifizieren und gezielt zu optimieren.
 
 ### Next Focus: Player mechanics and camera handling
 A player character will be added, which can be controlled by keyboard or gamepad.

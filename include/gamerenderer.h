@@ -116,15 +116,13 @@ private:
                            bool outline);
 
 public:
-    uint32_t contextSwitchCount; // For debugging: Count how many times we switch GPU context (render pass)
-    uint32_t totalSpriteCount;
-    uint32_t totalPrimitivesCount;
+    size_t contextSwitchCount; // For debugging: Count how many times we switch GPU context (render pass)
+    size_t totalSpriteCount;
+    size_t totalPrimitivesCount;
 
     GPUBatcher();
     ~GPUBatcher();
     void init(GPUContext* gpu, SDL_GPUSampler* sampler);
-
-    void resetContextSwitchCount();
 
     void setLogicalRenderSize(int screenWidth, int screenHeight);
     void setLogicalRenderSize(const ppl7::grafix::Size& size);
@@ -186,6 +184,14 @@ private:
     GPUBatcher batcher;
 
 public:
+    class Metrics
+    {
+    public:
+        size_t totalSpritesDrawn = 0;
+        size_t totalPrimitivesDrawn = 0;
+        size_t contextSwitches = 0;
+    };
+
     GPUContext* gpu;
 
     SDL_GPUTexture* render_target;
@@ -217,6 +223,8 @@ public:
     // Draw functions
     void setLogicalRenderSize(int screenWidth, int screenHeight);
     void setLogicalRenderSize(const ppl7::grafix::Size& size);
+    void resetMetrics();
+    Metrics getMetrics() const;
 
     void startRenderPass();
     void endRenderPass(SDL_GPUTexture* target_texture,

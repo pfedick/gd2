@@ -441,3 +441,19 @@ void GameRenderer::addFilledRect(float x, float y, float w, float h, const ppl7:
 {
     batcher.addFilledRect(x, y, w, h, color);
 }
+
+void GameRenderer::resetMetrics()
+{
+    batcher.contextSwitchCount = 0;
+    batcher.totalSpriteCount = 0;
+    batcher.totalPrimitivesCount = 0;
+}
+
+GameRenderer::Metrics GameRenderer::getMetrics() const
+{
+    Metrics m;
+    m.totalSpritesDrawn = batcher.totalSpriteCount;
+    m.totalPrimitivesDrawn = batcher.totalPrimitivesCount;
+    m.contextSwitches = batcher.contextSwitchCount;
+    return m;
+}

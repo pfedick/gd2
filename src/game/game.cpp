@@ -264,34 +264,6 @@ void Game::updateGameControllerMapping()
     controller.mapping.updateMapping();
 }
 
-/*
-void Game::createRenderTargetsIfRequired(const ppl7::grafix::Size& size)
-{
-    if (size == render_target_size) return;
-    render_target_size = size;
-
-    if (render_target_layer) {
-        gpu.destroyGPUTexture(render_target_layer);
-    }
-    render_target_layer = gpu.createRenderTarget(size.width, size.height);
-
-    if (render_target_tmp1) {
-        gpu.destroyGPUTexture(render_target_tmp1);
-    }
-    render_target_tmp1 = gpu.createRenderTarget(size.width, size.height);
-
-    if (render_target_tmp2) {
-        gpu.destroyGPUTexture(render_target_tmp2);
-    }
-    render_target_tmp2 = gpu.createRenderTarget(size.width, size.height);
-
-    if (depthTexture) {
-        gpu.destroyGPUTexture(depthTexture);
-    }
-    depthTexture = gpu.createDepthBuffer(size.width, size.height);
-}
-    */
-
 void Game::showUi(bool enable)
 {
     // const ppl7::grafix::Size& desktop=clientSize();
@@ -367,6 +339,7 @@ void Game::run()
         metrics.newFrame();
         metrics.time_frame.start();
         metrics.time_total.start();
+        renderer.resetMetrics();
 
         metrics.time_events.start();
 
@@ -412,7 +385,11 @@ void Game::run()
         // Frame done
         renderer.submitGPUCommandBuffer();
 
-        metrics.time_frame.stop();
+        GameRenderer::Metrics render_metrics = renderer.getMetrics();
+        metrics.renderer_total_sprites_drawn += render_metrics.totalSpritesDrawn;
+        metrics.renderer_total_primitives_drawn += render_metrics.totalPrimitivesDrawn;
+        metrics.renderer_context_switches += render_metrics.contextSwitches;
+
         metrics.time_total.stop();
         double frame_time = ppl7::GetMicrotime() - clock.time;
 
@@ -428,6 +405,7 @@ void Game::run()
         }
         // Framerate-Limitierung (z.B. 60 FPS)
         clock.limit(60);
+        metrics.time_frame.stop();
     }
 }
 
@@ -444,19 +422,6 @@ const GameViewport& Game::getGameViewport() const
 const Camera& Game::getCamera() const
 {
     return WorldCamera;
-}
-
-void Game::clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture)
-{
-    SDL_GPUColorTargetInfo colorTargetInfo = {0};
-    colorTargetInfo.texture = swapchainTexture;
-    colorTargetInfo.clear_color = (SDL_FColor){0.3f, 0.0f, 0.0f, 1.0f}; // Black background
-    colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-    colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-    colorTargetInfo.cycle = false; // CRITICAL: SDL examples use false!
-
-    SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, NULL);
-    SDL_EndGPURenderPass(renderPass);
 }
 
 void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
@@ -497,8 +462,9 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
     if (player) editor.statusbar->setPlayerCoords(ppl7::grafix::Point(player->x, player->y));
     if (player) editor.statusbar->setPlayerState(player->getState());
 
-    metrics.frame_rate_compensation = clock.frame_rate_compensation;
+    metrics.frame_rate_compensation += clock.frame_rate_compensation;
     metrics.fps += clock.fps;
+    metrics.frametime += clock.delta_time;
     metrics.total_sprites += level.countSprites();
     metrics.visible_sprites += level.countVisibleSprites();
     metrics.total_objects += level.countObjects();

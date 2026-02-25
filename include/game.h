@@ -261,7 +261,6 @@ private:
     void resizeMenueAndStatusbar();
     void checkFileDialog();
 
-    void clearScreen(SDL_GPUCommandBuffer* cmdbuf, SDL_GPUTexture* swapchainTexture);
     void drawUi();
     void drawWorld();
     void drawHUD();

@@ -68,6 +68,10 @@ public:
     size_t hearable_audiotracks;
     size_t total_lights;
     size_t visible_lights;
+
+    size_t renderer_total_sprites_drawn;
+    size_t renderer_total_primitives_drawn;
+    size_t renderer_context_switches;
     double frame_rate_compensation;
     float frametime;
 };

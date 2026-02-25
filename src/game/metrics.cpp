@@ -60,6 +60,10 @@ Metrics::Metrics()
     framecount = 0;
     frame_rate_compensation = 0.0f;
     frametime = 0.0f;
+
+    renderer_total_sprites_drawn = 0;
+    renderer_total_primitives_drawn = 0;
+    renderer_context_switches = 0;
 }
 
 void Metrics::clear()
@@ -79,6 +83,12 @@ void Metrics::clear()
     hearable_audiotracks = 0;
 
     frame_rate_compensation = 0.0f;
+    frametime = 0.0f;
+
+    renderer_total_sprites_drawn = 0;
+    renderer_total_primitives_drawn = 0;
+    renderer_context_switches = 0;
+
     frametime = 0.0f;
     time_frame.clear();
     time_total.clear();
@@ -147,6 +157,10 @@ Metrics Metrics::getAverage() const
 
         m.frame_rate_compensation = frame_rate_compensation / framecount;
         m.frametime = frametime / framecount;
+
+        m.renderer_total_sprites_drawn = renderer_total_sprites_drawn / framecount;
+        m.renderer_total_primitives_drawn = renderer_total_primitives_drawn / framecount;
+        m.renderer_context_switches = renderer_context_switches / framecount;
     }
     return m;
 }
@@ -184,6 +198,9 @@ Metrics& Metrics::operator+=(const Metrics& other)
     time_audioengine += other.time_audioengine;
     frame_rate_compensation += other.frame_rate_compensation;
     frametime += other.frametime;
+    renderer_total_sprites_drawn += other.renderer_total_sprites_drawn;
+    renderer_total_primitives_drawn += other.renderer_total_primitives_drawn;
+    renderer_context_switches += other.renderer_context_switches;
     return *this;
 }
 

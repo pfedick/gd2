@@ -38,15 +38,6 @@ GPUBatcher::~GPUBatcher()
     cleanup();
 }
 
-void GPUBatcher::resetContextSwitchCount()
-{
-    // ppl7::PrintDebug("GPUBatcher: Total Sprites drawn: %u, Total Primitives drawn: %u, Context Switches: %u\n", totalSpriteCount,
-    //                  totalPrimitivesCount, contextSwitchCount);
-    totalSpriteCount = 0;
-    totalPrimitivesCount = 0;
-    contextSwitchCount = 0;
-}
-
 void GPUBatcher::init(GPUContext* gpu, SDL_GPUSampler* sampler)
 {
     this->gpu = gpu;
@@ -186,9 +177,9 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
             SDL_DrawGPUPrimitives(render_pass, b.count, 1, b.offset, 0);
         }
     }
-
-    totalSpriteCount += (uint32_t)spriteInstances.size();
-    totalPrimitivesCount += (uint32_t)primitiveVertices.size();
+    totalSpriteCount += spriteInstances.size();
+    totalPrimitivesCount += primitiveVertices.size();
+    contextSwitchCount += batches.size();
     batches.clear();
     spriteInstances.clear();
     primitiveVertices.clear();
