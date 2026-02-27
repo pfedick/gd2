@@ -177,6 +177,7 @@ private:
     bool showParticles;
     bool lightsEnabled;
     bool blurEnabled;
+    bool cameraDebugEnabled;
 
     bool bShowGrid;
     bool bShowTileTypes;
@@ -234,6 +235,7 @@ public:
     void setShowObjects(bool enable);
     void setShowParticles(bool enable);
     void setLightsEnabled(bool enabled);
+    void setShowCameraDebug(bool enabled);
 
     ParallaxLayer& layer(ParallaxLayerId id);
     ParallaxLayer& editLayer();

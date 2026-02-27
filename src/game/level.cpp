@@ -20,6 +20,7 @@ Level::Level(Game* game)
     showParticles = true;
     lightsEnabled = true;
     blurEnabled = true;
+    cameraDebugEnabled = false;
     player = NULL;
     editlayer = ParallaxLayerId::Player;
     SetGlobalColorPalette(palette);
@@ -101,6 +102,10 @@ void Level::setShowCollisions(bool enable)
     bShowCollisions = enable;
 }
 
+void Level::setShowCameraDebug(bool enable)
+{
+    cameraDebugEnabled = enable;
+}
 void Level::setShowTiles(bool enable)
 {
     showTiles = enable;
@@ -373,7 +378,7 @@ void Level::drawDebug(GameRenderer& renderer, const Camera& camera, const GameVi
 {
     renderer.startRenderPass();
     if (player && bShowCollisions) player->drawCollision(renderer, viewport, camera);
-    camera.draw(renderer, viewport);
+    if (cameraDebugEnabled) camera.draw(renderer, viewport);
     renderer.endRenderPass(renderer.render_target, SDL_GPU_LOADOP_LOAD);
 }
 

@@ -448,8 +448,9 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
     level.setShowObjects(editor.mainmenue->visibility_objects);
     level.setShowParticles(editor.mainmenue->visibility_particles);
     level.setLightsEnabled(editor.mainmenue->visibility_lighting);
+    level.setShowCameraDebug(editor.mainmenue->visibility_camera_debug);
 
-    for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
+        for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
         auto& layer = level.layer(static_cast<ParallaxLayerId>(i));
         layer.isVisible = editor.mainmenue->layer_visibility[i];
         layer.bBlurEnabled = editor.mainmenue->visibility_blur;

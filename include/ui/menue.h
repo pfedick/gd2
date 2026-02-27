@@ -20,6 +20,7 @@ private:
     ppltk::CheckBox* show_grid_checkbox;
     ppltk::CheckBox* show_tiletypes_checkbox;
     ppltk::CheckBox* show_collision_checkbox;
+    ppltk::CheckBox* show_camera_debug_checkbox;
     ppltk::CheckBox* show_tiles_checkbox;
     ppltk::CheckBox* show_sprites_checkbox;
     ppltk::CheckBox* show_objects_checkbox;
@@ -130,6 +131,7 @@ public:
     bool visibility_blur;
     bool visibility_hud;
     bool visibility_tiles;
+    bool visibility_camera_debug;
 
     MainMenue(int x, int y, int width, int height, Game* game);
     void update();

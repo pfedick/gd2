@@ -21,6 +21,7 @@ MainMenue::MainMenue(int x, int y, int width, int height, Game* game)
     visibility_grid = false;
     visibility_tiletypes = false;
     visibility_collision = false;
+    visibility_camera_debug = false;
     visibility_lighting = true;
     visibility_hud = true;
     visibility_blur = true;
@@ -328,7 +329,7 @@ void MainMenue::closeEvent(ppltk::Event* event)
 }
 
 VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
-    : ppltk::Frame(x, y, 140, 480)
+    : ppltk::Frame(x, y, 140, 500)
 {
     this->menue = menue;
     int y1 = 0;
@@ -358,6 +359,11 @@ VisibilitySubMenu::VisibilitySubMenu(int x, int y, MainMenue* menue)
     show_collision_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Collision", menue->visibility_collision);
     show_collision_checkbox->setEventHandler(this);
     this->addChild(show_collision_checkbox);
+    y1 += 20;
+
+    show_camera_debug_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Camera debug", menue->visibility_camera_debug);
+    show_camera_debug_checkbox->setEventHandler(this);
+    this->addChild(show_camera_debug_checkbox);
     y1 += 20;
 
     show_tiles_checkbox = new ppltk::CheckBox(20, y1, 100, 20, "Tiles", menue->visibility_tiles);
@@ -438,6 +444,9 @@ void VisibilitySubMenu::toggledEvent(ppltk::Event* event, bool checked)
         menue->visibility_objects = checked;
     } else if (widget == show_particles_checkbox) {
         menue->visibility_particles = checked;
+    } else if (widget == show_camera_debug_checkbox) {
+        menue->visibility_camera_debug = checked;
+
     } else {
         for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
             if (widget == visible_layer_checkbox[i]) {

@@ -11,8 +11,8 @@ Camera::Camera()
     zoom = 1.0f;
     target_zoom = 1.0f;
     zoom_speed = 0.0f;
-    dead_zone.x = 0.0f;
-    dead_zone.y = 128;
+    dead_zone.x = 400.0f;
+    dead_zone.y = 400.0f;
     follow_player = true;
     logical_render_size.setSize(1920 * 2, 1080 * 2);
     look_ahead_x = 0.0f;
@@ -49,7 +49,17 @@ ppl7::grafix::Size Camera::getLogicalRenderSize() const
 
 void Camera::draw(GameRenderer& renderer, const GameViewport& viewport) const
 {
-    // Hier könnte man z.B. eine Debug-Ansicht der Kamera zeichnen, z.B. die Dead-Zone oder die Zielposition
+    ppl7::grafix::Color color(255, 255, 255, 128);
+
+    renderer.addRect(200, 200, logical_render_size.width - 400, logical_render_size.height - 400, color, 4);
+    renderer.addLine((logical_render_size.width / 2.0f), 0, (logical_render_size.width / 2.0f), logical_render_size.height, color, 4);
+    renderer.addLine(0, (logical_render_size.height / 2.0f), logical_render_size.width, (logical_render_size.height / 2.0f), color, 4);
+
+    color.set(255, 0, 0, 128);
+    renderer.addRect((logical_render_size.width / 2.0f) - dead_zone.x, (logical_render_size.height / 2.0f) - dead_zone.y,
+                     dead_zone.x * 2.0f, dead_zone.y * 2.0f, color, 4);
+
+    // ppl7::PrintDebug("Deadzone: (%.2f, %.2f)\n", dead_zone.x, dead_zone.y);
 }
 
 void Camera::stopMovement(float frame_rate_compensation)
