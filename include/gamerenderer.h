@@ -147,7 +147,14 @@ public:
                           float scale_y = 1.0f,
                           float angle = 0.0f,
                           const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
-
+    void addBoundingBox(const SpriteTexture& sprite,
+                        int id,
+                        float x,
+                        float y,
+                        float scale_x = 1.0f,
+                        float scale_y = 1.0f,
+                        float angle = 0.0f,
+                        const ppl7::grafix::Color& color = ppl7::grafix::Color(255, 0, 0, 255));
     void addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, int thickness = 1);
     void addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, int thickness = 1);
     void addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color);
@@ -248,6 +255,14 @@ public:
                           float angle = 0.0f,
                           const ppl7::grafix::Color& color_modulation = ppl7::grafix::Color(255, 255, 255, 255));
 
+    void addBoundingBox(const SpriteTexture& sprite,
+                        int id,
+                        float x,
+                        float y,
+                        float scale_x = 1.0f,
+                        float scale_y = 1.0f,
+                        float angle = 0.0f,
+                        const ppl7::grafix::Color& color = ppl7::grafix::Color(255, 0, 0, 255));
     void addLine(float x1, float y1, float x2, float y2, const ppl7::grafix::Color& color, int thickness = 1);
     void addRect(float x, float y, float w, float h, const ppl7::grafix::Color& color, int thickness = 1);
     void addFilledRect(float x, float y, float w, float h, const ppl7::grafix::Color& color);

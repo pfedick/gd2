@@ -4,6 +4,57 @@
 #include "player.h"
 #include "constants.h"
 
+WorldCollision::WorldCollision()
+{
+    left = right = top = bottom = false;
+    leftTile = rightTile = TileType::Type::NonBlocking;
+}
+
+bool IsBlocking(TileType::Type t, bool isEnemy)
+{
+    if (t == TileType::NonBlocking || (isEnemy == false && t == TileType::EnemyBlocker)) return false;
+    if (t == TileType::Ladder || t == TileType::Water || t == TileType::AirStream || t == TileType::Platform || t == TileType::Speer ||
+        t == TileType::Fire)
+        return false;
+    return true;
+}
+
+WorldCollision GetWorldCollision(const GameClock& clock,
+                                 const TileTypePlane& world,
+                                 float x,
+                                 float y,
+                                 const SpriteTexture* sprite,
+                                 int sprite_no,
+                                 float scale,
+                                 float rotation,
+                                 bool isEnemy,
+                                 int offset)
+{
+    WorldCollision collision;
+    collision.clock = clock;
+    if (sprite) {
+        int h = TILE_HEIGHT / 2;
+        ppl7::grafix::Rect box = sprite->spriteBoundary(sprite_no, scale, scale, rotation, x, y);
+        for (int cy = box.y1 - offset + h; cy < box.y2 + offset - h; cy += TILE_HEIGHT / 2) {
+            TileType::Type t = world.getType(ppl7::grafix::Point(box.x1 - offset, cy));
+            if (!collision.left) collision.left = IsBlocking(t, isEnemy);
+            t = world.getType(ppl7::grafix::Point(box.x2 + offset, cy));
+            if (!collision.right) collision.right = IsBlocking(t, isEnemy);
+        }
+        for (int cx = box.x1 - offset; cx < box.x2 + offset; cx += TILE_WIDTH / 2) {
+            TileType::Type t = world.getType(ppl7::grafix::Point(cx, box.y1 - offset));
+            if (!collision.top) collision.top = IsBlocking(t, isEnemy);
+
+            t = world.getType(ppl7::grafix::Point(cx, box.y2 + offset));
+            if (!collision.bottom) collision.bottom = IsBlocking(t, isEnemy);
+        }
+        collision.leftTile = world.getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y + 1));
+        collision.rightTile = world.getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y + 1));
+    }
+
+    return collision;
+}
+
 namespace Objects
 {
 

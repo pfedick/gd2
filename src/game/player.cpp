@@ -45,6 +45,7 @@ Player::Player(Game* game)
     speed_run = 16.0f;
 
     currentLayer = ParallaxLayerId::Player;
+    float parallax_scale = 1.0f;
     scale = 1.0f;
     last_animation_sound_played = -1;
     sprite_resource = NULL;
@@ -320,9 +321,10 @@ ParallaxLayerId Player::getParallaxLayer() const
     return currentLayer;
 }
 
-void Player::setParallaxLayer(ParallaxLayerId layer)
+void Player::setParallaxLayer(ParallaxLayerId layer, float parallax_scale)
 {
     currentLayer = layer;
+    this->parallax_scale = parallax_scale;
 }
 
 void Player::setZeroVelocity()
@@ -361,18 +363,8 @@ void Player::draw(GameRenderer& renderer, const GameViewport& viewport, const pp
 {
     if (!visible) return;
     ppl7::grafix::PointF p(x - worldcoords.x, y - worldcoords.y);
-    if (movement == Slide) p.y += 35;
     int frame = animation.getFrame();
-    if (flashlightOn) {
-        if (frame >= 0 && frame <= 78)
-            frame += 314;
-        else if (frame >= 79 && frame <= 86)
-            frame += 372; // 451
-        else if (frame >= 305 && frame <= 313)
-            frame += 88;
-        else if (frame >= 415 && frame <= 432)
-            frame += 18;
-    }
+
     renderer.addSprite(*sprite_resource, frame, p.x, p.y + 1, scale * size, scale * size, 0.0f, color_modulation);
     // sprite_resource->draw(renderer, p.x, p.y + 1, frame, color_modulation);
 }
@@ -473,7 +465,7 @@ void Player::addFlashlightToLightSystem(LightSystem& lights)
 
 void Player::drawCollision(GameRenderer& renderer, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords) const
 {
-    ppl7::grafix::Point p(x - worldcoords.x, y - worldcoords.y);
+    ppl7::grafix::PointF p(x - worldcoords.x, y - worldcoords.y);
     ppl7::grafix::Color nocol(255, 255, 255, 64);
     ppl7::grafix::Color white(255, 266, 255, 255);
     if (tiletype_resource) {
@@ -493,6 +485,24 @@ void Player::drawCollision(GameRenderer& renderer, const GameViewport& viewport,
     renderer.addSprite(*tiletype_resource, collision_at_pivoty[0], p.x + 4 * TILE_WIDTH, p.y - TILE_HEIGHT);
     renderer.addSprite(*tiletype_resource, collision_at_pivoty[1], p.x + 4 * TILE_WIDTH, p.y);
     renderer.addSprite(*tiletype_resource, collision_at_pivoty[2], p.x + 4 * TILE_WIDTH, p.y + TILE_HEIGHT);
+
+    int frame = animation.getFrame();
+    renderer.addBoundingBox(*sprite_resource, frame, p.x, p.y + 1, scale * parallax_scale, scale * parallax_scale, 0.0f,
+                            ppl7::grafix::Color(255, 192, 0, 255));
+
+        ppl7::grafix::Rect box = sprite_resource->spriteBoundary(frame, scale * parallax_scale, scale * parallax_scale, 0.0f, p.x, p.y);
+    if (world_collision.left) {
+        renderer.addLine(box.x1, box.y1, box.x1, box.y2, ppl7::grafix::Color(255, 0, 0, 255), 8);
+    }
+    if (world_collision.right) {
+        renderer.addLine(box.x2, box.y1, box.x2, box.y2, ppl7::grafix::Color(255, 0, 0, 255), 8);
+    }
+    if (world_collision.top) {
+        renderer.addLine(box.x1, box.y1, box.x2, box.y1, ppl7::grafix::Color(255, 0, 0, 255), 8);
+    }
+    if (world_collision.bottom) {
+        renderer.addLine(box.x1, box.y2, box.x2, box.y2, ppl7::grafix::Color(255, 0, 0, 255), 8);
+    }
 }
 
 void Player::turn(PlayerOrientation target)
@@ -877,6 +887,10 @@ void Player::update(const GameClock& clock, const TileTypePlane& world, ObjectSy
 
     if (movement == Hacking) return;
     if (movement == Dead) return;
+
+    int frame = animation.getFrame();
+
+    world_collision = GetWorldCollision(clock, world, x, y, sprite_resource, animation.getFrame(), scale * parallax_scale, 0.0f, false, 0);
     checkCollisionWithWorld(world);
     if (autoWalk) return;
     // PlayerMovement last_movement=movement;

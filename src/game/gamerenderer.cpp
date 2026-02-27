@@ -442,6 +442,12 @@ void GameRenderer::addFilledRect(float x, float y, float w, float h, const ppl7:
     batcher.addFilledRect(x, y, w, h, color);
 }
 
+void GameRenderer::addBoundingBox(
+    const SpriteTexture& sprite, int id, float x, float y, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color)
+{
+    batcher.addBoundingBox(sprite, id, x, y, scale_x, scale_y, angle, color);
+}
+
 void GameRenderer::resetMetrics()
 {
     batcher.contextSwitchCount = 0;

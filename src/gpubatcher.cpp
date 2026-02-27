@@ -185,6 +185,14 @@ void GPUBatcher::endRenderPass(SDL_GPUCommandBuffer* cmd, SDL_GPURenderPass* ren
     primitiveVertices.clear();
 }
 
+void GPUBatcher::addBoundingBox(
+    const SpriteTexture& sprite, int id, float x, float y, float scale_x, float scale_y, float angle, const ppl7::grafix::Color& color)
+{
+    ppl7::grafix::Rect box = sprite.spriteBoundary(id, scale_x, scale_y, angle, x, y);
+
+    addRect(box.left(), box.top(), box.width(), box.height(), color, 4);
+}
+
 void GPUBatcher::addSprite(const SpriteTexture& sprite,
                            int id,
                            float x,

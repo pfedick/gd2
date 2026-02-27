@@ -10,6 +10,7 @@ class SpriteTexture;
 #include "audio.h"
 #include "audiopool.h"
 #include "level.h"
+#include "collision.h"
 #include <map>
 
 class TileTypePlane;
@@ -152,8 +153,10 @@ private:
     double hacking_end;
     ppl7::String phonetics;
     std::list<ppl7::grafix::Point> collision_checkpoints;
+    WorldCollision world_collision;
 
     ParallaxLayerId currentLayer;
+    float parallax_scale;
 
     class FlashLightPivot
     {
@@ -208,7 +211,7 @@ public:
     explicit Player(Game* game);
     ~Player();
     ppl7::grafix::PointF position() const;
-    void setParallaxLayer(ParallaxLayerId layer);
+    void setParallaxLayer(ParallaxLayerId layer, float parallax_scale = 1.0f);
     ParallaxLayerId getParallaxLayer() const;
     void stand();
     void jumpExpression();
