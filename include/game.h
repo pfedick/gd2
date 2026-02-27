@@ -5,7 +5,6 @@
 
 #include "gpu.h"
 #include "gamerenderer.h"
-#include "renderpipelines.h"
 #include "resources.h"
 #include "sdl.h"
 #include "metrics.h"

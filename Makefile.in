@@ -44,7 +44,6 @@ OBJECTS=compile/main.o \
 	compile/spritetexture.o \
 	compile/gamecontroller.o \
 	compile/resources.o \
-	compile/renderpipelines.o \
 	compile/background.o \
 	compile/colorpalette.o \
 	compile/level.o \
@@ -334,10 +333,6 @@ compile/metrics.o: src/game/metrics.cpp Makefile
 compile/colorpalette.o: src/game/colorpalette.cpp Makefile
 	- @mkdir -p compile
 	$(CXX) -o compile/colorpalette.o -c src/game/colorpalette.cpp $(CFLAGS)
-
-compile/renderpipelines.o: src/game/renderpipelines.cpp Makefile
-	- @mkdir -p compile
-	$(CXX) -o compile/renderpipelines.o -c src/game/renderpipelines.cpp $(CFLAGS)
 
 compile/spritetexture.o: src/spritetexture.cpp Makefile
 	- @mkdir -p compile
