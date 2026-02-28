@@ -119,11 +119,13 @@ void TileTypePlane::draw(GameRenderer& renderer, const GameViewport& viewport, c
     float x1 = -offset_x;
     float y1 = -offset_y;
 
+    ppl7::grafix::Color color(255, 0, 0, 255);
+
     for (int y = 0; y < tiles_num_y; y++) {
         for (int x = 0; x < tiles_num_x; x++) {
             TileType::Type type = getType(x + start_x, y + start_y);
             if (type > 0) {
-                renderer.addSprite(*tiletypes, type, x1 + x * scaled_tile_width, y1 + y * scaled_tile_height, scale, scale);
+                renderer.addSprite(*tiletypes, type, x1 + x * scaled_tile_width, y1 + y * scaled_tile_height, scale, scale, 0.0f, color);
             }
         }
     }
