@@ -72,10 +72,12 @@ void Game::createNewLevel(const LevelParameter& params)
 void Game::updateFromLevelParameters()
 {
     if (player) {
+        /*
         if (level.params.drainBattery)
             player->setBatteryDrainRate(level.params.batteryDrainRate);
         else
             player->setBatteryDrainRate(0.0f);
+            */
     }
     level.runtimeParams = level.params;
     level.runtimeParams.CurrentSong = level.params.InitialSong;
@@ -224,12 +226,13 @@ void Game::startLevel(const ppl7::String& filename)
         enableControls(false);
     }
     player->resetLevelObjects();
-    player->setPetrified(false);
     player->enableControl();
+    /*
     if (level.params.drainBattery)
         player->setBatteryDrainRate(level.params.batteryDrainRate);
     else
         player->setBatteryDrainRate(0.0f);
+    */
 
     // TODO: hud->resetPlayerStats(player);
 
@@ -239,7 +242,7 @@ void Game::startLevel(const ppl7::String& filename)
         // else
         player->addSpecialObject((*it));
     }
-    if (level.params.flashlightOnOnLevelStart) player->enableFlashlight(true);
+    // if (level.params.flashlightOnOnLevelStart) player->enableFlashlight(true);
 
     player->stand();
     // soundtrack.playInitialSong();
@@ -247,12 +250,4 @@ void Game::startLevel(const ppl7::String& filename)
     background.setColor(level.params.BackgroundColor);
     background.setImage(level.params.BackgroundImage);
     background.setLevelDimension(level.getOccupiedAreaFromTileTypePlane(ParallaxLayerId::Player));
-    // gameState = GameState::Running;
-    if (filename == "level/start.lvl") {
-        player->setAutoWalk(true);
-        enableControls(false);
-
-    } else {
-        player->setAutoWalk(false);
-    }
 }

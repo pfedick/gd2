@@ -357,7 +357,7 @@ void Game::run()
 
         player->WorldCoords = WorldCamera;
         player->Viewport = game_viewport;
-        if (this->controlsEnabled || player->isAutoWalk()) {
+        if (this->controlsEnabled) {
             ParallaxLayerId player_layer = player->getParallaxLayer();
             ParallaxLayer& layer = level.layer(player_layer);
             player->update(clock, layer);
@@ -450,7 +450,7 @@ void Game::updateUi(const ppltk::MouseState& mouse, const Metrics& last_metrics)
     level.setLightsEnabled(editor.mainmenue->visibility_lighting);
     level.setShowCameraDebug(editor.mainmenue->visibility_camera_debug);
 
-        for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
+    for (int i = 0; i < static_cast<int>(ParallaxLayerId::MaxLayerId); i++) {
         auto& layer = level.layer(static_cast<ParallaxLayerId>(i));
         layer.isVisible = editor.mainmenue->layer_visibility[i];
         layer.bBlurEnabled = editor.mainmenue->visibility_blur;

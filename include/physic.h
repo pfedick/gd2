@@ -3,20 +3,22 @@
 
 #include "tiletypes.h"
 #include "game.h"
+#include "collision.h"
 
 class TileTypePlane;
 
-class Velocity
+class Vector2
 {
 public:
-    Velocity(float x = 0.0f, float y = 0.0f)
+    float x = 0.0f;
+    float y = 0.0f;
+
+    Vector2(float x = 0.0f, float y = 0.0f)
     {
         this->x = x;
         this->y = y;
     }
-    float x;
-    float y;
-    void stop()
+    void clear()
     {
         x = 0.0f;
         y = 0.0f;
@@ -88,56 +90,36 @@ public:
         Etched
     };
 
-    class Keys
-    {
-    public:
-        int matrix;
-        int velocity_x;
-        int velocity_y;
-    };
-    Keys keys;
-
     PlayerMovement movement = Stand;
     PlayerOrientation orientation = Front;
     PlayerOrientation turnTarget;
 
-    Velocity velocity_move, acceleration;
-    float gravity, acceleration_gravity;
-    float acceleration_airstream;
-    float acceleration_jump;
-    float acceleration_slide;
-    float acceleration_jump_sideways;
-    float speed_walk;
-    float speed_run;
-    float coyote_time; // time after leaving a platform where player can still jump
+    Vector2 velocity_move; // current velocity of object
+    Vector2 wind;
+    float gravity;
+    float friction;
+    float max_run_speed;
+    float max_slide_speed;
+    float coyote_time;
 
-    double jump_climax;
     double time;
     double fallstart;
+    double last_grounded_time;
 
-    int collision_matrix[6][6];
-    int collision_at_pivoty[3];
-    int collision_type_count[TileType::Type::MaxType];
-    // Objects::Object* player_stands_on_object;
     void* player_stands_on_object;
+
+    bool isEnemy;
 
     Physic();
 
-    bool updatePhysics(const TileTypePlane& world, float frame_rate_compensation);
-    PlayerMovement checkCollisionWithWorld(const TileTypePlane& world, float& x, float& y);
-    int detectFallingDamage(double time, float frame_rate_compensation);
-    void updateMovement(float frame_rate_compensation);
+    bool updatePhysics(const GameClock& clock, WorldCollision& collision); // returns true if movement has changed
+    PlayerMovement checkCollisionWithWorld(WorldCollision& collision,
+                                           float& x,
+                                           float& y); // returns new movement if movement has changed, otherwise Unchanged
 
-    bool isCollisionLeft() const;
-    bool isCollisionRight() const;
-    bool isSwimming() const;
-    bool isDiving() const;
-    bool isOnGround() const;
-    PlayerMovement getMovement() const;
+    void setWind(float strength, float direction);
+
     ppl7::String getState() const;
-
-    void updateCollisionMatrix(const TileTypePlane& world, float& x, float& y);
-    bool checkCollisionMatrixBody(TileType::Type type) const;
 };
 
 #endif // INCLUDE_PHYSIC_H_
