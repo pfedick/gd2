@@ -518,6 +518,46 @@ void Player::update(const GameClock& clock, ParallaxLayer& layer)
 }
 void Player::handleKeyboard(const GameClock& clock, const TileTypePlane& world, ObjectSystem& objects)
 {
+    if (keys.jump) {
+        if (movement != Jump) {
+            movement = Jump;
+            if (orientation == Left) {
+                animation.start(JumpLeftUp);
+            } else if (orientation == Right) {
+                animation.start(JumpRightUp);
+            } else if (orientation == Front) {
+                animation.start(JumpUp);
+            } else if (orientation == Back) {
+                animation.start(JumpUp);
+            }
+        }
+    } else if (keys.left) {
+        if (orientation == Right) {
+            turn(Left);
+        } else {
+            velocity_move.x = -max_run_speed;
+            orientation = Left;
+            if (movement != Run) {
+                animation.start(RunCycleLeft);
+                movement = Run;
+            }
+        }
+    } else if (keys.right) {
+        if (orientation == Left) {
+            turn(Right);
+        } else {
+            velocity_move.x = max_run_speed;
+            orientation = Right;
+            if (movement != Run) {
+                animation.start(RunCycleRight);
+                movement = Run;
+            }
+        }
+
+    } else {
+        velocity_move.x = 0;
+        if (movement == Run) stand();
+    }
 }
 
 void Player::handleKeyboardWhileJumpOrFalling(const GameClock& clock, const TileTypePlane& world, ObjectSystem& objects)

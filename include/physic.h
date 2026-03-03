@@ -51,7 +51,6 @@ public:
         Unchanged = 0,
         Stand,
         Turn,
-        Walk,
         Run,
         Pickup,
         ClimbUp,
