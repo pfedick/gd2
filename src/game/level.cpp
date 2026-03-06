@@ -14,7 +14,8 @@ Level::Level(Game* game)
     //  particles = new ParticleSystem();
     objectEditMode = false;
     bShowGrid = false;
-    bShowTileTypes = false;
+    bShowTileTypes = true;
+    bShowCollisions = true;
     showSprites = true;
     showObjects = true;
     showParticles = true;

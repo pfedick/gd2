@@ -280,6 +280,9 @@ void Game::showUi(bool enable)
         editor.mainmenue->setVisible(true);
         editor.mainmenue->fitMetrics(viewport);
         editor.statusbar->setVisible(true);
+        editor.mainmenue->setShowTileTypes(true);
+        editor.mainmenue->setShowCollision(true);
+
     } else {
         editor.closeAll();
         editor.mainmenue->setShowTileTypes(false);

@@ -23,8 +23,6 @@ WorldCollision::WorldCollision()
 void WorldCollision::update(float x, float y)
 {
     left = right = top = bottom = false;
-    leftGroundTile = middleGroundTile = rightGroundTile = TileType::Type::NonBlocking;
-    leftPivotTile = middlePivotTile = rightPivotTile = TileType::Type::NonBlocking;
     if (bounding_box.width()) {
         int h = TILE_HEIGHT / 2;
         for (int cy = bounding_box.y1 + h; cy < bounding_box.y2 - h; cy += TILE_HEIGHT / 2) {
@@ -41,9 +39,9 @@ void WorldCollision::update(float x, float y)
             if (!bottom) bottom = IsBlocking(t, isEnemy);
         }
     }
-    leftGroundTile = world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y + 2));
-    middleGroundTile = world->getType(ppl7::grafix::Point(x, y + 2));
-    rightGroundTile = world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y + 2));
+    leftGroundTile = world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y + 1));
+    middleGroundTile = world->getType(ppl7::grafix::Point(x, y + 1));
+    rightGroundTile = world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y + 1));
 
     leftPivotTile = world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y));
     middlePivotTile = world->getType(ppl7::grafix::Point(x, y));

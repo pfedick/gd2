@@ -176,6 +176,12 @@ void MainMenue::setShowTileTypes(bool show)
     if (visibility) visibility->setShowTileTypes(show);
 }
 
+void MainMenue::setShowCollision(bool show)
+{
+    visibility_collision = show;
+    if (visibility) visibility->setShowCollision(show);
+}
+
 ParallaxLayerId MainMenue::currentLayer() const
 {
     if (active_plane_combobox) return static_cast<ParallaxLayerId>(active_plane_combobox->currentIdentifier().toInt());
@@ -418,6 +424,11 @@ void VisibilitySubMenu::addVisibilityCheckbox(int& y1, ParallaxLayerId layerId, 
 void VisibilitySubMenu::setShowTileTypes(bool show)
 {
     show_tiletypes_checkbox->setChecked(show);
+}
+
+void VisibilitySubMenu::setShowCollision(bool show)
+{
+    show_collision_checkbox->setChecked(show);
 }
 
 void VisibilitySubMenu::toggledEvent(ppltk::Event* event, bool checked)

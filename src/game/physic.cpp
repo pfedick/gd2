@@ -34,6 +34,18 @@ ppl7::String Physic::getState() const
 
 bool Physic::updatePhysics(const GameClock& clock, WorldCollision& collision)
 {
+    if (velocity_move.y < gravity) {
+        if (!collision.bottom) {
+            velocity_move.y += gravity * clock.frame_rate_compensation;
+            if (velocity_move.y > gravity) velocity_move.y = gravity;
+            if (velocity_move.y > 0) {
+                if (movement != Jump && movement != Falling) {
+                    movement = Falling;
+                    return true;
+                }
+            }
+        }
+    }
     return false;
 }
 

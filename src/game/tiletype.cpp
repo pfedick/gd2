@@ -55,12 +55,12 @@ TileType::Type TileTypePlane::getType(int x, int y) const
     return tilematrix[y * width + x];
 }
 
-TileType::Type TileTypePlane::getType(const ppl7::grafix::Point& player) const
+TileType::Type TileTypePlane::getType(const ppl7::grafix::Point& position) const
 {
     // TODO: Wie wird das aussehen, wenn die Tile-Größe nicht 32x32 ist,
     // weil der Screen-Scale anders ist?
-    int tx = player.x / (float)TILE_WIDTH;
-    int ty = player.y / (float)TILE_HEIGHT;
+    int tx = position.x / TILE_WIDTH;
+    int ty = position.y / TILE_HEIGHT;
     return getType(tx, ty);
 }
 

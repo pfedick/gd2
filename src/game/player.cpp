@@ -196,13 +196,14 @@ void Player::drawCollision(GameRenderer& renderer, const GameViewport& viewport,
     }
     int half_tile_width = TILE_WIDTH / 2;
 
-    renderer.addSprite(*tiletype_resource, world_collision.leftPivotTile, p.x - TILE_WIDTH - half_tile_width, p.y);
-    renderer.addSprite(*tiletype_resource, world_collision.middlePivotTile, p.x - half_tile_width, p.y);
-    renderer.addSprite(*tiletype_resource, world_collision.rightPivotTile, p.x + half_tile_width, p.y);
+    renderer.addSprite(*tiletype_resource, world_collision.leftPivotTile, p.x - TILE_WIDTH, p.y);
+    renderer.addSprite(*tiletype_resource, world_collision.rightPivotTile, p.x, p.y);
 
-    renderer.addSprite(*tiletype_resource, world_collision.leftGroundTile, p.x - TILE_WIDTH - half_tile_width, p.y + TILE_HEIGHT);
-    renderer.addSprite(*tiletype_resource, world_collision.middleGroundTile, p.x - half_tile_width, p.y + TILE_HEIGHT);
-    renderer.addSprite(*tiletype_resource, world_collision.rightGroundTile, p.x + half_tile_width, p.y + TILE_HEIGHT);
+    renderer.addSprite(*tiletype_resource, world_collision.leftGroundTile, p.x - TILE_WIDTH, p.y + TILE_HEIGHT);
+    renderer.addSprite(*tiletype_resource, world_collision.rightGroundTile, p.x, p.y + TILE_HEIGHT);
+
+    // renderer.addSprite(*tiletype_resource, world_collision.middlePivotTile, p.x - half_tile_width, p.y);
+    // renderer.addSprite(*tiletype_resource, world_collision.middleGroundTile, p.x - half_tile_width, p.y + TILE_HEIGHT);
 }
 
 void Player::turn(PlayerOrientation target)
@@ -609,16 +610,15 @@ Physic::PlayerMovement Player::checkCollisionWithWorld(const GameClock& clock, c
     // Physic::PlayerMovement new_movement = Physic::checkCollisionWithWorld(world, x, y);
     if (movement == Dead) return new_movement;
 
-    if (world_collision.bottom) {
-        // This fixes blocking issues on ramps
-        while (world_collision.bottom) {
+    if (world_collision.leftPivotTile == TileType::Type::Blocking || world_collision.rightPivotTile == TileType::Type::Blocking) {
+        velocity_move.y = 0;
+
+        while (world_collision.leftPivotTile == TileType::Type::Blocking || world_collision.rightPivotTile == TileType::Type::Blocking) {
             y--;
             world_collision =
                 GetWorldCollision(clock, world, x, y, sprite_resource, animation.getFrame(), scale * parallax_scale, 0.0f, false, 0);
         }
-        // y++;
     }
-
     return new_movement;
     /*
     if (collision_type_count[TileType::Type::Speer] > 0) {
@@ -633,7 +633,24 @@ Physic::PlayerMovement Player::checkCollisionWithWorld(const GameClock& clock, c
 bool Player::updatePhysics(const GameClock& clock)
 {
     bool movement_changed = false;
-
+    if (velocity_move.y < gravity) {
+        if (!world_collision.bottom) {
+            velocity_move.y += gravity * clock.frame_rate_compensation;
+            if (velocity_move.y > gravity) velocity_move.y = gravity;
+            if (velocity_move.y > 0) {
+                if (movement != Jump && movement != Falling) {
+                    movement = Falling;
+                    return true;
+                }
+            }
+        } else {
+            velocity_move.y = 0;
+            if (movement == Jump || movement == Falling) {
+                movement = Stand;
+                return true;
+            }
+        }
+    }
     return movement_changed;
 }
 

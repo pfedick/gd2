@@ -33,6 +33,7 @@ private:
 public:
     VisibilitySubMenu(int x, int y, MainMenue* menue);
     void setShowTileTypes(bool show);
+    void setShowCollision(bool show);
     void setShowHud(bool show);
     void toggledEvent(ppltk::Event* event, bool checked) override;
     void lostFocusEvent(ppltk::FocusEvent* event) override;
@@ -151,6 +152,7 @@ public:
     bool worldFollowsPlayer() const;
     void setGodMode(bool enable);
     void setShowTileTypes(bool show);
+    void setShowCollision(bool show);
     void openLevelDialog(bool new_flag);
 
     void updateMetrics(const Metrics& last_metrics);

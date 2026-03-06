@@ -71,6 +71,18 @@ public:
     bool runRight();
 };
 
+class MoveState
+{
+public:
+    virtual void update(const GameClock& clock, const TileTypePlane& world, ObjectSystem& objects) = 0;
+};
+
+class MoveStateWalk : public MoveState
+{
+public:
+    void update(const GameClock& clock, const TileTypePlane& world, ObjectSystem& objects) override;
+};
+
 class Player : public Physic
 {
 private:
