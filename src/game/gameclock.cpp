@@ -6,7 +6,7 @@ void GameClock::update()
     delta_time = current_time - time;
     time = current_time;
     frame_rate_compensation = (delta_time > 0.0f) ? (delta_time / (1.0f / 60.0f)) : 1.0f;
-    // ppl7::PrintDebug("Frame Time: %0.3f ms, Frame Rate Compensation: %0.2f\n", delta_time * 1000.0f, frame_rate_compensation);
+    if (frame_rate_compensation > 2.0f) frame_rate_compensation = 2.0f;
     frame_count++;
     fps_frame_count++;
     current_second = static_cast<uint64_t>(time);

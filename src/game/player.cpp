@@ -168,7 +168,6 @@ void Player::draw(GameRenderer& renderer, const GameViewport& viewport, const pp
     int frame = animation.getFrame();
 
     renderer.addSprite(*sprite_resource, frame, p.x, p.y + 1, scale * size, scale * size, 0.0f, color_modulation);
-    // sprite_resource->draw(renderer, p.x, p.y + 1, frame, color_modulation);
 }
 
 void Player::drawCollision(GameRenderer& renderer, const GameViewport& viewport, const ppl7::grafix::Point& worldcoords) const
@@ -609,16 +608,28 @@ Physic::PlayerMovement Player::checkCollisionWithWorld(const GameClock& clock, c
 
     // Physic::PlayerMovement new_movement = Physic::checkCollisionWithWorld(world, x, y);
     if (movement == Dead) return new_movement;
-
+checkagain:
     if (world_collision.leftPivotTile == TileType::Type::Blocking || world_collision.rightPivotTile == TileType::Type::Blocking) {
         velocity_move.y = 0;
-
-        while (world_collision.leftPivotTile == TileType::Type::Blocking || world_collision.rightPivotTile == TileType::Type::Blocking) {
-            y--;
-            world_collision =
-                GetWorldCollision(clock, world, x, y, sprite_resource, animation.getFrame(), scale * parallax_scale, 0.0f, false, 0);
-        }
+        y = (((int)y / TILE_HEIGHT) * TILE_HEIGHT) - 1;
+        world_collision.update(x, y);
+        // while (world_collision.leftPivotTile == TileType::Type::Blocking || world_collision.rightPivotTile == TileType::Type::Blocking) {
+        //     y--;
+        //     world_collision.update(x, y);
+        // }
     }
+    if (world_collision.leftPivotTile == TileType::Type::TwoThirdBlockLower ||
+        world_collision.rightPivotTile == TileType::Type::TwoThirdBlockLower) {
+        velocity_move.y = 0;
+        y = (((int)y / TILE_HEIGHT) * TILE_HEIGHT) + (TILE_HEIGHT / 3) - 1;
+        world_collision.update(x, y);
+    } else if (world_collision.leftPivotTile == TileType::Type::ThirdBlockLower ||
+               world_collision.rightPivotTile == TileType::Type::ThirdBlockLower) {
+        velocity_move.y = 0;
+        y = (((int)y / TILE_HEIGHT) * TILE_HEIGHT) + 2 * (TILE_HEIGHT / 3) - 1;
+        world_collision.update(x, y);
+    }
+
     return new_movement;
     /*
     if (collision_type_count[TileType::Type::Speer] > 0) {

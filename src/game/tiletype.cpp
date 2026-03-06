@@ -47,6 +47,7 @@ void TileTypePlane::setType(int x, int y, TileType::Type type)
 {
     if (x < 0 || x >= width || y < 0 || y >= height || tilematrix == NULL) return;
     tilematrix[y * width + x] = type;
+    ppl7::PrintDebug("Set tile type at %d/%d to %d\n", x, y, (int)type);
 }
 
 TileType::Type TileTypePlane::getType(int x, int y) const
@@ -57,8 +58,6 @@ TileType::Type TileTypePlane::getType(int x, int y) const
 
 TileType::Type TileTypePlane::getType(const ppl7::grafix::Point& position) const
 {
-    // TODO: Wie wird das aussehen, wenn die Tile-Größe nicht 32x32 ist,
-    // weil der Screen-Scale anders ist?
     int tx = position.x / TILE_WIDTH;
     int ty = position.y / TILE_HEIGHT;
     return getType(tx, ty);
