@@ -68,7 +68,10 @@ public:
         Crouch,
         Crawling,
         CrawlTurn,
-        Petrified
+        Petrified,
+        JumpStart,
+        JumpUp,
+        MaxMovementId
     };
     enum PlayerOrientation
     {
@@ -100,11 +103,17 @@ public:
     float max_run_speed;
     float max_slide_speed;
     float max_falling_speed;
+    float max_jump_speed;
+    float max_jump_time;
+    float min_jump_time;
     float coyote_time;
 
     double time;
     double fallstart_time;
     double last_grounded_time;
+
+    double jump_min_time;
+    double jump_climax_time;
 
     void* player_stands_on_object;
 

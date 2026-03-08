@@ -3,9 +3,10 @@
 #include "objectsystem.h"
 #include "constants.h"
 
-static const char* movement_string[22] = {"Unchanged", "Stand",    "Turn",    "Run",      "Pickup",   "ClimbUp",   "ClimbDown",
-                                          "Jump",      "Falling",  "Slide",   "Floating", "Dead",     "Swim",      "SwimStraight",
-                                          "SwimUp",    "SwimDown", "Hacking", "Crouch",   "Crawling", "CrawlTurn", "Petrified"};
+static const char* movement_string[Physic::MaxMovementId + 1] = {
+    "Unchanged", "Stand",  "Turn",     "Run",       "Pickup",    "ClimbUp",      "ClimbDown", "Jump",
+    "Falling",   "Slide",  "Floating", "Dead",      "Swim",      "SwimStraight", "SwimUp",    "SwimDown",
+    "Hacking",   "Crouch", "Crawling", "CrawlTurn", "Petrified", "JumpStart",    "JumpUp"};
 static const char* orientation_string[4] = {"Left", "Right", "Front", "Back"};
 
 Physic::Physic()
@@ -18,10 +19,15 @@ Physic::Physic()
     max_run_speed = 16.0f;
     max_slide_speed = 8.0f;
     max_falling_speed = 50.0f;
-    coyote_time = 0.2f;
+    max_jump_speed = 30.0f;
+    max_jump_time = 0.5f;
+    min_jump_time = 0.05f;
+    coyote_time = 1.3f;
     time = 0.0f;
     fallstart_time = 0.0f;
     last_grounded_time = 0.0f;
+    jump_climax_time = 0.0f;
+    jump_min_time = 0.0f;
     player_stands_on_object = nullptr;
     isEnemy = false;
 }
