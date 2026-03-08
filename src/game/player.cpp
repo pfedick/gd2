@@ -10,7 +10,10 @@
 
 static AnimationDefinition RunCycleLeft(36, 51, true, 51, 0.01666f * 2.0f);
 static AnimationDefinition RunCycleRight(16, 31, true, 31, 0.01666f * 2.0f);
-static AnimationDefinition JumpUp(53, 58, false, 58, 0.01666f * 2.0f);
+static AnimationDefinition JumpUpFront(180, 195, false, 195, 0.01666f * 2.0f);
+static AnimationDefinition JumpUpRight(100, 115, false, 115, 0.01666f * 2.0f);
+static AnimationDefinition JumpUpLeft(140, 155, false, 155, 0.01666f * 2.0f);
+
 static AnimationDefinition JumpRightUp(60, 65, false, 65, 0.01666f * 2.0f);
 static AnimationDefinition JumpRightDown(66, 71, false, 71, 0.01666f * 2.0f);
 static AnimationDefinition JumpRightLand(72, 77, false, 0, 0.01666f * 2.0f);
@@ -177,10 +180,14 @@ void Player::drawCollision(GameRenderer& renderer, const GameViewport& viewport,
     ppl7::grafix::Color white(255, 266, 255, 255);
 
     int frame = animation.getFrame();
-    renderer.addBoundingBox(*sprite_resource, frame, p.x, p.y + 1, scale * parallax_scale, scale * parallax_scale, 0.0f,
-                            ppl7::grafix::Color(255, 192, 0, 255));
+    // renderer.addBoundingBox(*sprite_resource, frame, p.x, p.y + 1, scale * parallax_scale, scale * parallax_scale, 0.0f,
+    //                         ppl7::grafix::Color(255, 192, 0, 255));
+    ppl7::grafix::Rect box(world_collision.bounding_box.x1 - worldcoords.x, world_collision.bounding_box.y1 - worldcoords.y,
+                           world_collision.bounding_box.width(), world_collision.bounding_box.height());
+    renderer.addRect(box.x1, box.y1, box.width(), box.height(), ppl7::grafix::Color(255, 192, 0, 255), 4);
 
-    ppl7::grafix::Rect box = sprite_resource->spriteBoundary(frame, scale * parallax_scale, scale * parallax_scale, 0.0f, p.x, p.y);
+    // ppl7::grafix::Rect box = sprite_resource->spriteBoundary(frame, scale * parallax_scale, scale * parallax_scale, 0.0f, p.x, p.y);
+
     if (world_collision.left) {
         renderer.addLine(box.x1, box.y1, box.x1, box.y2, ppl7::grafix::Color(255, 0, 0, 255), 8);
     }
@@ -300,7 +307,7 @@ void Player::dropHealth(float points, HealthDropReason reason)
     if (health <= 0.0f && movement != Dead) {
         health = 0;
         movement = Dead;
-        fallstart = 0.0f;
+        fallstart_time = 0.0f;
         // we can play different animations for different reasons
         if (reason == FallingDeep) {
             // TODO: animation.start(death_by_falling, sizeof(death_by_falling) / sizeof(int), false, 106);
@@ -478,8 +485,10 @@ void Player::update(const GameClock& clock, ParallaxLayer& layer)
 
     int frame = animation.getFrame();
 
-    world_collision =
-        GetWorldCollision(clock, layer.TileTypeMatrix, x, y, sprite_resource, animation.getFrame(), scale * parallax_scale, 0.0f, false, 0);
+    ppl7::grafix::Rect collision_box(x - ((float)PLAYER_WIDTH / 2.0f) * scale * parallax_scale,
+                                     y - (float)PLAYER_HEIGHT * scale * parallax_scale, (float)PLAYER_WIDTH * scale * parallax_scale,
+                                     (float)PLAYER_HEIGHT * scale * parallax_scale);
+    world_collision = GetWorldCollision(clock, layer.TileTypeMatrix, x, y, collision_box, false);
     Physic::PlayerMovement new_movement = checkCollisionWithWorld(clock, layer.TileTypeMatrix);
     if (new_movement == Stand) stand();
 
@@ -522,20 +531,24 @@ void Player::handleKeyboard(const GameClock& clock, const TileTypePlane& world, 
         if (movement != Jump) {
             movement = Jump;
             if (orientation == Left) {
-                animation.start(JumpLeftUp);
+                animation.start(JumpUpLeft);
             } else if (orientation == Right) {
-                animation.start(JumpRightUp);
+                animation.start(JumpUpRight);
             } else if (orientation == Front) {
-                animation.start(JumpUp);
+                animation.start(JumpUpFront);
             } else if (orientation == Back) {
-                animation.start(JumpUp);
+                animation.start(JumpUpFront);
             }
         }
     } else if (keys.left) {
         if (orientation == Right) {
             turn(Left);
         } else {
-            velocity_move.x = -max_run_speed;
+            float diff = max_run_speed - velocity_move.x;
+            if (diff > 0) {
+                velocity_move.x -= diff / 2.0f * frame_rate_compensation;
+                if (velocity_move.x < -max_run_speed) velocity_move.x = -max_run_speed;
+            }
             orientation = Left;
             if (movement != Run) {
                 animation.start(RunCycleLeft);
@@ -546,14 +559,17 @@ void Player::handleKeyboard(const GameClock& clock, const TileTypePlane& world, 
         if (orientation == Left) {
             turn(Right);
         } else {
-            velocity_move.x = max_run_speed;
+            float diff = max_run_speed - velocity_move.x;
+            if (diff > 0) {
+                velocity_move.x += diff / 2.0f * frame_rate_compensation;
+                if (velocity_move.x > max_run_speed) velocity_move.x = max_run_speed;
+            }
             orientation = Right;
             if (movement != Run) {
                 animation.start(RunCycleRight);
                 movement = Run;
             }
         }
-
     } else {
         velocity_move.x = 0;
         if (movement == Run) stand();
@@ -608,15 +624,36 @@ Physic::PlayerMovement Player::checkCollisionWithWorld(const GameClock& clock, c
 
     // Physic::PlayerMovement new_movement = Physic::checkCollisionWithWorld(world, x, y);
     if (movement == Dead) return new_movement;
-checkagain:
+
+    if (world_collision.left && velocity_move.x < 0) {
+        velocity_move.x = 0;
+        x = (float)((int)x);
+        while (world_collision.left) {
+            x++;
+            world_collision.update(x, y);
+        }
+    } else if (world_collision.right && velocity_move.x > 0) {
+        velocity_move.x = 0;
+        x = (float)((int)x);
+        while (world_collision.right) {
+            x--;
+            world_collision.update(x, y);
+        }
+    }
+    if (world_collision.top && velocity_move.y < 0) {
+        velocity_move.y = 0;
+    }
+
     if (world_collision.leftPivotTile == TileType::Type::Blocking || world_collision.rightPivotTile == TileType::Type::Blocking) {
         velocity_move.y = 0;
         y = (((int)y / TILE_HEIGHT) * TILE_HEIGHT) - 1;
         world_collision.update(x, y);
-        // while (world_collision.leftPivotTile == TileType::Type::Blocking || world_collision.rightPivotTile == TileType::Type::Blocking) {
+        // while (world_collision.leftPivotTile == TileType::Type::Blocking || world_collision.rightPivotTile ==
+        // TileType::Type::Blocking) {
         //     y--;
         //     world_collision.update(x, y);
         // }
+        if (movement == Jump && movement == Falling) new_movement = Physic::PlayerMovement::Stand;
     }
     if (world_collision.leftPivotTile == TileType::Type::TwoThirdBlockLower ||
         world_collision.rightPivotTile == TileType::Type::TwoThirdBlockLower) {
@@ -645,21 +682,20 @@ bool Player::updatePhysics(const GameClock& clock)
 {
     bool movement_changed = false;
     if (velocity_move.y < gravity) {
-        if (!world_collision.bottom) {
-            velocity_move.y += gravity * clock.frame_rate_compensation;
-            if (velocity_move.y > gravity) velocity_move.y = gravity;
-            if (velocity_move.y > 0) {
-                if (movement != Jump && movement != Falling) {
-                    movement = Falling;
-                    return true;
+        if (world_collision.leftGroundTile != TileType::Type::Blocking && world_collision.rightGroundTile != TileType::Type::Blocking) {
+            if (velocity_move.y < max_falling_speed) {
+                velocity_move.y += gravity * clock.frame_rate_compensation;
+                if (velocity_move.y > max_falling_speed) velocity_move.y = max_falling_speed;
+                if (velocity_move.y > 0) {
+                    if (movement != Jump && movement != Falling) {
+                        // movement = Falling;
+                        return true;
+                    }
                 }
             }
         } else {
-            velocity_move.y = 0;
-            if (movement == Jump || movement == Falling) {
-                movement = Stand;
-                return true;
-            }
+            last_grounded_time = clock.time;
+            fallstart_time = clock.time;
         }
     }
     return movement_changed;

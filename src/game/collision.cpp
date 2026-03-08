@@ -7,10 +7,16 @@
 bool IsBlocking(TileType::Type t, bool isEnemy)
 {
     if (t == TileType::NonBlocking || (isEnemy == false && t == TileType::EnemyBlocker)) return false;
-    if (t == TileType::Ladder || t == TileType::Water || t == TileType::AirStream || t == TileType::Platform || t == TileType::Speer ||
-        t == TileType::Fire)
-        return false;
-    return true;
+    if (t == TileType::Blocking || (isEnemy == true && t == TileType::EnemyBlocker)) return true;
+    if ((int)t >= (int)TileType::ShallowRampCeilingRightUpper && (int)t <= (int)TileType::ShallowRampCeilingLeftUpper) return true;
+    if ((int)t >= (int)TileType::SteepRampCeilingLeftUpper && (int)t <= (int)TileType::SteepRampCeilingRightUpper) return true;
+    return false;
+}
+
+static inline TileType::Type FilterType(TileType::Type t, bool isEnemy)
+{
+    if (t == TileType::NonBlocking || (isEnemy == false && t == TileType::EnemyBlocker)) return TileType::Type::NonBlocking;
+    return t;
 }
 
 WorldCollision::WorldCollision()
@@ -24,6 +30,16 @@ void WorldCollision::update(float x, float y)
 {
     left = right = top = bottom = false;
     if (bounding_box.width()) {
+        ppl7::grafix::Point new_pivot((int)x, (int)y);
+        ppl7::grafix::Point delta = new_pivot - last_pivot;
+        if (delta.x) {
+            bounding_box.x1 += delta.x;
+            bounding_box.x2 += delta.x;
+        }
+        if (delta.y) {
+            bounding_box.y1 += delta.y;
+            bounding_box.y2 += delta.y;
+        }
         int h = TILE_HEIGHT / 2;
         for (int cy = bounding_box.y1 + h; cy < bounding_box.y2 - h; cy += TILE_HEIGHT / 2) {
             TileType::Type t = world->getType(ppl7::grafix::Point(bounding_box.x1, cy));
@@ -31,7 +47,7 @@ void WorldCollision::update(float x, float y)
             t = world->getType(ppl7::grafix::Point(bounding_box.x2, cy));
             if (!right) right = IsBlocking(t, isEnemy);
         }
-        for (int cx = bounding_box.x1; cx < bounding_box.x2; cx += TILE_WIDTH / 2) {
+        for (int cx = bounding_box.x1 + h; cx < bounding_box.x2 - h; cx += TILE_WIDTH / 2) {
             TileType::Type t = world->getType(ppl7::grafix::Point(cx, bounding_box.y1));
             if (!top) top = IsBlocking(t, isEnemy);
 
@@ -39,13 +55,14 @@ void WorldCollision::update(float x, float y)
             if (!bottom) bottom = IsBlocking(t, isEnemy);
         }
     }
-    leftGroundTile = world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y + 1));
-    middleGroundTile = world->getType(ppl7::grafix::Point(x, y + 1));
-    rightGroundTile = world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y + 1));
+    last_pivot.setPoint((int)x, (int)y);
+    leftGroundTile = FilterType(world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y + 1)), isEnemy);
+    middleGroundTile = FilterType(world->getType(ppl7::grafix::Point(x, y + 1)), isEnemy);
+    rightGroundTile = FilterType(world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y + 1)), isEnemy);
 
-    leftPivotTile = world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y));
-    middlePivotTile = world->getType(ppl7::grafix::Point(x, y));
-    rightPivotTile = world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y));
+    leftPivotTile = FilterType(world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y)), isEnemy);
+    middlePivotTile = FilterType(world->getType(ppl7::grafix::Point(x, y)), isEnemy);
+    rightPivotTile = FilterType(world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y)), isEnemy);
 }
 
 WorldCollision GetWorldCollision(const GameClock& clock,
@@ -70,6 +87,7 @@ WorldCollision GetWorldCollision(const GameClock& clock,
         collision.bounding_box.x2 += offset;
         collision.bounding_box.y2 += offset;
     }
+    collision.last_pivot.setPoint((int)x, (int)y);
     collision.update(x, y);
     return collision;
 }
@@ -82,6 +100,7 @@ WorldCollision GetWorldCollision(
     collision.world = &world;
     collision.isEnemy = isEnemy;
     collision.bounding_box = bounding_box;
+    collision.last_pivot.setPoint((int)x, (int)y);
     collision.update(x, y);
     return collision;
 }

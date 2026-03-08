@@ -3,5 +3,7 @@
 
 #define TILE_WIDTH 100
 #define TILE_HEIGHT 100
+#define PLAYER_HEIGHT 340
+#define PLAYER_WIDTH 200
 
 #endif // INCLUDE_CONSTANTS_H_

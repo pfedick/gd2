@@ -11,7 +11,7 @@ Camera::Camera()
     zoom = 1.0f;
     target_zoom = 1.0f;
     zoom_speed = 0.0f;
-    dead_zone.x = 400.0f;
+    dead_zone.x = 0.0f;
     dead_zone.y = 400.0f;
     follow_player = true;
     logical_render_size.setSize(1920 * 2, 1080 * 2);

@@ -99,10 +99,11 @@ public:
     float friction;
     float max_run_speed;
     float max_slide_speed;
+    float max_falling_speed;
     float coyote_time;
 
     double time;
-    double fallstart;
+    double fallstart_time;
     double last_grounded_time;
 
     void* player_stands_on_object;

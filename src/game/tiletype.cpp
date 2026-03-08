@@ -47,7 +47,6 @@ void TileTypePlane::setType(int x, int y, TileType::Type type)
 {
     if (x < 0 || x >= width || y < 0 || y >= height || tilematrix == NULL) return;
     tilematrix[y * width + x] = type;
-    ppl7::PrintDebug("Set tile type at %d/%d to %d\n", x, y, (int)type);
 }
 
 TileType::Type TileTypePlane::getType(int x, int y) const

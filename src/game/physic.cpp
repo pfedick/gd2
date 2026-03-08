@@ -3,9 +3,9 @@
 #include "objectsystem.h"
 #include "constants.h"
 
-static const char* movement_string[22] = {
-    "Unchanged", "Stand", "Turn", "Walk",         "Run",    "Pickup",   "ClimbUp", "ClimbDown", "Jump",     "Falling",   "Slide",
-    "Floating",  "Dead",  "Swim", "SwimStraight", "SwimUp", "SwimDown", "Hacking", "Crouch",    "Crawling", "CrawlTurn", "Petrified"};
+static const char* movement_string[22] = {"Unchanged", "Stand",    "Turn",    "Run",      "Pickup",   "ClimbUp",   "ClimbDown",
+                                          "Jump",      "Falling",  "Slide",   "Floating", "Dead",     "Swim",      "SwimStraight",
+                                          "SwimUp",    "SwimDown", "Hacking", "Crouch",   "Crawling", "CrawlTurn", "Petrified"};
 static const char* orientation_string[4] = {"Left", "Right", "Front", "Back"};
 
 Physic::Physic()
@@ -17,9 +17,10 @@ Physic::Physic()
     friction = 0.5f;
     max_run_speed = 16.0f;
     max_slide_speed = 8.0f;
+    max_falling_speed = 50.0f;
     coyote_time = 0.2f;
     time = 0.0f;
-    fallstart = 0.0f;
+    fallstart_time = 0.0f;
     last_grounded_time = 0.0f;
     player_stands_on_object = nullptr;
     isEnemy = false;
@@ -34,18 +35,7 @@ ppl7::String Physic::getState() const
 
 bool Physic::updatePhysics(const GameClock& clock, WorldCollision& collision)
 {
-    if (velocity_move.y < gravity) {
-        if (!collision.bottom) {
-            velocity_move.y += gravity * clock.frame_rate_compensation;
-            if (velocity_move.y > gravity) velocity_move.y = gravity;
-            if (velocity_move.y > 0) {
-                if (movement != Jump && movement != Falling) {
-                    movement = Falling;
-                    return true;
-                }
-            }
-        }
-    }
+
     return false;
 }
 

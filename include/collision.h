@@ -7,6 +7,7 @@ class WorldCollision
 {
 public:
     ppl7::grafix::Rect bounding_box;
+    ppl7::grafix::Point last_pivot;
     GameClock clock;
     const TileTypePlane* world;
     bool left;
@@ -30,15 +31,19 @@ public:
 
 WorldCollision GetWorldCollision(const GameClock& clock,
                                  const TileTypePlane& world,
-                                 float x,
-                                 float y,
+                                 float pivot_x,
+                                 float pivot_y,
                                  const SpriteTexture* sprite,
                                  int sprite_no,
                                  float scale,
                                  float rotation,
                                  bool isEnemy = false,
                                  int offset = 0);
-WorldCollision GetWorldCollision(
-    const GameClock& clock, const TileTypePlane& world, float x, float y, const ppl7::grafix::Rect& bounding_box, bool isEnemy = false);
+WorldCollision GetWorldCollision(const GameClock& clock,
+                                 const TileTypePlane& world,
+                                 float pivot_x,
+                                 float pivot_y,
+                                 const ppl7::grafix::Rect& bounding_box,
+                                 bool isEnemy = false);
 
 #endif /* INCLUDE_COLLISION_H_ */
