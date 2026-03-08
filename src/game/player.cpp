@@ -546,7 +546,7 @@ void Player::handleKeyboard(const GameClock& clock, const TileTypePlane& world, 
         } else {
             float diff = max_run_speed - velocity_move.x;
             if (diff > 0) {
-                velocity_move.x -= diff / 2.0f * frame_rate_compensation;
+                velocity_move.x -= diff / 10.0f * frame_rate_compensation;
                 if (velocity_move.x < -max_run_speed) velocity_move.x = -max_run_speed;
             }
             orientation = Left;
@@ -561,7 +561,7 @@ void Player::handleKeyboard(const GameClock& clock, const TileTypePlane& world, 
         } else {
             float diff = max_run_speed - velocity_move.x;
             if (diff > 0) {
-                velocity_move.x += diff / 2.0f * frame_rate_compensation;
+                velocity_move.x += diff / 10.0f * frame_rate_compensation;
                 if (velocity_move.x > max_run_speed) velocity_move.x = max_run_speed;
             }
             orientation = Right;
@@ -681,10 +681,10 @@ Physic::PlayerMovement Player::checkCollisionWithWorld(const GameClock& clock, c
 bool Player::updatePhysics(const GameClock& clock)
 {
     bool movement_changed = false;
-    if (velocity_move.y < gravity) {
+    if (velocity_move.y < max_falling_speed) {
         if (world_collision.leftGroundTile != TileType::Type::Blocking && world_collision.rightGroundTile != TileType::Type::Blocking) {
             if (velocity_move.y < max_falling_speed) {
-                velocity_move.y += gravity * clock.frame_rate_compensation;
+                velocity_move.y += gravity / 6.0f * clock.frame_rate_compensation;
                 if (velocity_move.y > max_falling_speed) velocity_move.y = max_falling_speed;
                 if (velocity_move.y > 0) {
                     if (movement != Jump && movement != Falling) {

@@ -56,13 +56,13 @@ void WorldCollision::update(float x, float y)
         }
     }
     last_pivot.setPoint((int)x, (int)y);
-    leftGroundTile = FilterType(world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y + 1)), isEnemy);
+    leftGroundTile = FilterType(world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 4), y + 1)), isEnemy);
     middleGroundTile = FilterType(world->getType(ppl7::grafix::Point(x, y + 1)), isEnemy);
-    rightGroundTile = FilterType(world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y + 1)), isEnemy);
+    rightGroundTile = FilterType(world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 4), y + 1)), isEnemy);
 
-    leftPivotTile = FilterType(world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 2), y)), isEnemy);
+    leftPivotTile = FilterType(world->getType(ppl7::grafix::Point(x - (TILE_WIDTH / 4), y)), isEnemy);
     middlePivotTile = FilterType(world->getType(ppl7::grafix::Point(x, y)), isEnemy);
-    rightPivotTile = FilterType(world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 2), y)), isEnemy);
+    rightPivotTile = FilterType(world->getType(ppl7::grafix::Point(x + (TILE_WIDTH / 4), y)), isEnemy);
 }
 
 WorldCollision GetWorldCollision(const GameClock& clock,
