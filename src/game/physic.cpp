@@ -19,10 +19,10 @@ Physic::Physic()
     max_run_speed = 16.0f;
     max_slide_speed = 8.0f;
     max_falling_speed = 50.0f;
-    max_jump_speed = 30.0f;
-    max_jump_time = 0.5f;
+    max_jump_speed = 40.0f;
+    max_jump_time = 0.3f;
     min_jump_time = 0.05f;
-    coyote_time = 1.3f;
+    coyote_time = 0.3f;
     time = 0.0f;
     fallstart_time = 0.0f;
     last_grounded_time = 0.0f;

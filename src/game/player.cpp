@@ -580,7 +580,7 @@ void Player::handleKeyboard(const GameClock& clock, const TileTypePlane& world, 
         } else {
             float diff = max_run_speed - velocity_move.x;
             if (diff > 0) {
-                velocity_move.x -= (diff / 10.0f) * frame_rate_compensation;
+                velocity_move.x -= (diff / 15.0f) * frame_rate_compensation;
                 if (velocity_move.x < -max_run_speed) velocity_move.x = -max_run_speed;
             }
             orientation = Left;
@@ -595,7 +595,7 @@ void Player::handleKeyboard(const GameClock& clock, const TileTypePlane& world, 
         } else {
             float diff = max_run_speed - velocity_move.x;
             if (diff > 0) {
-                velocity_move.x += (diff / 10.0f) * frame_rate_compensation;
+                velocity_move.x += (diff / 15.0f) * frame_rate_compensation;
                 if (velocity_move.x > max_run_speed) velocity_move.x = max_run_speed;
             }
             orientation = Right;
@@ -618,21 +618,21 @@ void Player::handleKeyboardWhileJumpOrFalling(const GameClock& clock, const Tile
         }
     }
 
-    if (keys.left) {
+    if (keys.left && movement == Falling) {
         orientation = Left;
         animation.setStaticFrame(84);
 
         float diff = max_run_speed - velocity_move.x;
         if (diff > 0) {
-            velocity_move.x -= (diff / 20.0f) * frame_rate_compensation;
+            velocity_move.x -= (diff / 10.0f) * frame_rate_compensation;
             if (velocity_move.x < -max_run_speed) velocity_move.x = -max_run_speed;
         }
-    } else if (keys.right) {
+    } else if (keys.right && movement == Falling) {
         orientation = Right;
         animation.setStaticFrame(65);
         float diff = max_run_speed - velocity_move.x;
         if (diff > 0) {
-            velocity_move.x += (diff / 20.0f) * frame_rate_compensation;
+            velocity_move.x += (diff / 10.0f) * frame_rate_compensation;
             if (velocity_move.x > max_run_speed) velocity_move.x = max_run_speed;
         }
         orientation = Right;
@@ -741,7 +741,7 @@ bool Player::updatePhysics(const GameClock& clock)
     bool movement_changed = false;
     if (movement == Jump || movement == JumpUp) {
         if (clock.time < jump_climax_time && velocity_move.y > -max_jump_speed) {
-            velocity_move.y -= 4 * frame_rate_compensation;
+            velocity_move.y -= 3 * frame_rate_compensation;
             if (velocity_move.y < -max_jump_speed) velocity_move.y = -max_jump_speed;
             return false;
         } else if (clock.time >= jump_climax_time) {
